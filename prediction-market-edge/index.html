@@ -1341,9 +1341,13 @@
       } catch (error) {
         state.searchResults = [];
         renderSearchResults();
-        if (state.inputs.source === "kalshi" && query) {
+        if (state.inputs.source === "kalshi" && query && (intent.kind === "url" || isLikelyKalshiTicker(query))) {
           applyKalshiLinkFallback(query, intent.side, intent.url);
           setStatus("Kalshi blocked browser market data. Ticker and side were loaded; enter price manually.", "bad");
+          return;
+        }
+        if (state.inputs.source === "kalshi") {
+          setStatus("Kalshi blocks browser keyword search from GitHub Pages. Paste an exact Kalshi link/ticker, or switch to Polymarket.", "bad");
           return;
         }
         setStatus("Browser fetch failed: " + error.message + ". Manual entry still works.", "bad");
@@ -1398,7 +1402,7 @@
 
     function parseSearchIntent(rawValue) {
       const value = rawValue.trim();
-      const fallback = { source: "", query: value, side: "", url: "" };
+      const fallback = { kind: isLikelyKalshiTicker(value) ? "ticker" : "keyword", source: "", query: value, side: "", url: "" };
       if (!value) return fallback;
       let url;
       try {
@@ -1414,6 +1418,7 @@
           url.searchParams.get("ticker") ||
           extractKalshiTickerFromPath(url.pathname);
         return {
+          kind: "url",
           source: "kalshi",
           query: (ticker || "").toUpperCase(),
           side: parseSide(url.searchParams.get("op_order_side") || url.searchParams.get("side")),
@@ -1427,6 +1432,7 @@
           url.searchParams.get("search") ||
           slugToQuery(url.pathname);
         return {
+          kind: "url",
           source: "polymarket",
           query,
           side: parseSide(url.searchParams.get("side") || url.searchParams.get("outcome")),
@@ -1441,6 +1447,10 @@
       const parts = pathname.split("/").filter(Boolean);
       const ticker = parts.find((part) => /^kx[a-z0-9-]+$/i.test(part));
       return ticker || "";
+    }
+
+    function isLikelyKalshiTicker(value) {
+      return /^KX[A-Z0-9]+(?:-[A-Z0-9]+)*$/i.test(String(value || "").trim());
     }
 
     function slugToQuery(pathname) {
