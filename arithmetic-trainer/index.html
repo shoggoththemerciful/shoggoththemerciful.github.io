@@ -135,7 +135,6 @@
     }
 
     .button:active,
-    .key:active,
     .segmented button:active {
       transform: translateY(1px);
     }
@@ -154,7 +153,7 @@
 
     .workspace {
       display: grid;
-      grid-template-rows: auto minmax(390px, 1fr) auto;
+      grid-template-rows: auto minmax(390px, 1fr);
       gap: 16px;
     }
 
@@ -219,12 +218,11 @@
     }
 
     .duration {
-      width: 112px;
+      width: 168px;
     }
 
     .duration .segmented {
-      grid-template-columns: repeat(2, 1fr);
-      grid-auto-flow: row;
+      grid-template-columns: repeat(3, 1fr);
     }
 
     .panel {
@@ -367,28 +365,6 @@
       text-transform: uppercase;
     }
 
-    .keypad {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 9px;
-    }
-
-    .key {
-      min-height: 46px;
-      border: 2px solid var(--ink);
-      border-radius: var(--radius);
-      background: var(--panel);
-      color: var(--ink);
-      font-size: 1.08rem;
-      font-weight: 950;
-      box-shadow: 2px 2px 0 rgba(23, 32, 38, 0.2);
-    }
-
-    .key.accent {
-      background: var(--blue);
-      color: white;
-    }
-
     .sidebar {
       padding: 16px;
       display: grid;
@@ -510,11 +486,6 @@
         width: auto;
       }
 
-      .duration .segmented {
-        grid-auto-flow: column;
-        grid-template-columns: none;
-      }
-
       .panel {
         min-height: 440px;
       }
@@ -525,10 +496,6 @@
 
       .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .keypad {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
       .sidebar {
@@ -592,6 +559,7 @@
             <div class="segmented" id="durationGroup" role="tablist" aria-label="Time">
               <button type="button" class="active" data-duration="60">60</button>
               <button type="button" data-duration="120">120</button>
+              <button type="button" data-duration="0">∞</button>
             </div>
           </div>
         </section>
@@ -620,20 +588,6 @@
           </div>
         </section>
 
-        <section class="keypad" aria-label="Number pad">
-          <button class="key" type="button" data-key="7">7</button>
-          <button class="key" type="button" data-key="8">8</button>
-          <button class="key" type="button" data-key="9">9</button>
-          <button class="key" type="button" data-key="4">4</button>
-          <button class="key" type="button" data-key="5">5</button>
-          <button class="key" type="button" data-key="6">6</button>
-          <button class="key" type="button" data-key="1">1</button>
-          <button class="key" type="button" data-key="2">2</button>
-          <button class="key" type="button" data-key="3">3</button>
-          <button class="key" type="button" data-key="-">-</button>
-          <button class="key" type="button" data-key="0">0</button>
-          <button class="key accent" type="button" data-key="back">Del</button>
-        </section>
       </div>
 
       <aside class="sidebar">
@@ -720,9 +674,6 @@
     els.answerForm.addEventListener("submit", submitAnswer);
     els.answerInput.addEventListener("input", handleAnswerInput);
     document.addEventListener("keydown", handleGlobalKeydown);
-    document.querySelectorAll("[data-key]").forEach((button) => {
-      button.addEventListener("click", () => pressKey(button.dataset.key));
-    });
 
     resetRound();
     renderStore();
@@ -742,7 +693,7 @@
       if (state.active) return;
       state.active = true;
       state.startedAt = Date.now();
-      state.endsAt = state.startedAt + state.duration * 1000;
+      state.endsAt = state.duration ? state.startedAt + state.duration * 1000 : 0;
       state.score = 0;
       state.attempts = 0;
       state.streak = 0;
@@ -761,6 +712,9 @@
     }
 
     function resetRound() {
+      if (state.active && state.attempts > 0) {
+        saveRound();
+      }
       state.active = false;
       clearInterval(state.timer);
       state.timer = null;
@@ -777,7 +731,7 @@
       els.feedback.className = "feedback";
       render();
       renderProblem();
-      updateTimer(state.duration);
+      updateTimer(state.duration || 0);
       els.answerInput.focus();
     }
 
@@ -831,6 +785,9 @@
       state.history = state.history.slice(0, 10);
       els.answerInput.value = "";
       nextProblem();
+      if (state.duration === 0) {
+        saveBestOnly();
+      }
       render();
     }
 
@@ -853,6 +810,13 @@
       els.feedback.textContent = "Done";
       els.feedback.className = "feedback";
 
+      saveRound();
+      render();
+      renderStore();
+      updateTimer(0);
+    }
+
+    function saveRound() {
       const accuracy = getAccuracy();
       const today = todayKey();
       if (!state.store.days[today]) {
@@ -873,12 +837,31 @@
         };
       }
       saveStore();
-      render();
       renderStore();
-      updateTimer(0);
+    }
+
+    function saveBestOnly() {
+      const accuracy = getAccuracy();
+      const beatsBest = state.score > state.store.best.score ||
+        (state.score === state.store.best.score && accuracy > state.store.best.accuracy);
+      if (!beatsBest) return;
+      state.store.best = {
+        score: state.score,
+        accuracy,
+        duration: state.duration,
+        mode: state.mode,
+        level: state.level
+      };
+      saveStore();
+      renderStore();
     }
 
     function tick() {
+      if (state.duration === 0) {
+        updateTimer(0);
+        render();
+        return;
+      }
       const remaining = Math.max(0, Math.ceil((state.endsAt - Date.now()) / 1000));
       updateTimer(remaining);
       if (remaining <= 0) finishRound();
@@ -886,6 +869,11 @@
     }
 
     function updateTimer(seconds) {
+      if (state.duration === 0) {
+        els.timeLeft.textContent = "∞";
+        els.meterFill.style.transform = "scaleX(1)";
+        return;
+      }
       els.timeLeft.textContent = seconds + "s";
       const ratio = Math.max(0, Math.min(1, seconds / state.duration));
       els.meterFill.style.transform = "scaleX(" + ratio + ")";
@@ -921,8 +909,7 @@
       }
 
       if (mode === "mul") {
-        a = rand(2, range.mul);
-        b = rand(2, range.mul);
+        [a, b] = makeMultiplicationFactors();
         answer = a * b;
       }
 
@@ -936,6 +923,16 @@
         label: a + " " + symbols[mode] + " " + b,
         answer
       };
+    }
+
+    function makeMultiplicationFactors() {
+      if (state.level === "medium") {
+        return shufflePair(rand(2, 9), rand(10, 99));
+      }
+      if (state.level === "hard") {
+        return [rand(10, 99), rand(10, 99)];
+      }
+      return [rand(2, ranges.easy.mul), rand(2, ranges.easy.mul)];
     }
 
     function render() {
@@ -965,7 +962,7 @@
       els.todayRounds.textContent = today.rounds;
       els.bestScore.textContent = state.store.best.score;
       els.bestAccuracy.textContent = state.store.best.accuracy + "%";
-      els.recordLine.textContent = "Best " + state.store.best.score + " in " + state.store.best.duration + "s";
+      els.recordLine.textContent = "Best " + state.store.best.score + " in " + formatDuration(state.store.best.duration);
     }
 
     function pressKey(key) {
@@ -1015,6 +1012,14 @@
 
     function pick(items) {
       return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function shufflePair(a, b) {
+      return Math.random() < 0.5 ? [a, b] : [b, a];
+    }
+
+    function formatDuration(duration) {
+      return duration ? duration + "s" : "untimed";
     }
 
     function todayKey() {
