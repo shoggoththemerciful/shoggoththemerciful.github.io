@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#eef4f1">
+  <title>Market Math Trainer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #eef4f1;
+      --panel: #fffaf0;
+      --ink: #172026;
+      --muted: #66716f;
+      --line: #d3d9d2;
+      --teal: #177c76;
+      --teal-dark: #095a55;
+      --coral: #df5f4e;
+      --coral-dark: #a6392e;
+      --gold: #e0a82e;
+      --blue: #2f6fbb;
+      --shadow: 0 18px 55px rgba(23, 32, 38, 0.12);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--paper);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(135deg, rgba(23, 124, 118, 0.1) 0 26%, transparent 27%),
+        radial-gradient(circle at 86% 16%, rgba(224, 168, 46, 0.22) 0 10%, transparent 11%),
+        var(--paper);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(1180px, calc(100vw - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      background: var(--teal);
+      box-shadow: 4px 4px 0 var(--ink);
+      flex: 0 0 auto;
+    }
+
+    .mark svg {
+      width: 30px;
+      height: 30px;
+      stroke: white;
+      stroke-width: 2.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2.35rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .record {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .button {
+      min-height: 42px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      padding: 0 16px;
+      background: var(--ink);
+      color: #fffaf0;
+      box-shadow: 3px 3px 0 rgba(23, 32, 38, 0.22);
+      font-weight: 850;
+    }
+
+    .button.secondary {
+      background: var(--panel);
+      color: var(--ink);
+    }
+
+    .button:active,
+    .segmented button:active {
+      transform: translateY(1px);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .workspace {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto minmax(430px, 1fr);
+      gap: 16px;
+    }
+
+    .controls,
+    .panel,
+    .sidebar {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: rgba(255, 250, 240, 0.94);
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.75fr) auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .segmented {
+      min-height: 40px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      padding: 3px;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      gap: 3px;
+      background: #e6eee9;
+    }
+
+    .segmented button {
+      min-width: 0;
+      min-height: 32px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--ink);
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .segmented button.active {
+      background: var(--teal);
+      color: white;
+    }
+
+    .duration {
+      width: 168px;
+    }
+
+    .duration .segmented {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .panel {
+      padding: clamp(16px, 4vw, 32px);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    .timer-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .meter {
+      height: 12px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e0e9e4;
+    }
+
+    .meter span {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--gold), var(--coral));
+      transform-origin: left;
+      transform: scaleX(1);
+    }
+
+    .time {
+      width: 78px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-size: 1.1rem;
+      font-weight: 950;
+    }
+
+    .stage {
+      display: grid;
+      align-content: center;
+      gap: 18px;
+      min-height: 300px;
+    }
+
+    .scenario {
+      display: grid;
+      gap: 14px;
+    }
+
+    .scenario-type {
+      color: var(--teal-dark);
+      font-size: 0.82rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .prompt {
+      min-height: 132px;
+      border: 2px solid rgba(23, 32, 38, 0.18);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(90deg, rgba(47, 111, 187, 0.08), rgba(224, 168, 46, 0.16)),
+        repeating-linear-gradient(0deg, transparent 0 34px, rgba(23, 32, 38, 0.055) 35px 36px);
+      padding: clamp(16px, 4vw, 26px);
+      display: grid;
+      align-content: center;
+      gap: 12px;
+    }
+
+    .prompt-main {
+      font-size: clamp(1.85rem, 5vw, 4.1rem);
+      line-height: 1.05;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .prompt-sub {
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.22rem);
+      line-height: 1.35;
+      font-weight: 750;
+    }
+
+    .answer-wrap {
+      width: min(470px, 100%);
+      display: grid;
+      gap: 9px;
+      justify-self: center;
+    }
+
+    .answer {
+      width: 100%;
+      min-height: 60px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: white;
+      color: var(--ink);
+      padding: 0 14px;
+      font-size: 1.65rem;
+      font-weight: 850;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+    }
+
+    .answer:focus {
+      box-shadow: 0 0 0 4px rgba(47, 111, 187, 0.18);
+    }
+
+    .unit {
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.84rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .feedback {
+      min-height: 44px;
+      color: var(--muted);
+      font-weight: 850;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .feedback.correct {
+      color: var(--teal-dark);
+    }
+
+    .feedback.missed {
+      color: var(--coral-dark);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      min-height: 72px;
+      border-top: 2px solid var(--line);
+      padding-top: 11px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: clamp(1.25rem, 3vw, 1.9rem);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .sidebar {
+      min-width: 0;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .tiles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .tile {
+      min-height: 82px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fffdf7;
+    }
+
+    .tile strong {
+      display: block;
+      font-size: 1.55rem;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tile span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .history {
+      min-height: 226px;
+      overflow: auto;
+      border-top: 2px solid var(--line);
+    }
+
+    .history-row {
+      display: grid;
+      gap: 3px;
+      min-height: 54px;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 0;
+      font-size: 0.92rem;
+    }
+
+    .history-row strong {
+      color: var(--teal-dark);
+    }
+
+    .history-row span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.3;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 16px 0;
+      font-weight: 750;
+    }
+
+    @media (max-width: 940px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+      }
+
+      .history-section {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        width: min(100vw - 18px, 680px);
+        padding: 10px 0 16px;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .actions .button {
+        flex: 1 1 120px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .duration {
+        width: auto;
+      }
+
+      .panel {
+        min-height: 500px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .sidebar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .segmented button {
+        font-size: 0.84rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M5 23l7-7 5 5 10-12"></path>
+            <path d="M21 9h6v6"></path>
+            <path d="M6 27h21"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>Market Math Trainer</h1>
+          <div class="record" id="recordLine">Best 0 in 60s</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="button" id="startBtn" type="button">Start</button>
+        <button class="button secondary" id="resetBtn" type="button">Reset</button>
+      </div>
+    </header>
+
+    <section class="layout" aria-label="Prediction market math practice">
+      <div class="workspace">
+        <section class="controls" aria-label="Session controls">
+          <div>
+            <span class="label">Drill</span>
+            <div class="segmented" id="modeGroup" role="tablist" aria-label="Drill">
+              <button type="button" class="active" data-mode="mix">Mix</button>
+              <button type="button" data-mode="edge">Edge</button>
+              <button type="button" data-mode="profit">Profit</button>
+              <button type="button" data-mode="ev">EV</button>
+              <button type="button" data-mode="kelly">Kelly</button>
+            </div>
+          </div>
+          <div>
+            <span class="label">Level</span>
+            <div class="segmented" id="levelGroup" role="tablist" aria-label="Level">
+              <button type="button" class="active" data-level="easy">Easy</button>
+              <button type="button" data-level="medium">Medium</button>
+              <button type="button" data-level="hard">Hard</button>
+            </div>
+          </div>
+          <div class="duration">
+            <span class="label">Time</span>
+            <div class="segmented" id="durationGroup" role="tablist" aria-label="Time">
+              <button type="button" class="active" data-duration="60">60</button>
+              <button type="button" data-duration="120">120</button>
+              <button type="button" data-duration="0">∞</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-live="polite">
+          <div class="timer-row">
+            <div class="meter" aria-hidden="true"><span id="meterFill"></span></div>
+            <div class="time" id="timeLeft">60s</div>
+          </div>
+
+          <div class="stage">
+            <div class="scenario">
+              <div class="scenario-type" id="scenarioType">Edge</div>
+              <div class="prompt">
+                <div class="prompt-main" id="promptMain">YES 42c, fair 51%</div>
+                <div class="prompt-sub" id="promptSub">What is your edge in cents?</div>
+              </div>
+            </div>
+
+            <form class="answer-wrap" id="answerForm" autocomplete="off">
+              <input class="answer" id="answerInput" name="answer" inputmode="decimal" aria-label="Answer" placeholder="Type answer" autofocus>
+              <div class="unit" id="answerUnit">cents</div>
+            </form>
+            <div class="feedback" id="feedback">Type to start. Enter marks the current answer.</div>
+          </div>
+
+          <div class="stats" aria-label="Current stats">
+            <div class="stat"><strong id="score">0</strong><span>Score</span></div>
+            <div class="stat"><strong id="streak">0</strong><span>Streak</span></div>
+            <div class="stat"><strong id="accuracy">100%</strong><span>Accuracy</span></div>
+            <div class="stat"><strong id="pace">0.0</strong><span>Per Min</span></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="sidebar">
+        <section>
+          <h2>Today</h2>
+          <div class="tiles">
+            <div class="tile"><strong id="todayCorrect">0</strong><span>Correct</span></div>
+            <div class="tile"><strong id="todayRounds">0</strong><span>Rounds</span></div>
+          </div>
+        </section>
+        <section>
+          <h2>Best</h2>
+          <div class="tiles">
+            <div class="tile"><strong id="bestScore">0</strong><span>Score</span></div>
+            <div class="tile"><strong id="bestAccuracy">0%</strong><span>Accuracy</span></div>
+          </div>
+        </section>
+        <section class="history-section">
+          <h2>Recent</h2>
+          <div class="history" id="history"></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      mode: "mix",
+      level: "easy",
+      duration: 60,
+      active: false,
+      startedAt: 0,
+      endsAt: 0,
+      score: 0,
+      attempts: 0,
+      streak: 0,
+      current: null,
+      timer: null,
+      history: [],
+      store: loadStore()
+    };
+
+    const els = {
+      startBtn: document.getElementById("startBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      answerForm: document.getElementById("answerForm"),
+      answerInput: document.getElementById("answerInput"),
+      scenarioType: document.getElementById("scenarioType"),
+      promptMain: document.getElementById("promptMain"),
+      promptSub: document.getElementById("promptSub"),
+      answerUnit: document.getElementById("answerUnit"),
+      feedback: document.getElementById("feedback"),
+      meterFill: document.getElementById("meterFill"),
+      timeLeft: document.getElementById("timeLeft"),
+      score: document.getElementById("score"),
+      streak: document.getElementById("streak"),
+      accuracy: document.getElementById("accuracy"),
+      pace: document.getElementById("pace"),
+      todayCorrect: document.getElementById("todayCorrect"),
+      todayRounds: document.getElementById("todayRounds"),
+      bestScore: document.getElementById("bestScore"),
+      bestAccuracy: document.getElementById("bestAccuracy"),
+      recordLine: document.getElementById("recordLine"),
+      history: document.getElementById("history")
+    };
+
+    const modes = ["edge", "profit", "ev", "kelly"];
+    const nicePrices = [10, 12, 15, 18, 20, 22, 25, 28, 30, 32, 35, 38, 40, 42, 45, 48, 50, 52, 55, 58, 60, 62, 65, 68, 70, 72, 75, 78, 80, 82, 85, 88, 90];
+    const shareCounts = {
+      easy: [10, 20, 25, 50, 100],
+      medium: [40, 75, 100, 125, 150, 200],
+      hard: [80, 120, 150, 175, 225, 250, 300]
+    };
+
+    wireSegments("modeGroup", "mode");
+    wireSegments("levelGroup", "level");
+    wireSegments("durationGroup", "duration");
+
+    els.startBtn.addEventListener("click", startRound);
+    els.resetBtn.addEventListener("click", resetRound);
+    els.answerForm.addEventListener("submit", submitAnswer);
+    els.answerInput.addEventListener("input", handleAnswerInput);
+    document.addEventListener("keydown", handleGlobalKeydown);
+
+    resetRound();
+    renderStore();
+
+    function wireSegments(id, key) {
+      document.getElementById(id).addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        [...button.parentElement.children].forEach((child) => child.classList.remove("active"));
+        button.classList.add("active");
+        state[key] = key === "duration" ? Number(button.dataset.duration) : button.dataset[key];
+        resetRound();
+      });
+    }
+
+    function startRound() {
+      if (state.active) return;
+      state.active = true;
+      state.startedAt = Date.now();
+      state.endsAt = state.duration ? state.startedAt + state.duration * 1000 : 0;
+      state.score = 0;
+      state.attempts = 0;
+      state.streak = 0;
+      state.history = [];
+      els.startBtn.textContent = "Running";
+      els.startBtn.disabled = true;
+      els.feedback.textContent = "Go";
+      els.feedback.className = "feedback correct";
+      if (!state.current) nextProblem();
+      tick();
+      clearInterval(state.timer);
+      state.timer = setInterval(tick, 200);
+      els.answerInput.focus();
+      render();
+    }
+
+    function resetRound() {
+      if (state.active && state.attempts > 0) saveRound();
+      state.active = false;
+      clearInterval(state.timer);
+      state.timer = null;
+      state.score = 0;
+      state.attempts = 0;
+      state.streak = 0;
+      state.history = [];
+      state.current = makeProblem();
+      els.answerInput.value = "";
+      els.startBtn.textContent = "Start";
+      els.startBtn.disabled = false;
+      els.feedback.textContent = "Type to start. Enter marks the current answer.";
+      els.feedback.className = "feedback";
+      renderProblem();
+      render();
+      updateTimer(state.duration || 0);
+      els.answerInput.focus();
+    }
+
+    function submitAnswer(event) {
+      event.preventDefault();
+      if (!state.active) startRound();
+      checkAnswer({ force: true });
+    }
+
+    function handleAnswerInput() {
+      sanitizeAnswer();
+      if (!state.active && hasAnswer()) startRound();
+      checkAnswer({ force: false });
+    }
+
+    function checkAnswer({ force }) {
+      if (!state.active || !hasAnswer()) return;
+      const value = Number(els.answerInput.value);
+      if (!Number.isFinite(value)) return;
+      const correct = Math.abs(value - state.current.answer) <= state.current.tolerance;
+      if (!correct && !force) return;
+      recordAnswer(value, correct);
+    }
+
+    function recordAnswer(value, correct) {
+      state.attempts += 1;
+      if (correct) {
+        state.score += 1;
+        state.streak += 1;
+        els.feedback.textContent = "Correct";
+        els.feedback.className = "feedback correct";
+      } else {
+        state.streak = 0;
+        els.feedback.textContent = "Answer: " + state.current.displayAnswer + ". " + state.current.explanation;
+        els.feedback.className = "feedback missed";
+      }
+      state.history.unshift({
+        type: state.current.type,
+        short: state.current.short,
+        answer: state.current.displayAnswer,
+        correct
+      });
+      state.history = state.history.slice(0, 10);
+      els.answerInput.value = "";
+      nextProblem();
+      if (state.duration === 0) saveBestOnly();
+      render();
+    }
+
+    function sanitizeAnswer() {
+      const cleaned = els.answerInput.value
+        .replace(/[^\d.-]/g, "")
+        .replace(/(?!^)-/g, "")
+        .replace(/(\..*)\./g, "$1");
+      if (cleaned !== els.answerInput.value) els.answerInput.value = cleaned;
+    }
+
+    function hasAnswer() {
+      const value = els.answerInput.value.trim();
+      return value !== "" && value !== "-" && value !== ".";
+    }
+
+    function finishRound() {
+      if (!state.active) return;
+      state.active = false;
+      clearInterval(state.timer);
+      state.timer = null;
+      els.startBtn.textContent = "Start";
+      els.startBtn.disabled = false;
+      els.feedback.textContent = "Done";
+      els.feedback.className = "feedback";
+      saveRound();
+      render();
+      updateTimer(0);
+    }
+
+    function saveRound() {
+      const accuracy = getAccuracy();
+      const today = todayKey();
+      if (!state.store.days[today]) {
+        state.store.days[today] = { correct: 0, rounds: 0 };
+      }
+      state.store.days[today].correct += state.score;
+      state.store.days[today].rounds += 1;
+      updateBest(accuracy);
+      saveStore();
+      renderStore();
+    }
+
+    function saveBestOnly() {
+      updateBest(getAccuracy());
+      saveStore();
+      renderStore();
+    }
+
+    function updateBest(accuracy) {
+      const beatsBest = state.score > state.store.best.score ||
+        (state.score === state.store.best.score && accuracy > state.store.best.accuracy);
+      if (!beatsBest) return;
+      state.store.best = {
+        score: state.score,
+        accuracy,
+        duration: state.duration,
+        mode: state.mode,
+        level: state.level
+      };
+    }
+
+    function tick() {
+      if (state.duration === 0) {
+        updateTimer(0);
+        render();
+        return;
+      }
+      const remaining = Math.max(0, Math.ceil((state.endsAt - Date.now()) / 1000));
+      updateTimer(remaining);
+      if (remaining <= 0) finishRound();
+      else render();
+    }
+
+    function updateTimer(seconds) {
+      if (state.duration === 0) {
+        els.timeLeft.textContent = "∞";
+        els.meterFill.style.transform = "scaleX(1)";
+        return;
+      }
+      els.timeLeft.textContent = seconds + "s";
+      const ratio = Math.max(0, Math.min(1, seconds / state.duration));
+      els.meterFill.style.transform = "scaleX(" + ratio + ")";
+    }
+
+    function nextProblem() {
+      state.current = makeProblem();
+      renderProblem();
+    }
+
+    function renderProblem() {
+      els.scenarioType.textContent = state.current.type;
+      els.promptMain.textContent = state.current.main;
+      els.promptSub.textContent = state.current.sub;
+      els.answerUnit.textContent = state.current.unit;
+    }
+
+    function makeProblem() {
+      const mode = state.mode === "mix" ? pick(modes) : state.mode;
+      if (mode === "edge") return makeEdgeProblem();
+      if (mode === "profit") return makeProfitProblem();
+      if (mode === "ev") return makeEvProblem();
+      return makeKellyProblem();
+    }
+
+    function makeEdgeProblem() {
+      const side = pick(["YES", "NO"]);
+      const price = pick(nicePrices);
+      const fairSide = clamp(price + edgeDelta(), 5, 95);
+      const fairYes = side === "YES" ? fairSide : 100 - fairSide;
+      const answer = fairSide - price;
+      return problem({
+        type: "Cents edge",
+        main: side + " " + price + "c, fair YES " + fairYes + "%",
+        sub: "What is the edge on the " + side + " side?",
+        unit: "cents, signed",
+        answer,
+        tolerance: 0,
+        explanation: fairSide + " fair cents - " + price + " price cents = " + signed(answer) + "c"
+      });
+    }
+
+    function makeProfitProblem() {
+      const kind = pick(["resolve", "exit", "implied"]);
+      if (kind === "resolve") {
+        const side = pick(["YES", "NO"]);
+        const price = pick(nicePrices);
+        const shares = pick(shareCounts[state.level]);
+        const answer = round2(shares * (100 - price) / 100);
+        return problem({
+          type: "Payout profit",
+          main: "Buy " + shares + " " + side + " at " + price + "c",
+          sub: "If it resolves in your favor, what is profit?",
+          unit: "dollars",
+          answer,
+          tolerance: 0.01,
+          explanation: shares + " x (100 - " + price + ")c = $" + money(answer)
+        });
+      }
+      if (kind === "exit") {
+        const shares = pick(shareCounts[state.level]);
+        const buy = pick(nicePrices.filter((p) => p <= 70));
+        const sell = clamp(buy + pick([5, 8, 10, 12, 15, 20]), 1, 95);
+        const answer = round2(shares * (sell - buy) / 100);
+        return problem({
+          type: "Exit profit",
+          main: shares + " shares: buy " + buy + "c, sell " + sell + "c",
+          sub: "What is realized profit?",
+          unit: "dollars",
+          answer,
+          tolerance: 0.01,
+          explanation: shares + " x (" + sell + " - " + buy + ")c = $" + money(answer)
+        });
+      }
+      const side = pick(["YES", "NO"]);
+      const price = pick(nicePrices);
+      const answer = side === "YES" ? price : 100 - price;
+      return problem({
+        type: "Implied probability",
+        main: side + " contract at " + price + "c",
+        sub: "What YES probability does that imply?",
+        unit: "percent",
+        answer,
+        tolerance: 0,
+        explanation: side === "YES" ? "YES price maps directly to " + answer + "%" : "NO " + price + "c implies YES " + answer + "%"
+      });
+    }
+
+    function makeEvProblem() {
+      const side = pick(["YES", "NO"]);
+      const price = pick(nicePrices);
+      const fairSide = clamp(price + edgeDelta(), 5, 95);
+      const fairYes = side === "YES" ? fairSide : 100 - fairSide;
+      const shares = pick(shareCounts[state.level]);
+      const answer = round2(shares * (fairSide - price) / 100);
+      return problem({
+        type: "Expected value",
+        main: shares + " " + side + " at " + price + "c, fair YES " + fairYes + "%",
+        sub: "What is expected profit before fees?",
+        unit: "dollars, signed",
+        answer,
+        tolerance: 0.01,
+        explanation: shares + " x (" + fairSide + " - " + price + ")c = $" + money(answer)
+      });
+    }
+
+    function makeKellyProblem() {
+      const price = pick([20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70]);
+      const fair = clamp(price + kellyDelta(), 5, 95);
+      const p = fair / 100;
+      const cost = price / 100;
+      const b = (1 - cost) / cost;
+      const q = 1 - p;
+      const answer = round1(Math.max(0, ((b * p - q) / b) * 100));
+      return problem({
+        type: "Full Kelly",
+        main: "YES " + price + "c, fair " + fair + "%",
+        sub: "What bankroll percent is full Kelly?",
+        unit: "percent",
+        answer,
+        tolerance: state.level === "easy" ? 0.5 : 0.2,
+        explanation: "Kelly = edge / profit-on-cost = " + money(fair - price) + "c / " + (100 - price) + "c = " + answer + "%"
+      });
+    }
+
+    function problem(config) {
+      return {
+        ...config,
+        displayAnswer: formatAnswer(config.answer, config.unit),
+        short: config.main
+      };
+    }
+
+    function render() {
+      const elapsed = state.active ? Math.max(1, (Date.now() - state.startedAt) / 1000) : 0;
+      const perMinute = elapsed ? (state.score / elapsed) * 60 : 0;
+      els.score.textContent = state.score;
+      els.streak.textContent = state.streak;
+      els.accuracy.textContent = getAccuracy() + "%";
+      els.pace.textContent = perMinute.toFixed(1);
+      renderHistory();
+    }
+
+    function renderHistory() {
+      if (state.history.length === 0) {
+        els.history.innerHTML = '<div class="empty">No answers yet</div>';
+        return;
+      }
+      els.history.innerHTML = state.history.map((item) => {
+        const result = item.correct ? "hit" : "miss";
+        return '<div class="history-row"><strong>' + item.type + ' - ' + result + '</strong><span>' + item.short + ' - ' + item.answer + '</span></div>';
+      }).join("");
+    }
+
+    function renderStore() {
+      const today = state.store.days[todayKey()] || { correct: 0, rounds: 0 };
+      els.todayCorrect.textContent = today.correct;
+      els.todayRounds.textContent = today.rounds;
+      els.bestScore.textContent = state.store.best.score;
+      els.bestAccuracy.textContent = state.store.best.accuracy + "%";
+      els.recordLine.textContent = "Best " + state.store.best.score + " in " + formatDuration(state.store.best.duration);
+    }
+
+    function handleGlobalKeydown(event) {
+      if (event.target === els.answerInput) return;
+      if (/^[\d.-]$/.test(event.key)) {
+        event.preventDefault();
+        els.answerInput.focus();
+        els.answerInput.value += event.key;
+        handleAnswerInput();
+        return;
+      }
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        els.answerInput.focus();
+        els.answerInput.value = els.answerInput.value.slice(0, -1);
+        handleAnswerInput();
+      }
+    }
+
+    function getAccuracy() {
+      if (!state.attempts) return 100;
+      return Math.round((state.score / state.attempts) * 100);
+    }
+
+    function edgeDelta() {
+      if (state.level === "easy") return pick([5, 8, 10, 12]);
+      if (state.level === "medium") return pick([-8, -5, 6, 9, 12, 15]);
+      return rand(-12, 18);
+    }
+
+    function kellyDelta() {
+      if (state.level === "easy") return pick([5, 8, 10, 12]);
+      if (state.level === "medium") return pick([6, 9, 12, 15]);
+      return rand(4, 18);
+    }
+
+    function rand(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pick(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function round1(value) {
+      return Math.round(value * 10) / 10;
+    }
+
+    function round2(value) {
+      return Math.round(value * 100) / 100;
+    }
+
+    function money(value) {
+      return Number(value).toFixed(2);
+    }
+
+    function signed(value) {
+      return value > 0 ? "+" + value : String(value);
+    }
+
+    function formatAnswer(value, unit) {
+      if (unit.includes("dollars")) return "$" + money(value);
+      if (unit.includes("percent")) return round1(value) + "%";
+      return signed(value) + "c";
+    }
+
+    function formatDuration(duration) {
+      return duration ? duration + "s" : "untimed";
+    }
+
+    function todayKey() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function loadStore() {
+      const fallback = {
+        best: { score: 0, accuracy: 0, duration: 60, mode: "mix", level: "easy" },
+        days: {}
+      };
+      try {
+        return JSON.parse(localStorage.getItem("market-math-trainer")) || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveStore() {
+      localStorage.setItem("market-math-trainer", JSON.stringify(state.store));
+    }
+  </script>
+</body>
+</html>
