@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local Market Tracker</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M5 23h22"></path>
+            <path d="M8 23V12"></path>
+            <path d="M16 23V6"></path>
+            <path d="M24 23V15"></path>
+            <path d="M6 13l10-7 10 9"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>Local Market Tracker</h1>
+          <div class="record" id="statusLine">Connecting to local server</div>
+        </div>
+      </div>
+      <div class="live-badge" id="liveBadge">offline</div>
+    </header>
+
+    <section class="search-band">
+      <label>
+        <span class="label">Venue</span>
+        <select id="venueSelect">
+          <option value="all">Kalshi + Polymarket</option>
+          <option value="kalshi">Kalshi</option>
+          <option value="polymarket">Polymarket</option>
+        </select>
+      </label>
+      <form class="search-form" id="searchForm" autocomplete="off">
+        <label>
+          <span class="label">Search or paste market link</span>
+          <input id="searchInput" type="search" placeholder="fable, KXFABLERESTORE-27-26JUN27, or a market URL">
+        </label>
+        <button class="button" type="submit">Search</button>
+      </form>
+    </section>
+
+    <section class="layout">
+      <aside class="panel sidebar">
+        <div class="panel-head">
+          <h2>Tracked Markets</h2>
+          <span class="pill" id="watchCount">0</span>
+        </div>
+        <div class="watchlist" id="watchList"></div>
+      </aside>
+
+      <section class="main-column">
+        <section class="panel results-panel" id="resultsPanel">
+          <div class="panel-head">
+            <h2>Search Results</h2>
+            <span class="pill" id="resultCount">0</span>
+          </div>
+          <div class="results" id="resultList"></div>
+        </section>
+
+        <section class="panel detail-panel">
+          <div class="detail-head">
+            <div>
+              <div class="label" id="detailVenue">Select a market</div>
+              <h2 id="detailTitle">No market selected</h2>
+              <div class="detail-meta" id="detailMeta">Add a market to your watchlist, then select it.</div>
+            </div>
+            <div class="detail-controls">
+              <div class="segmented" id="sideGroup">
+                <button type="button" class="active" data-side="yes">YES</button>
+                <button type="button" data-side="no">NO</button>
+              </div>
+              <div class="segmented" id="rangeGroup">
+                <button type="button" data-range="1d">1D</button>
+                <button type="button" class="active" data-range="7d">7D</button>
+                <button type="button" data-range="30d">30D</button>
+                <button type="button" data-range="90d">90D</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-shell">
+            <canvas id="priceChart" width="1100" height="420"></canvas>
+            <div class="chart-empty" id="chartEmpty">No chart data loaded</div>
+          </div>
+
+          <div class="metrics" id="metricsGrid">
+            <div class="metric"><strong>-</strong><span>Latest</span></div>
+            <div class="metric"><strong>-</strong><span>Change</span></div>
+            <div class="metric"><strong>-</strong><span>High / Low</span></div>
+            <div class="metric"><strong>-</strong><span>Spread</span></div>
+            <div class="metric"><strong>-</strong><span>Volatility</span></div>
+            <div class="metric"><strong>-</strong><span>Volume</span></div>
+          </div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
