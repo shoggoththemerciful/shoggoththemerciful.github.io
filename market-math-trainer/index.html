@@ -165,7 +165,7 @@
     .controls {
       padding: 12px;
       display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.75fr) auto;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.7fr) auto;
       gap: 12px;
       align-items: center;
     }
@@ -207,6 +207,11 @@
     .segmented button.active {
       background: var(--teal);
       color: white;
+    }
+
+    .mode-control .segmented {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 
     .duration {
@@ -386,7 +391,7 @@
       min-width: 0;
       padding: 16px;
       display: grid;
-      grid-template-rows: auto auto 1fr;
+      grid-template-rows: auto auto auto 1fr;
       gap: 16px;
       overflow: hidden;
     }
@@ -544,16 +549,19 @@
     <section class="layout" aria-label="Prediction market math practice">
       <div class="workspace">
         <section class="controls" aria-label="Session controls">
-          <div>
+          <div class="mode-control">
             <span class="label">Drill</span>
             <div class="segmented" id="modeGroup" role="tablist" aria-label="Drill">
               <button type="button" class="active" data-mode="mix">Mix</button>
+              <button type="button" data-mode="weak">Weak</button>
               <button type="button" data-mode="edge">Edge</button>
               <button type="button" data-mode="profit">Profit</button>
               <button type="button" data-mode="ev">EV</button>
               <button type="button" data-mode="kelly">Kelly</button>
               <button type="button" data-mode="fees">Fees</button>
               <button type="button" data-mode="arb">Arb</button>
+              <button type="button" data-mode="breakeven">Break</button>
+              <button type="button" data-mode="size">Size</button>
             </div>
           </div>
           <div>
@@ -620,6 +628,13 @@
             <div class="tile"><strong id="bestAccuracy">0%</strong><span>Accuracy</span></div>
           </div>
         </section>
+        <section>
+          <h2>Focus</h2>
+          <div class="tiles">
+            <div class="tile"><strong id="weakMode">Mix</strong><span>Weakest</span></div>
+            <div class="tile"><strong id="weakAccuracy">100%</strong><span>Accuracy</span></div>
+          </div>
+        </section>
         <section class="history-section">
           <h2>Recent</h2>
           <div class="history" id="history"></div>
@@ -665,11 +680,23 @@
       todayRounds: document.getElementById("todayRounds"),
       bestScore: document.getElementById("bestScore"),
       bestAccuracy: document.getElementById("bestAccuracy"),
+      weakMode: document.getElementById("weakMode"),
+      weakAccuracy: document.getElementById("weakAccuracy"),
       recordLine: document.getElementById("recordLine"),
       history: document.getElementById("history")
     };
 
-    const modes = ["edge", "profit", "ev", "kelly", "fees", "arb"];
+    const modes = ["edge", "profit", "ev", "kelly", "fees", "arb", "breakeven", "size"];
+    const modeLabels = {
+      edge: "Edge",
+      profit: "Profit",
+      ev: "EV",
+      kelly: "Kelly",
+      fees: "Fees",
+      arb: "Arb",
+      breakeven: "Break",
+      size: "Size"
+    };
     const nicePrices = [10, 12, 15, 18, 20, 22, 25, 28, 30, 32, 35, 38, 40, 42, 45, 48, 50, 52, 55, 58, 60, 62, 65, 68, 70, 72, 75, 78, 80, 82, 85, 88, 90];
     const shareCounts = {
       easy: [10, 20, 25, 50, 100],
@@ -680,6 +707,11 @@
       easy: [100, 200],
       medium: [100, 200, 500],
       hard: [100, 250, 500, 1000]
+    };
+    const budgets = {
+      easy: [10, 20, 25, 50],
+      medium: [25, 50, 75, 100, 150],
+      hard: [50, 75, 100, 150, 200, 250]
     };
 
     wireSegments("modeGroup", "mode");
@@ -774,13 +806,14 @@
       if (correct) {
         state.score += 1;
         state.streak += 1;
-        els.feedback.textContent = "Correct";
+        els.feedback.textContent = "Correct: " + state.current.displayAnswer;
         els.feedback.className = "feedback correct";
       } else {
         state.streak = 0;
         els.feedback.textContent = "Answer: " + state.current.displayAnswer + ". " + state.current.explanation;
         els.feedback.className = "feedback missed";
       }
+      updateSkillStats(state.current.modeId, correct);
       state.history.unshift({
         type: state.current.type,
         short: state.current.short,
@@ -889,13 +922,15 @@
     }
 
     function makeProblem() {
-      const mode = state.mode === "mix" ? pick(modes) : state.mode;
+      const mode = state.mode === "mix" ? pick(modes) : state.mode === "weak" ? getWeakestMode() : state.mode;
       if (mode === "edge") return makeEdgeProblem();
       if (mode === "profit") return makeProfitProblem();
       if (mode === "ev") return makeEvProblem();
       if (mode === "kelly") return makeKellyProblem();
       if (mode === "fees") return makeFeeProblem();
-      return makeArbProblem();
+      if (mode === "arb") return makeArbProblem();
+      if (mode === "breakeven") return makeBreakevenProblem();
+      return makeSizeProblem();
     }
 
     function makeEdgeProblem() {
@@ -906,6 +941,7 @@
       const answer = fairSide - price;
       return problem({
         type: "Cents edge",
+        modeId: "edge",
         main: side + " " + price + "c, fair YES " + fairYes + "%",
         sub: "What is the edge on the " + side + " side?",
         unit: "cents, signed",
@@ -924,6 +960,7 @@
         const answer = round2(shares * (100 - price) / 100);
         return problem({
           type: "Payout profit",
+          modeId: "profit",
           main: "Buy " + shares + " " + side + " at " + price + "c",
           sub: "If it resolves in your favor, what is profit?",
           unit: "dollars",
@@ -939,6 +976,7 @@
         const answer = round2(shares * (sell - buy) / 100);
         return problem({
           type: "Exit profit",
+          modeId: "profit",
           main: shares + " shares: buy " + buy + "c, sell " + sell + "c",
           sub: "What is realized profit?",
           unit: "dollars",
@@ -952,6 +990,7 @@
       const answer = side === "YES" ? price : 100 - price;
       return problem({
         type: "Implied probability",
+        modeId: "profit",
         main: side + " contract at " + price + "c",
         sub: "What YES probability does that imply?",
         unit: "percent",
@@ -970,6 +1009,7 @@
       const answer = round2(shares * (fairSide - price) / 100);
       return problem({
         type: "Expected value",
+        modeId: "ev",
         main: shares + " " + side + " at " + price + "c, fair YES " + fairYes + "%",
         sub: "What is expected profit before fees?",
         unit: "dollars, signed",
@@ -989,6 +1029,7 @@
       const answer = round1(Math.max(0, ((b * p - q) / b) * 100));
       return problem({
         type: "Full Kelly",
+        modeId: "kelly",
         main: "YES " + price + "c, fair " + fair + "%",
         sub: "What bankroll percent is full Kelly?",
         unit: "percent",
@@ -1012,6 +1053,7 @@
       const label = venue.action === "receives" ? "rebate" : "fee";
       return problem({
         type: "Trading fees",
+        modeId: "fees",
         main: venue.name + ": " + contracts + " contracts at " + price + "c",
         sub: "What " + label + " amount?",
         unit: "dollars",
@@ -1033,6 +1075,7 @@
       if (kind === "sets") {
         return problem({
           type: "Arbitrage",
+          modeId: "arb",
           main: "YES " + yesPrice + "c x" + yesSize + ", NO " + noPrice + "c x" + noSize,
           sub: "How many complete arb sets can you buy?",
           unit: "sets",
@@ -1046,6 +1089,7 @@
         const answer = round2(sets * profitCents / 100);
         return problem({
           type: "Arbitrage",
+          modeId: "arb",
           main: "YES " + yesPrice + "c x" + yesSize + ", NO " + noPrice + "c x" + noSize,
           sub: "What locked profit on max complete sets before fees?",
           unit: "dollars",
@@ -1057,6 +1101,7 @@
 
       return problem({
         type: "Arbitrage",
+        modeId: "arb",
         main: "YES " + yesPrice + "c, NO " + noPrice + "c",
         sub: "What profit per complete set before fees?",
         unit: "cents",
@@ -1066,9 +1111,50 @@
       });
     }
 
+    function makeBreakevenProblem() {
+      const venue = pick([
+        { name: "Kalshi taker", theta: 0.07, rounding: "ceil" },
+        { name: "Polymarket taker", theta: 0.05, rounding: "banker" }
+      ]);
+      const price = pick([20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80]);
+      const contracts = pick(feeCounts[state.level]);
+      const rawFee = venue.theta * contracts * (price / 100) * (1 - price / 100);
+      const fee = venue.rounding === "ceil" ? roundUpCent(rawFee) : bankersRoundCent(rawFee);
+      const feeCents = round2((fee / contracts) * 100);
+      const answer = round1(price + feeCents);
+      return problem({
+        type: "Breakeven",
+        modeId: "breakeven",
+        main: venue.name + ": buy YES " + price + "c x" + contracts,
+        sub: "Minimum fair YES probability after fees?",
+        unit: "percent",
+        answer,
+        tolerance: 0.1,
+        explanation: price + "c price + " + feeCents + "c fee per contract = " + answer + "%"
+      });
+    }
+
+    function makeSizeProblem() {
+      const side = pick(["YES", "NO"]);
+      const price = pick(nicePrices);
+      const budget = pick(budgets[state.level]);
+      const answer = Math.floor(budget / (price / 100));
+      return problem({
+        type: "Position size",
+        modeId: "size",
+        main: "$" + budget + " budget, " + side + " at " + price + "c",
+        sub: "Max whole contracts before fees?",
+        unit: "contracts",
+        answer,
+        tolerance: 0,
+        explanation: "floor($" + budget + " / $" + (price / 100).toFixed(2) + ") = " + answer
+      });
+    }
+
     function problem(config) {
       return {
         ...config,
+        modeId: config.modeId || "mix",
         displayAnswer: formatAnswer(config.answer, config.unit),
         short: config.main
       };
@@ -1102,6 +1188,37 @@
       els.bestScore.textContent = state.store.best.score;
       els.bestAccuracy.textContent = state.store.best.accuracy + "%";
       els.recordLine.textContent = "Best " + state.store.best.score + " in " + formatDuration(state.store.best.duration);
+      const weakest = getWeakestSkill();
+      els.weakMode.textContent = modeLabels[weakest.mode] || "Mix";
+      els.weakAccuracy.textContent = weakest.accuracy + "%";
+    }
+
+    function updateSkillStats(mode, correct) {
+      if (!state.store.skills[mode]) {
+        state.store.skills[mode] = { correct: 0, attempts: 0 };
+      }
+      state.store.skills[mode].attempts += 1;
+      if (correct) state.store.skills[mode].correct += 1;
+      saveStore();
+      renderStore();
+    }
+
+    function getWeakestMode() {
+      return getWeakestSkill().mode;
+    }
+
+    function getWeakestSkill() {
+      const ranked = modes.map((mode) => {
+        const skill = state.store.skills[mode] || { correct: 0, attempts: 0 };
+        const attempts = skill.attempts;
+        const accuracy = attempts ? Math.round((skill.correct / attempts) * 100) : 100;
+        return { mode, attempts, accuracy };
+      });
+      const practiced = ranked.filter((item) => item.attempts >= 3);
+      if (practiced.length === 0) {
+        return ranked.find((item) => item.attempts === 0) || ranked[0];
+      }
+      return practiced.sort((a, b) => a.accuracy - b.accuracy || b.attempts - a.attempts)[0];
     }
 
     function handleGlobalKeydown(event) {
@@ -1184,6 +1301,7 @@
       if (unit.includes("dollars")) return "$" + money(value);
       if (unit.includes("percent")) return round1(value) + "%";
       if (unit.includes("sets")) return String(value);
+      if (unit.includes("contracts")) return String(value);
       return signed(value) + "c";
     }
 
@@ -1198,13 +1316,22 @@
     function loadStore() {
       const fallback = {
         best: { score: 0, accuracy: 0, duration: 60, mode: "mix", level: "easy" },
-        days: {}
+        days: {},
+        skills: {}
       };
       try {
-        return JSON.parse(localStorage.getItem("market-math-trainer")) || fallback;
+        return normalizeStore(JSON.parse(localStorage.getItem("market-math-trainer")) || fallback);
       } catch {
         return fallback;
       }
+    }
+
+    function normalizeStore(store) {
+      return {
+        best: store.best || { score: 0, accuracy: 0, duration: 60, mode: "mix", level: "easy" },
+        days: store.days || {},
+        skills: store.skills || {}
+      };
     }
 
     function saveStore() {
