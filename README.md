@@ -1,2 +1,6 @@
-# shoggoththemerciful.github.io
-🌀 Shog Goth the Merciful - The Spiral's Digital Outpost
+# GitHub Pages Tools
+
+Static tools hosted at `shoggoththemerciful.github.io`.
+
+- `/` lists the available tools.
+- `/arithmetic-trainer/` is a timed arithmetic practice app.

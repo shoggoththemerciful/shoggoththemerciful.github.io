@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f2e8">
+  <title>Arithmetic Trainer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f7f2e8;
+      --panel: #fffaf0;
+      --ink: #172026;
+      --muted: #66716f;
+      --line: #d7d0c3;
+      --coral: #df5f4e;
+      --coral-dark: #a6392e;
+      --teal: #177c76;
+      --teal-dark: #095a55;
+      --gold: #e0a82e;
+      --blue: #2f6fbb;
+      --shadow: 0 18px 55px rgba(23, 32, 38, 0.12);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--paper);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 14% 18%, rgba(224, 168, 46, 0.18) 0 12%, transparent 13%),
+        linear-gradient(135deg, rgba(47, 111, 187, 0.08) 0 25%, transparent 26% 100%),
+        var(--paper);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(1160px, calc(100vw - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(190px, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--gold);
+      box-shadow: 4px 4px 0 var(--ink);
+      flex: 0 0 auto;
+    }
+
+    .mark svg {
+      width: 30px;
+      height: 30px;
+      stroke: var(--ink);
+      stroke-width: 2.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2.35rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .record {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .button {
+      min-height: 42px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      padding: 0 16px;
+      background: var(--ink);
+      color: #fffaf0;
+      box-shadow: 3px 3px 0 rgba(23, 32, 38, 0.22);
+      font-weight: 800;
+    }
+
+    .button.secondary {
+      background: var(--panel);
+      color: var(--ink);
+    }
+
+    .button:active,
+    .key:active,
+    .segmented button:active {
+      transform: translateY(1px);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .workspace,
+    .sidebar {
+      min-width: 0;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-rows: auto minmax(390px, 1fr) auto;
+      gap: 16px;
+    }
+
+    .controls,
+    .panel,
+    .sidebar {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: rgba(255, 250, 240, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .control-group {
+      min-width: 0;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .segmented {
+      min-height: 40px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      padding: 3px;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      gap: 3px;
+      background: #efe7d8;
+    }
+
+    .segmented button {
+      min-width: 0;
+      min-height: 32px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--ink);
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .segmented button.active {
+      background: var(--teal);
+      color: white;
+    }
+
+    .duration {
+      width: 112px;
+    }
+
+    .duration .segmented {
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-flow: row;
+    }
+
+    .panel {
+      padding: clamp(16px, 4vw, 32px);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .timer-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .meter {
+      height: 12px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      overflow: hidden;
+      background: #eadfcd;
+    }
+
+    .meter span {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--gold), var(--coral));
+      transform-origin: left;
+      transform: scaleX(1);
+    }
+
+    .time {
+      width: 76px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-size: 1.1rem;
+      font-weight: 950;
+    }
+
+    .stage {
+      display: grid;
+      place-items: center;
+      text-align: center;
+      min-height: 260px;
+    }
+
+    .problem-wrap {
+      width: min(720px, 100%);
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+    }
+
+    .problem {
+      width: 100%;
+      min-height: 124px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius);
+      background:
+        linear-gradient(90deg, rgba(23, 124, 118, 0.12), rgba(224, 168, 46, 0.16)),
+        repeating-linear-gradient(0deg, transparent 0 34px, rgba(23, 32, 38, 0.06) 35px 36px);
+      color: var(--ink);
+      font-size: clamp(3.2rem, 11vw, 7.4rem);
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: 0;
+      white-space: nowrap;
+      border: 2px solid rgba(23, 32, 38, 0.18);
+    }
+
+    .answer-row {
+      width: min(430px, 100%);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .answer {
+      width: 100%;
+      min-height: 58px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: white;
+      color: var(--ink);
+      padding: 0 14px;
+      font-size: 1.65rem;
+      font-weight: 850;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+    }
+
+    .answer:focus {
+      box-shadow: 0 0 0 4px rgba(47, 111, 187, 0.18);
+    }
+
+    .submit {
+      min-width: 76px;
+      background: var(--coral);
+      color: white;
+    }
+
+    .feedback {
+      min-height: 24px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .feedback.correct {
+      color: var(--teal-dark);
+    }
+
+    .feedback.missed {
+      color: var(--coral-dark);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      min-height: 72px;
+      border-top: 2px solid var(--line);
+      padding-top: 11px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: clamp(1.25rem, 3vw, 1.9rem);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .key {
+      min-height: 46px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 1.08rem;
+      font-weight: 950;
+      box-shadow: 2px 2px 0 rgba(23, 32, 38, 0.2);
+    }
+
+    .key.accent {
+      background: var(--blue);
+      color: white;
+    }
+
+    .sidebar {
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    .side-section {
+      min-width: 0;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .compact-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .tile {
+      min-height: 82px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fffdf7;
+    }
+
+    .tile strong {
+      display: block;
+      font-size: 1.55rem;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tile span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .history {
+      min-height: 226px;
+      overflow: auto;
+      border-top: 2px solid var(--line);
+    }
+
+    .history-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 42px;
+      border-bottom: 1px solid var(--line);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.94rem;
+    }
+
+    .history-row b {
+      color: var(--teal-dark);
+    }
+
+    .history-row i {
+      color: var(--coral-dark);
+      font-style: normal;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 16px 0;
+      font-weight: 750;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+      }
+
+      .history-section {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        width: min(100vw - 18px, 640px);
+        padding: 10px 0 16px;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .actions .button {
+        flex: 1 1 120px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .duration {
+        width: auto;
+      }
+
+      .duration .segmented {
+        grid-auto-flow: column;
+        grid-template-columns: none;
+      }
+
+      .panel {
+        min-height: 440px;
+      }
+
+      .problem {
+        min-height: 96px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .keypad {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .sidebar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .answer-row {
+        grid-template-columns: 1fr;
+      }
+
+      .submit {
+        min-height: 50px;
+      }
+
+      .segmented button {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M6 16h20"></path>
+            <path d="M16 6v20"></path>
+            <path d="M8 8l16 16"></path>
+            <path d="M24 8L8 24"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>Arithmetic Trainer</h1>
+          <div class="record" id="recordLine">Best 0 in 60s</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="button" id="startBtn" type="button">Start</button>
+        <button class="button secondary" id="resetBtn" type="button">Reset</button>
+      </div>
+    </header>
+
+    <section class="layout" aria-label="Arithmetic practice">
+      <div class="workspace">
+        <section class="controls" aria-label="Session controls">
+          <div class="control-group">
+            <span class="label">Mode</span>
+            <div class="segmented" id="modeGroup" role="tablist" aria-label="Mode">
+              <button type="button" class="active" data-mode="mix">Mix</button>
+              <button type="button" data-mode="add">Add</button>
+              <button type="button" data-mode="sub">Sub</button>
+              <button type="button" data-mode="mul">Mul</button>
+              <button type="button" data-mode="div">Div</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <span class="label">Level</span>
+            <div class="segmented" id="levelGroup" role="tablist" aria-label="Level">
+              <button type="button" class="active" data-level="easy">Easy</button>
+              <button type="button" data-level="medium">Medium</button>
+              <button type="button" data-level="hard">Hard</button>
+            </div>
+          </div>
+          <div class="control-group duration">
+            <span class="label">Time</span>
+            <div class="segmented" id="durationGroup" role="tablist" aria-label="Time">
+              <button type="button" class="active" data-duration="60">60</button>
+              <button type="button" data-duration="120">120</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-live="polite">
+          <div class="timer-row">
+            <div class="meter" aria-hidden="true"><span id="meterFill"></span></div>
+            <div class="time" id="timeLeft">60s</div>
+          </div>
+
+          <div class="stage">
+            <div class="problem-wrap">
+              <div class="problem" id="problem">8 + 4</div>
+              <form class="answer-row" id="answerForm" autocomplete="off">
+                <input class="answer" id="answerInput" name="answer" inputmode="numeric" pattern="-?[0-9]*" aria-label="Answer" placeholder="0">
+                <button class="button submit" type="submit">OK</button>
+              </form>
+              <div class="feedback" id="feedback">Ready</div>
+            </div>
+          </div>
+
+          <div class="stats" aria-label="Current stats">
+            <div class="stat"><strong id="score">0</strong><span>Score</span></div>
+            <div class="stat"><strong id="streak">0</strong><span>Streak</span></div>
+            <div class="stat"><strong id="accuracy">100%</strong><span>Accuracy</span></div>
+            <div class="stat"><strong id="pace">0.0</strong><span>Per Min</span></div>
+          </div>
+        </section>
+
+        <section class="keypad" aria-label="Number pad">
+          <button class="key" type="button" data-key="7">7</button>
+          <button class="key" type="button" data-key="8">8</button>
+          <button class="key" type="button" data-key="9">9</button>
+          <button class="key" type="button" data-key="4">4</button>
+          <button class="key" type="button" data-key="5">5</button>
+          <button class="key" type="button" data-key="6">6</button>
+          <button class="key" type="button" data-key="1">1</button>
+          <button class="key" type="button" data-key="2">2</button>
+          <button class="key" type="button" data-key="3">3</button>
+          <button class="key" type="button" data-key="-">-</button>
+          <button class="key" type="button" data-key="0">0</button>
+          <button class="key accent" type="button" data-key="back">Del</button>
+        </section>
+      </div>
+
+      <aside class="sidebar">
+        <section class="side-section">
+          <h2>Today</h2>
+          <div class="compact-stats">
+            <div class="tile"><strong id="todayCorrect">0</strong><span>Correct</span></div>
+            <div class="tile"><strong id="todayRounds">0</strong><span>Rounds</span></div>
+          </div>
+        </section>
+        <section class="side-section">
+          <h2>Best</h2>
+          <div class="compact-stats">
+            <div class="tile"><strong id="bestScore">0</strong><span>Score</span></div>
+            <div class="tile"><strong id="bestAccuracy">0%</strong><span>Accuracy</span></div>
+          </div>
+        </section>
+        <section class="side-section history-section">
+          <h2>Recent</h2>
+          <div class="history" id="history"></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      mode: "mix",
+      level: "easy",
+      duration: 60,
+      active: false,
+      startedAt: 0,
+      endsAt: 0,
+      score: 0,
+      attempts: 0,
+      streak: 0,
+      bestStreak: 0,
+      current: null,
+      timer: null,
+      history: [],
+      store: loadStore()
+    };
+
+    const els = {
+      startBtn: document.getElementById("startBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      answerForm: document.getElementById("answerForm"),
+      answerInput: document.getElementById("answerInput"),
+      problem: document.getElementById("problem"),
+      feedback: document.getElementById("feedback"),
+      meterFill: document.getElementById("meterFill"),
+      timeLeft: document.getElementById("timeLeft"),
+      score: document.getElementById("score"),
+      streak: document.getElementById("streak"),
+      accuracy: document.getElementById("accuracy"),
+      pace: document.getElementById("pace"),
+      todayCorrect: document.getElementById("todayCorrect"),
+      todayRounds: document.getElementById("todayRounds"),
+      bestScore: document.getElementById("bestScore"),
+      bestAccuracy: document.getElementById("bestAccuracy"),
+      recordLine: document.getElementById("recordLine"),
+      history: document.getElementById("history")
+    };
+
+    const ranges = {
+      easy: { add: 20, sub: 20, mul: 10, div: 10 },
+      medium: { add: 80, sub: 80, mul: 12, div: 12 },
+      hard: { add: 200, sub: 200, mul: 19, div: 19 }
+    };
+
+    const symbols = {
+      add: "+",
+      sub: "-",
+      mul: "x",
+      div: "/"
+    };
+
+    wireSegments("modeGroup", "mode");
+    wireSegments("levelGroup", "level");
+    wireSegments("durationGroup", "duration");
+
+    els.startBtn.addEventListener("click", startRound);
+    els.resetBtn.addEventListener("click", resetRound);
+    els.answerForm.addEventListener("submit", submitAnswer);
+    document.querySelectorAll("[data-key]").forEach((button) => {
+      button.addEventListener("click", () => pressKey(button.dataset.key));
+    });
+
+    resetRound();
+    renderStore();
+
+    function wireSegments(id, key) {
+      document.getElementById(id).addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        [...button.parentElement.children].forEach((child) => child.classList.remove("active"));
+        button.classList.add("active");
+        state[key] = key === "duration" ? Number(button.dataset.duration) : button.dataset[key];
+        resetRound();
+      });
+    }
+
+    function startRound() {
+      if (state.active) return;
+      state.active = true;
+      state.startedAt = Date.now();
+      state.endsAt = state.startedAt + state.duration * 1000;
+      state.score = 0;
+      state.attempts = 0;
+      state.streak = 0;
+      state.bestStreak = 0;
+      state.history = [];
+      els.startBtn.textContent = "Running";
+      els.startBtn.disabled = true;
+      els.feedback.textContent = "Go";
+      els.feedback.className = "feedback correct";
+      nextProblem();
+      tick();
+      clearInterval(state.timer);
+      state.timer = setInterval(tick, 200);
+      els.answerInput.focus();
+      render();
+    }
+
+    function resetRound() {
+      state.active = false;
+      clearInterval(state.timer);
+      state.timer = null;
+      state.score = 0;
+      state.attempts = 0;
+      state.streak = 0;
+      state.bestStreak = 0;
+      state.history = [];
+      state.current = makeProblem();
+      els.answerInput.value = "";
+      els.startBtn.textContent = "Start";
+      els.startBtn.disabled = false;
+      els.feedback.textContent = "Ready";
+      els.feedback.className = "feedback";
+      render();
+      renderProblem();
+      updateTimer(state.duration);
+    }
+
+    function submitAnswer(event) {
+      event.preventDefault();
+      if (!state.active) {
+        startRound();
+        return;
+      }
+      const raw = els.answerInput.value.trim();
+      if (raw === "" || raw === "-") return;
+      const value = Number(raw);
+      if (!Number.isInteger(value)) return;
+
+      const correct = value === state.current.answer;
+      state.attempts += 1;
+      if (correct) {
+        state.score += 1;
+        state.streak += 1;
+        state.bestStreak = Math.max(state.bestStreak, state.streak);
+        els.feedback.textContent = "Correct";
+        els.feedback.className = "feedback correct";
+      } else {
+        state.streak = 0;
+        els.feedback.textContent = state.current.label + " = " + state.current.answer;
+        els.feedback.className = "feedback missed";
+      }
+      state.history.unshift({
+        label: state.current.label,
+        answer: state.current.answer,
+        value,
+        correct
+      });
+      state.history = state.history.slice(0, 10);
+      els.answerInput.value = "";
+      nextProblem();
+      render();
+    }
+
+    function finishRound() {
+      if (!state.active) return;
+      state.active = false;
+      clearInterval(state.timer);
+      state.timer = null;
+      els.startBtn.textContent = "Start";
+      els.startBtn.disabled = false;
+      els.feedback.textContent = "Done";
+      els.feedback.className = "feedback";
+
+      const accuracy = getAccuracy();
+      const today = todayKey();
+      if (!state.store.days[today]) {
+        state.store.days[today] = { correct: 0, rounds: 0 };
+      }
+      state.store.days[today].correct += state.score;
+      state.store.days[today].rounds += 1;
+
+      const beatsBest = state.score > state.store.best.score ||
+        (state.score === state.store.best.score && accuracy > state.store.best.accuracy);
+      if (beatsBest) {
+        state.store.best = {
+          score: state.score,
+          accuracy,
+          duration: state.duration,
+          mode: state.mode,
+          level: state.level
+        };
+      }
+      saveStore();
+      render();
+      renderStore();
+      updateTimer(0);
+    }
+
+    function tick() {
+      const remaining = Math.max(0, Math.ceil((state.endsAt - Date.now()) / 1000));
+      updateTimer(remaining);
+      if (remaining <= 0) finishRound();
+      else render();
+    }
+
+    function updateTimer(seconds) {
+      els.timeLeft.textContent = seconds + "s";
+      const ratio = Math.max(0, Math.min(1, seconds / state.duration));
+      els.meterFill.style.transform = "scaleX(" + ratio + ")";
+    }
+
+    function nextProblem() {
+      state.current = makeProblem();
+      renderProblem();
+    }
+
+    function renderProblem() {
+      els.problem.textContent = state.current.label;
+    }
+
+    function makeProblem() {
+      const mode = state.mode === "mix" ? pick(["add", "sub", "mul", "div"]) : state.mode;
+      const range = ranges[state.level];
+      let a;
+      let b;
+      let answer;
+
+      if (mode === "add") {
+        a = rand(2, range.add);
+        b = rand(2, range.add);
+        answer = a + b;
+      }
+
+      if (mode === "sub") {
+        a = rand(2, range.sub);
+        b = rand(2, range.sub);
+        if (b > a) [a, b] = [b, a];
+        answer = a - b;
+      }
+
+      if (mode === "mul") {
+        a = rand(2, range.mul);
+        b = rand(2, range.mul);
+        answer = a * b;
+      }
+
+      if (mode === "div") {
+        b = rand(2, range.div);
+        answer = rand(2, range.div);
+        a = b * answer;
+      }
+
+      return {
+        label: a + " " + symbols[mode] + " " + b,
+        answer
+      };
+    }
+
+    function render() {
+      const elapsed = state.active ? Math.max(1, (Date.now() - state.startedAt) / 1000) : 0;
+      const perMinute = elapsed ? (state.score / elapsed) * 60 : 0;
+      els.score.textContent = state.score;
+      els.streak.textContent = state.streak;
+      els.accuracy.textContent = getAccuracy() + "%";
+      els.pace.textContent = perMinute.toFixed(1);
+      renderHistory();
+    }
+
+    function renderHistory() {
+      if (state.history.length === 0) {
+        els.history.innerHTML = '<div class="empty">No answers yet</div>';
+        return;
+      }
+      els.history.innerHTML = state.history.map((item) => {
+        const result = item.correct ? "<b>hit</b>" : "<i>" + item.value + "</i>";
+        return '<div class="history-row"><span>' + item.label + '</span><span>' + result + '</span></div>';
+      }).join("");
+    }
+
+    function renderStore() {
+      const today = state.store.days[todayKey()] || { correct: 0, rounds: 0 };
+      els.todayCorrect.textContent = today.correct;
+      els.todayRounds.textContent = today.rounds;
+      els.bestScore.textContent = state.store.best.score;
+      els.bestAccuracy.textContent = state.store.best.accuracy + "%";
+      els.recordLine.textContent = "Best " + state.store.best.score + " in " + state.store.best.duration + "s";
+    }
+
+    function pressKey(key) {
+      els.answerInput.focus();
+      if (key === "back") {
+        els.answerInput.value = els.answerInput.value.slice(0, -1);
+        return;
+      }
+      if (key === "-") {
+        els.answerInput.value = els.answerInput.value.startsWith("-")
+          ? els.answerInput.value.slice(1)
+          : "-" + els.answerInput.value;
+        return;
+      }
+      els.answerInput.value += key;
+    }
+
+    function getAccuracy() {
+      if (!state.attempts) return 100;
+      return Math.round((state.score / state.attempts) * 100);
+    }
+
+    function rand(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pick(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function todayKey() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function loadStore() {
+      const fallback = {
+        best: { score: 0, accuracy: 0, duration: 60, mode: "mix", level: "easy" },
+        days: {}
+      };
+      try {
+        return JSON.parse(localStorage.getItem("arithmetic-trainer")) || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveStore() {
+      localStorage.setItem("arithmetic-trainer", JSON.stringify(state.store));
+    }
+  </script>
+</body>
+</html>
