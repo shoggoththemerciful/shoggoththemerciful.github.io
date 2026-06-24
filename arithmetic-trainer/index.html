@@ -304,8 +304,6 @@
     .answer-row {
       width: min(430px, 100%);
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
     }
 
     .answer {
@@ -325,12 +323,6 @@
 
     .answer:focus {
       box-shadow: 0 0 0 4px rgba(47, 111, 187, 0.18);
-    }
-
-    .submit {
-      min-width: 76px;
-      background: var(--coral);
-      color: white;
     }
 
     .feedback {
@@ -545,14 +537,6 @@
     }
 
     @media (max-width: 420px) {
-      .answer-row {
-        grid-template-columns: 1fr;
-      }
-
-      .submit {
-        min-height: 50px;
-      }
-
       .segmented button {
         font-size: 0.9rem;
       }
@@ -622,8 +606,7 @@
             <div class="problem-wrap">
               <div class="problem" id="problem">8 + 4</div>
               <form class="answer-row" id="answerForm" autocomplete="off">
-                <input class="answer" id="answerInput" name="answer" inputmode="numeric" pattern="-?[0-9]*" aria-label="Answer" placeholder="0">
-                <button class="button submit" type="submit">OK</button>
+                <input class="answer" id="answerInput" name="answer" inputmode="numeric" pattern="-?[0-9]*" aria-label="Answer" placeholder="Type answer" autofocus>
               </form>
               <div class="feedback" id="feedback">Ready</div>
             </div>
@@ -735,6 +718,8 @@
     els.startBtn.addEventListener("click", startRound);
     els.resetBtn.addEventListener("click", resetRound);
     els.answerForm.addEventListener("submit", submitAnswer);
+    els.answerInput.addEventListener("input", handleAnswerInput);
+    document.addEventListener("keydown", handleGlobalKeydown);
     document.querySelectorAll("[data-key]").forEach((button) => {
       button.addEventListener("click", () => pressKey(button.dataset.key));
     });
@@ -767,7 +752,7 @@
       els.startBtn.disabled = true;
       els.feedback.textContent = "Go";
       els.feedback.className = "feedback correct";
-      nextProblem();
+      if (!state.current) nextProblem();
       tick();
       clearInterval(state.timer);
       state.timer = setInterval(tick, 200);
@@ -788,25 +773,43 @@
       els.answerInput.value = "";
       els.startBtn.textContent = "Start";
       els.startBtn.disabled = false;
-      els.feedback.textContent = "Ready";
+      els.feedback.textContent = "Type to start";
       els.feedback.className = "feedback";
       render();
       renderProblem();
       updateTimer(state.duration);
+      els.answerInput.focus();
     }
 
     function submitAnswer(event) {
       event.preventDefault();
       if (!state.active) {
         startRound();
-        return;
       }
+      checkAnswer({ force: true });
+    }
+
+    function handleAnswerInput() {
+      sanitizeAnswer();
+      if (!state.active && els.answerInput.value !== "" && els.answerInput.value !== "-") {
+        startRound();
+      }
+      checkAnswer({ force: false });
+    }
+
+    function checkAnswer({ force }) {
+      if (!state.active) return;
       const raw = els.answerInput.value.trim();
       if (raw === "" || raw === "-") return;
       const value = Number(raw);
       if (!Number.isInteger(value)) return;
 
       const correct = value === state.current.answer;
+      if (!correct && !force) return;
+      recordAnswer(value, correct);
+    }
+
+    function recordAnswer(value, correct) {
       state.attempts += 1;
       if (correct) {
         state.score += 1;
@@ -829,6 +832,15 @@
       els.answerInput.value = "";
       nextProblem();
       render();
+    }
+
+    function sanitizeAnswer() {
+      const cleaned = els.answerInput.value
+        .replace(/[^\d-]/g, "")
+        .replace(/(?!^)-/g, "");
+      if (cleaned !== els.answerInput.value) {
+        els.answerInput.value = cleaned;
+      }
     }
 
     function finishRound() {
@@ -960,15 +972,36 @@
       els.answerInput.focus();
       if (key === "back") {
         els.answerInput.value = els.answerInput.value.slice(0, -1);
+        handleAnswerInput();
         return;
       }
       if (key === "-") {
         els.answerInput.value = els.answerInput.value.startsWith("-")
           ? els.answerInput.value.slice(1)
           : "-" + els.answerInput.value;
+        handleAnswerInput();
         return;
       }
       els.answerInput.value += key;
+      handleAnswerInput();
+    }
+
+    function handleGlobalKeydown(event) {
+      if (event.target === els.answerInput) return;
+      if (/^\d$/.test(event.key)) {
+        event.preventDefault();
+        pressKey(event.key);
+        return;
+      }
+      if (event.key === "-") {
+        event.preventDefault();
+        pressKey("-");
+        return;
+      }
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        pressKey("back");
+      }
     }
 
     function getAccuracy() {
