@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#eef3ed">
+  <title>Prediction Market Edge</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #eef3ed;
+      --panel: #fffdf7;
+      --ink: #172026;
+      --muted: #62706c;
+      --line: #cfd8d1;
+      --line-dark: #aeb9b0;
+      --teal: #177c76;
+      --teal-dark: #095a55;
+      --coral: #df5f4e;
+      --coral-dark: #a6392e;
+      --gold: #e0a82e;
+      --blue: #2f6fbb;
+      --green-soft: #e8f5ef;
+      --red-soft: #fff0ec;
+      --blue-soft: #eef5ff;
+      --shadow: 0 18px 55px rgba(23, 32, 38, 0.11);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--paper);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(135deg, rgba(23, 124, 118, 0.08) 0 31%, transparent 31%),
+        linear-gradient(315deg, rgba(47, 111, 187, 0.08) 0 22%, transparent 22%),
+        var(--paper);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button,
+    select {
+      cursor: pointer;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: white;
+      color: var(--ink);
+      padding: 0 11px;
+      outline: none;
+      font-weight: 760;
+    }
+
+    textarea {
+      min-height: 86px;
+      padding: 10px 11px;
+      resize: vertical;
+      line-height: 1.35;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus,
+    button:focus-visible,
+    a:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(47, 111, 187, 0.18);
+    }
+
+    .app {
+      width: min(1440px, calc(100vw - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      background: var(--teal);
+      box-shadow: 4px 4px 0 var(--ink);
+      flex: 0 0 auto;
+    }
+
+    .mark svg {
+      width: 31px;
+      height: 31px;
+      stroke: white;
+      stroke-width: 2.35;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2.4rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .record {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.94rem;
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .button {
+      min-height: 42px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      padding: 0 15px;
+      background: var(--ink);
+      color: #fffaf0;
+      box-shadow: 3px 3px 0 rgba(23, 32, 38, 0.22);
+      font-weight: 850;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .button.secondary {
+      background: var(--panel);
+      color: var(--ink);
+    }
+
+    .button.icon {
+      width: 42px;
+      padding: 0;
+    }
+
+    .button svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: 0 0 auto;
+    }
+
+    .button:active,
+    .segmented button:active,
+    .result-actions button:active {
+      transform: translateY(1px);
+    }
+
+    .workspace {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 16px;
+    }
+
+    .market-strip,
+    .panel,
+    .sidebar,
+    .result-board {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 247, 0.94);
+      box-shadow: var(--shadow);
+    }
+
+    .market-strip {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: minmax(230px, 0.8fr) minmax(280px, 1.4fr) auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .segmented {
+      min-height: 42px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      padding: 3px;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      gap: 3px;
+      background: #e6eee9;
+    }
+
+    .segmented button {
+      min-width: 0;
+      min-height: 32px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--ink);
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .segmented button.active {
+      background: var(--teal);
+      color: white;
+    }
+
+    .search-form {
+      display: grid;
+      grid-template-columns: minmax(170px, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .status-line {
+      min-height: 42px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      background: #f9fbf8;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 780;
+      line-height: 1.25;
+      display: flex;
+      align-items: center;
+      max-width: 330px;
+    }
+
+    .status-line.good {
+      color: var(--teal-dark);
+      background: var(--green-soft);
+    }
+
+    .status-line.bad {
+      color: var(--coral-dark);
+      background: var(--red-soft);
+    }
+
+    .result-board {
+      display: none;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .result-board.visible {
+      display: block;
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .result-table th,
+    .result-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .result-table th {
+      color: var(--muted);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      font-weight: 950;
+      background: #f5f8f3;
+    }
+
+    .result-title {
+      min-width: 260px;
+      max-width: 650px;
+      line-height: 1.32;
+      font-weight: 850;
+    }
+
+    .result-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 740;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .result-actions button {
+      min-height: 34px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      padding: 0 10px;
+      background: var(--panel);
+      color: var(--ink);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .layout {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(320px, 0.86fr) minmax(420px, 1.08fr) minmax(310px, 0.7fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .column {
+      min-width: 0;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      min-width: 0;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 2px solid var(--line);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.02rem;
+      line-height: 1.15;
+    }
+
+    .pill {
+      min-height: 28px;
+      border: 2px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 9px;
+      color: var(--teal-dark);
+      background: var(--green-soft);
+      font-size: 0.76rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .side-control .segmented,
+    .sizing-control .segmented {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hint {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.3;
+      font-weight: 700;
+    }
+
+    .results-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .decision {
+      min-height: 74px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      padding: 13px;
+      background: var(--blue-soft);
+      display: grid;
+      gap: 4px;
+    }
+
+    .decision strong {
+      font-size: clamp(1.2rem, 2vw, 1.65rem);
+      line-height: 1;
+    }
+
+    .decision span {
+      color: var(--muted);
+      font-weight: 780;
+      line-height: 1.35;
+    }
+
+    .decision.positive {
+      background: var(--green-soft);
+    }
+
+    .decision.negative {
+      background: var(--red-soft);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0 12px;
+      border-top: 2px solid var(--line);
+      border-bottom: 2px solid var(--line);
+    }
+
+    .metric {
+      min-height: 84px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric:nth-last-child(-n + 3) {
+      border-bottom: 0;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: clamp(1.18rem, 2.8vw, 1.85rem);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .positive-text {
+      color: var(--teal-dark);
+    }
+
+    .negative-text {
+      color: var(--coral-dark);
+    }
+
+    .payoff {
+      display: grid;
+      gap: 0;
+      border-top: 2px solid var(--line);
+    }
+
+    .payoff-row {
+      min-height: 50px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding: 9px 0;
+    }
+
+    .payoff-row strong {
+      line-height: 1.2;
+    }
+
+    .payoff-row span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 760;
+    }
+
+    .payoff-value {
+      font-size: 1.08rem;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .sidebar {
+      min-width: 0;
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      max-height: 390px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .list-item {
+      border-top: 2px solid var(--line);
+      padding-top: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .item-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .item-title {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: var(--ink);
+      text-align: left;
+      font-weight: 880;
+      line-height: 1.25;
+      cursor: pointer;
+    }
+
+    .item-title:hover {
+      color: var(--teal-dark);
+    }
+
+    .item-remove {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: #fffaf0;
+      color: var(--coral-dark);
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .item-meta {
+      color: var(--muted);
+      font-size: 0.81rem;
+      line-height: 1.35;
+      font-weight: 730;
+    }
+
+    .empty {
+      color: var(--muted);
+      border-top: 2px solid var(--line);
+      padding-top: 12px;
+      font-weight: 760;
+      line-height: 1.35;
+    }
+
+    .data-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+
+    @media (max-width: 1180px) {
+      .layout {
+        grid-template-columns: minmax(300px, 0.9fr) minmax(390px, 1.1fr);
+      }
+
+      .sidebar {
+        grid-column: 1 / -1;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .data-section {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 880px) {
+      .app {
+        width: min(100vw - 18px, 760px);
+        padding: 10px 0 16px;
+      }
+
+      .topbar,
+      .market-strip,
+      .layout,
+      .sidebar {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .actions .button {
+        flex: 1 1 120px;
+      }
+
+      .status-line {
+        max-width: none;
+      }
+
+      .result-table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .search-form,
+      .form-grid,
+      .metric-grid,
+      .data-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .metric:nth-last-child(-n + 3) {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .metric:last-child {
+        border-bottom: 0;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .segmented button,
+      .button,
+      input,
+      select {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M5 23h22"></path>
+            <path d="M8 23V11"></path>
+            <path d="M16 23V6"></path>
+            <path d="M24 23V14"></path>
+            <path d="M6 12l10-6 10 8"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>Prediction Market Edge</h1>
+          <div class="record" id="recordLine">Read-only planner for Kalshi and Polymarket trades</div>
+        </div>
+      </div>
+      <div class="actions">
+        <a class="button secondary" href="../">Home</a>
+        <button class="button secondary" id="exportBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3v12"></path>
+            <path d="M7 10l5 5 5-5"></path>
+            <path d="M5 21h14"></path>
+          </svg>
+          Export
+        </button>
+        <button class="button" id="addWatchBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14"></path>
+            <path d="M5 12h14"></path>
+          </svg>
+          Watch
+        </button>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="Prediction market betting planner">
+      <section class="market-strip" aria-label="Market lookup">
+        <div>
+          <span class="label">Source</span>
+          <div class="segmented" id="sourceGroup" role="tablist" aria-label="Source">
+            <button type="button" class="active" data-source="manual">Manual</button>
+            <button type="button" data-source="polymarket">Polymarket</button>
+            <button type="button" data-source="kalshi">Kalshi</button>
+          </div>
+        </div>
+        <form class="search-form" id="searchForm" autocomplete="off">
+          <label>
+            <span class="label">Market search or ticker</span>
+            <input id="searchInput" name="search" type="search" placeholder="bitcoin, fed, KXHIGHNY-..." spellcheck="false">
+          </label>
+          <button class="button" id="searchBtn" type="submit">Search</button>
+        </form>
+        <div class="status-line" id="apiStatus">Manual mode is ready. Search can prefill fields when public APIs allow browser access.</div>
+      </section>
+
+      <section class="result-board" id="resultBoard" aria-label="Market search results">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>Market</th>
+              <th>YES</th>
+              <th>NO</th>
+              <th>Volume</th>
+              <th>Load</th>
+            </tr>
+          </thead>
+          <tbody id="resultRows"></tbody>
+        </table>
+      </section>
+
+      <section class="layout">
+        <div class="column">
+          <section class="panel" aria-label="Trade inputs">
+            <div class="panel-head">
+              <h2>Trade</h2>
+              <span class="pill" id="platformPill">Manual</span>
+            </div>
+            <div class="form-grid">
+              <label class="full">
+                <span class="label">Market</span>
+                <input id="marketTitle" type="text" value="Will this market resolve YES?" spellcheck="false">
+              </label>
+              <div class="side-control">
+                <span class="label">Buy side</span>
+                <div class="segmented" id="sideGroup" role="tablist" aria-label="Buy side">
+                  <button type="button" class="active" data-side="yes">YES</button>
+                  <button type="button" data-side="no">NO</button>
+                </div>
+              </div>
+              <label>
+                <span class="label">Entry price</span>
+                <input id="entryPrice" type="number" min="0.1" max="99.9" step="0.1" value="42" inputmode="decimal">
+                <div class="hint">Cents for the selected side.</div>
+              </label>
+              <label>
+                <span class="label">Fair YES</span>
+                <input id="fairYes" type="number" min="0" max="100" step="0.1" value="51" inputmode="decimal">
+              </label>
+              <label>
+                <span class="label">Slippage</span>
+                <input id="slippageCents" type="number" min="0" max="20" step="0.1" value="0" inputmode="decimal">
+                <div class="hint">Added to entry price in cents.</div>
+              </label>
+              <div class="sizing-control full">
+                <span class="label">Sizing mode</span>
+                <div class="segmented" id="sizingGroup" role="tablist" aria-label="Sizing mode">
+                  <button type="button" class="active" data-sizing="contracts">Contracts</button>
+                  <button type="button" data-sizing="spend">Max spend</button>
+                </div>
+              </div>
+              <label>
+                <span class="label">Contracts</span>
+                <input id="contracts" type="number" min="1" max="1000000" step="1" value="100" inputmode="numeric">
+              </label>
+              <label>
+                <span class="label">Max spend</span>
+                <input id="maxSpend" type="number" min="0" max="10000000" step="1" value="50" inputmode="decimal">
+              </label>
+            </div>
+          </section>
+
+          <section class="panel" aria-label="Risk assumptions">
+            <div class="panel-head">
+              <h2>Risk</h2>
+              <span class="pill" id="feePill">No fee</span>
+            </div>
+            <div class="form-grid">
+              <label class="full">
+                <span class="label">Fee preset</span>
+                <select id="feePreset">
+                  <option value="none">No fee</option>
+                  <option value="kalshiTaker">Kalshi taker estimate</option>
+                  <option value="kalshiMaker">Kalshi maker estimate</option>
+                  <option value="polymarketTaker">Polymarket taker estimate</option>
+                  <option value="polymarketMaker">Polymarket maker rebate estimate</option>
+                  <option value="custom">Custom cents per contract</option>
+                </select>
+              </label>
+              <label>
+                <span class="label">Custom fee</span>
+                <input id="customFeeCents" type="number" min="-20" max="20" step="0.1" value="0" inputmode="decimal">
+                <div class="hint">Cents per contract. Rebates can be negative.</div>
+              </label>
+              <label>
+                <span class="label">Bankroll</span>
+                <input id="bankroll" type="number" min="0" max="100000000" step="1" value="1000" inputmode="decimal">
+              </label>
+              <label>
+                <span class="label">Kelly scale</span>
+                <select id="kellyScale">
+                  <option value="0.25">Quarter Kelly</option>
+                  <option value="0.5" selected>Half Kelly</option>
+                  <option value="1">Full Kelly</option>
+                  <option value="0">No Kelly</option>
+                </select>
+              </label>
+              <label>
+                <span class="label">Max stake</span>
+                <input id="maxStakePct" type="number" min="0" max="100" step="0.25" value="2" inputmode="decimal">
+                <div class="hint">Percent of bankroll.</div>
+              </label>
+              <label class="full">
+                <span class="label">Thesis notes</span>
+                <textarea id="notes" placeholder="Catalyst, resolution source, what would change your fair value"></textarea>
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel results-panel" aria-label="Edge results">
+          <div class="panel-head">
+            <h2>Decision</h2>
+            <span class="pill" id="updatedPill">Live</span>
+          </div>
+          <div class="decision" id="decisionBox">
+            <strong id="decisionTitle">Interesting edge</strong>
+            <span id="decisionText">Net edge is positive after the current fee and slippage assumptions.</span>
+          </div>
+
+          <div class="metric-grid" aria-label="Calculated metrics">
+            <div class="metric"><strong id="netEdge">+0.0c</strong><span>Net edge</span></div>
+            <div class="metric"><strong id="evTotal">$0.00</strong><span>Total EV</span></div>
+            <div class="metric"><strong id="roiValue">0.0%</strong><span>EV / cost</span></div>
+            <div class="metric"><strong id="impliedValue">42.0%</strong><span>Implied side</span></div>
+            <div class="metric"><strong id="fairSideValue">51.0%</strong><span>Fair side</span></div>
+            <div class="metric"><strong id="breakevenValue">42.0%</strong><span>Breakeven</span></div>
+            <div class="metric"><strong id="cashOutlay">$42.00</strong><span>Cash outlay</span></div>
+            <div class="metric"><strong id="kellyFull">10.0%</strong><span>Full Kelly</span></div>
+            <div class="metric"><strong id="suggestedSize">$20 / 47</strong><span>Suggested</span></div>
+          </div>
+
+          <div class="payoff" aria-label="Payoff summary">
+            <div class="payoff-row">
+              <div>
+                <strong id="winLabel">If YES wins</strong>
+                <span id="winSub">Gross payout less entry and fees</span>
+              </div>
+              <div class="payoff-value" id="winProfit">$0.00</div>
+            </div>
+            <div class="payoff-row">
+              <div>
+                <strong id="loseLabel">If NO wins</strong>
+                <span id="loseSub">Entry and fees are lost</span>
+              </div>
+              <div class="payoff-value" id="loseProfit">$0.00</div>
+            </div>
+            <div class="payoff-row">
+              <div>
+                <strong>Contracts evaluated</strong>
+                <span id="contractSub">Based on selected sizing mode</span>
+              </div>
+              <div class="payoff-value" id="contractCount">100</div>
+            </div>
+          </div>
+
+          <div class="panel-actions">
+            <button class="button" id="saveJournalBtn" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path>
+                <path d="M17 21v-8H7v8"></path>
+                <path d="M7 3v5h8"></path>
+              </svg>
+              Save journal
+            </button>
+            <button class="button secondary" id="resetBtn" type="button">Reset inputs</button>
+          </div>
+        </section>
+
+        <aside class="sidebar" aria-label="Saved markets and journal">
+          <section>
+            <div class="panel-head">
+              <h2>Watchlist</h2>
+              <span class="pill" id="watchCount">0</span>
+            </div>
+            <div class="list" id="watchList"></div>
+          </section>
+
+          <section>
+            <div class="panel-head">
+              <h2>Journal</h2>
+              <span class="pill" id="journalCount">0</span>
+            </div>
+            <div class="list" id="journalList"></div>
+          </section>
+
+          <section class="data-section">
+            <div class="panel-head">
+              <h2>Data</h2>
+              <span class="pill">Local</span>
+            </div>
+            <div class="data-actions">
+              <button class="button secondary" id="importBtn" type="button">Import</button>
+              <button class="button secondary" id="clearBtn" type="button">Clear saved</button>
+            </div>
+            <input class="file-input" id="importFile" type="file" accept="application/json,.json">
+          </section>
+        </aside>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const storeKey = "prediction-market-edge-v1";
+    const defaultInputs = {
+      source: "manual",
+      platform: "Manual",
+      marketTitle: "Will this market resolve YES?",
+      sourceUrl: "",
+      side: "yes",
+      sizing: "contracts",
+      entryPrice: 42,
+      fairYes: 51,
+      slippageCents: 0,
+      contracts: 100,
+      maxSpend: 50,
+      feePreset: "none",
+      customFeeCents: 0,
+      bankroll: 1000,
+      kellyScale: 0.5,
+      maxStakePct: 2,
+      notes: ""
+    };
+
+    const feePresets = {
+      none: { label: "No fee", theta: 0, rebate: false },
+      kalshiTaker: { label: "Kalshi taker", theta: 0.07, rebate: false },
+      kalshiMaker: { label: "Kalshi maker", theta: 0.0175, rebate: false },
+      polymarketTaker: { label: "Polymarket taker", theta: 0.05, rebate: false },
+      polymarketMaker: { label: "Polymarket maker rebate", theta: 0.0125, rebate: true },
+      custom: { label: "Custom fee", theta: 0, rebate: false }
+    };
+
+    const state = {
+      inputs: { ...defaultInputs },
+      store: loadStore(),
+      searchResults: [],
+      lastCalc: null
+    };
+
+    const els = {
+      sourceGroup: document.getElementById("sourceGroup"),
+      sideGroup: document.getElementById("sideGroup"),
+      sizingGroup: document.getElementById("sizingGroup"),
+      searchForm: document.getElementById("searchForm"),
+      searchInput: document.getElementById("searchInput"),
+      searchBtn: document.getElementById("searchBtn"),
+      apiStatus: document.getElementById("apiStatus"),
+      resultBoard: document.getElementById("resultBoard"),
+      resultRows: document.getElementById("resultRows"),
+      platformPill: document.getElementById("platformPill"),
+      feePill: document.getElementById("feePill"),
+      updatedPill: document.getElementById("updatedPill"),
+      marketTitle: document.getElementById("marketTitle"),
+      entryPrice: document.getElementById("entryPrice"),
+      fairYes: document.getElementById("fairYes"),
+      slippageCents: document.getElementById("slippageCents"),
+      contracts: document.getElementById("contracts"),
+      maxSpend: document.getElementById("maxSpend"),
+      feePreset: document.getElementById("feePreset"),
+      customFeeCents: document.getElementById("customFeeCents"),
+      bankroll: document.getElementById("bankroll"),
+      kellyScale: document.getElementById("kellyScale"),
+      maxStakePct: document.getElementById("maxStakePct"),
+      notes: document.getElementById("notes"),
+      decisionBox: document.getElementById("decisionBox"),
+      decisionTitle: document.getElementById("decisionTitle"),
+      decisionText: document.getElementById("decisionText"),
+      netEdge: document.getElementById("netEdge"),
+      evTotal: document.getElementById("evTotal"),
+      roiValue: document.getElementById("roiValue"),
+      impliedValue: document.getElementById("impliedValue"),
+      fairSideValue: document.getElementById("fairSideValue"),
+      breakevenValue: document.getElementById("breakevenValue"),
+      cashOutlay: document.getElementById("cashOutlay"),
+      kellyFull: document.getElementById("kellyFull"),
+      suggestedSize: document.getElementById("suggestedSize"),
+      winLabel: document.getElementById("winLabel"),
+      winSub: document.getElementById("winSub"),
+      loseLabel: document.getElementById("loseLabel"),
+      loseSub: document.getElementById("loseSub"),
+      winProfit: document.getElementById("winProfit"),
+      loseProfit: document.getElementById("loseProfit"),
+      contractSub: document.getElementById("contractSub"),
+      contractCount: document.getElementById("contractCount"),
+      addWatchBtn: document.getElementById("addWatchBtn"),
+      saveJournalBtn: document.getElementById("saveJournalBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      exportBtn: document.getElementById("exportBtn"),
+      importBtn: document.getElementById("importBtn"),
+      importFile: document.getElementById("importFile"),
+      clearBtn: document.getElementById("clearBtn"),
+      watchList: document.getElementById("watchList"),
+      journalList: document.getElementById("journalList"),
+      watchCount: document.getElementById("watchCount"),
+      journalCount: document.getElementById("journalCount"),
+      recordLine: document.getElementById("recordLine")
+    };
+
+    wireSegments();
+    wireInputs();
+    render();
+
+    function wireSegments() {
+      els.sourceGroup.addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        state.inputs.source = button.dataset.source;
+        state.inputs.platform = labelForSource(state.inputs.source);
+        setActive(els.sourceGroup, button);
+        setStatus("Manual mode is ready. Search can prefill fields when public APIs allow browser access.", "");
+        if (state.inputs.source !== "manual") {
+          setStatus(labelForSource(state.inputs.source) + " selected. Search for an open market or paste an exact ticker.", "good");
+        }
+        render();
+      });
+
+      els.sideGroup.addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        state.inputs.side = button.dataset.side;
+        setActive(els.sideGroup, button);
+        render();
+      });
+
+      els.sizingGroup.addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        state.inputs.sizing = button.dataset.sizing;
+        setActive(els.sizingGroup, button);
+        render();
+      });
+    }
+
+    function wireInputs() {
+      [
+        "marketTitle",
+        "entryPrice",
+        "fairYes",
+        "slippageCents",
+        "contracts",
+        "maxSpend",
+        "feePreset",
+        "customFeeCents",
+        "bankroll",
+        "kellyScale",
+        "maxStakePct",
+        "notes"
+      ].forEach((id) => {
+        els[id].addEventListener("input", () => {
+          readInputs();
+          render();
+        });
+      });
+
+      els.searchForm.addEventListener("submit", handleSearch);
+      els.resultRows.addEventListener("click", handleResultClick);
+      els.addWatchBtn.addEventListener("click", addWatch);
+      els.saveJournalBtn.addEventListener("click", saveJournal);
+      els.resetBtn.addEventListener("click", resetInputs);
+      els.exportBtn.addEventListener("click", exportData);
+      els.importBtn.addEventListener("click", () => els.importFile.click());
+      els.importFile.addEventListener("change", importData);
+      els.clearBtn.addEventListener("click", clearSaved);
+      els.watchList.addEventListener("click", handleSavedClick);
+      els.journalList.addEventListener("click", handleSavedClick);
+    }
+
+    function readInputs() {
+      state.inputs.marketTitle = els.marketTitle.value.trim() || "Untitled market";
+      state.inputs.entryPrice = readNumber(els.entryPrice, defaultInputs.entryPrice);
+      state.inputs.fairYes = readNumber(els.fairYes, defaultInputs.fairYes);
+      state.inputs.slippageCents = readNumber(els.slippageCents, 0);
+      state.inputs.contracts = Math.max(1, Math.floor(readNumber(els.contracts, 1)));
+      state.inputs.maxSpend = Math.max(0, readNumber(els.maxSpend, 0));
+      state.inputs.feePreset = els.feePreset.value;
+      state.inputs.customFeeCents = readNumber(els.customFeeCents, 0);
+      state.inputs.bankroll = Math.max(0, readNumber(els.bankroll, 0));
+      state.inputs.kellyScale = readNumber(els.kellyScale, 0.5);
+      state.inputs.maxStakePct = Math.max(0, readNumber(els.maxStakePct, 0));
+      state.inputs.notes = els.notes.value.trim();
+    }
+
+    function render() {
+      syncInputs();
+      const calc = calculate();
+      state.lastCalc = calc;
+      renderDecision(calc);
+      renderMetrics(calc);
+      renderSaved();
+      els.platformPill.textContent = state.inputs.platform;
+      els.feePill.textContent = calc.feeLabel;
+      els.updatedPill.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      els.recordLine.textContent = state.store.watchlist.length + " watched, " + state.store.journal.length + " journaled";
+    }
+
+    function syncInputs() {
+      els.marketTitle.value = state.inputs.marketTitle;
+      els.entryPrice.value = formatInputNumber(state.inputs.entryPrice);
+      els.fairYes.value = formatInputNumber(state.inputs.fairYes);
+      els.slippageCents.value = formatInputNumber(state.inputs.slippageCents);
+      els.contracts.value = String(state.inputs.contracts);
+      els.maxSpend.value = formatInputNumber(state.inputs.maxSpend);
+      els.feePreset.value = state.inputs.feePreset;
+      els.customFeeCents.value = formatInputNumber(state.inputs.customFeeCents);
+      els.bankroll.value = formatInputNumber(state.inputs.bankroll);
+      els.kellyScale.value = String(state.inputs.kellyScale);
+      els.maxStakePct.value = formatInputNumber(state.inputs.maxStakePct);
+      els.notes.value = state.inputs.notes;
+      setActiveByData(els.sideGroup, "side", state.inputs.side);
+      setActiveByData(els.sourceGroup, "source", state.inputs.source);
+      setActiveByData(els.sizingGroup, "sizing", state.inputs.sizing);
+      els.customFeeCents.disabled = state.inputs.feePreset !== "custom";
+    }
+
+    function calculate() {
+      const entryPrice = clamp(state.inputs.entryPrice, 0.1, 99.9);
+      const slippageCents = clamp(state.inputs.slippageCents, 0, 20);
+      const effectivePrice = clamp(entryPrice + slippageCents, 0.1, 99.9);
+      const fairYes = clamp(state.inputs.fairYes, 0, 100);
+      const fairSide = state.inputs.side === "yes" ? fairYes : 100 - fairYes;
+      const feeCents = Math.max(-effectivePrice + 0.1, getFeeCents(effectivePrice));
+      const costPerContract = Math.max(0.001, (effectivePrice + feeCents) / 100);
+      const requestedContracts = Math.max(1, Math.floor(state.inputs.contracts));
+      const spendContracts = Math.max(0, Math.floor(state.inputs.maxSpend / costPerContract));
+      const contracts = state.inputs.sizing === "spend" ? spendContracts : requestedContracts;
+      const feeTotal = contracts * feeCents / 100;
+      const entryTotal = contracts * effectivePrice / 100;
+      const cashOutlay = entryTotal + feeTotal;
+      const winProfit = contracts * (1 - effectivePrice / 100) - feeTotal;
+      const loseProfit = -entryTotal - feeTotal;
+      const fairProbability = fairSide / 100;
+      const evTotal = fairProbability * winProfit + (1 - fairProbability) * loseProfit;
+      const netEdgeCents = fairSide - effectivePrice - feeCents;
+      const grossEdgeCents = fairSide - effectivePrice;
+      const roi = cashOutlay > 0 ? evTotal / cashOutlay * 100 : 0;
+      const breakevenSide = clamp(effectivePrice + feeCents, 0, 100);
+      const b = Math.max(0.0001, (1 - Math.min(costPerContract, 0.999)) / Math.min(costPerContract, 0.999));
+      const q = 1 - fairProbability;
+      const fullKelly = costPerContract >= 1 ? 0 : Math.max(0, ((b * fairProbability - q) / b) * 100);
+      const maxStake = state.inputs.bankroll * clamp(state.inputs.maxStakePct, 0, 100) / 100;
+      const kellyStake = state.inputs.bankroll * fullKelly / 100 * clamp(state.inputs.kellyScale, 0, 1);
+      const suggestedStake = Math.max(0, Math.min(maxStake, kellyStake));
+      const suggestedContracts = Math.floor(suggestedStake / costPerContract);
+      const sideLabel = state.inputs.side.toUpperCase();
+      const winningOutcome = state.inputs.side === "yes" ? "YES" : "NO";
+      const losingOutcome = state.inputs.side === "yes" ? "NO" : "YES";
+
+      return {
+        entryPrice,
+        effectivePrice,
+        fairYes,
+        fairSide,
+        sideLabel,
+        feeCents,
+        feeTotal,
+        feeLabel: getFeeLabel(effectivePrice, feeCents),
+        contracts,
+        cashOutlay,
+        winProfit,
+        loseProfit,
+        evTotal,
+        roi,
+        netEdgeCents,
+        grossEdgeCents,
+        breakevenSide,
+        fullKelly,
+        suggestedStake,
+        suggestedContracts,
+        winningOutcome,
+        losingOutcome
+      };
+    }
+
+    function renderDecision(calc) {
+      const box = els.decisionBox;
+      box.className = "decision";
+      let title = "Pass";
+      let text = "Net edge is not positive after the current cost assumptions.";
+
+      if (calc.contracts < 1) {
+        title = "No fill size";
+        text = "Max spend is below the estimated cost of one contract.";
+        box.classList.add("negative");
+      } else if (calc.netEdgeCents >= 5) {
+        title = "Strong edge";
+        text = "Your fair value clears price, fees, and slippage by at least 5 cents.";
+        box.classList.add("positive");
+      } else if (calc.netEdgeCents >= 2) {
+        title = "Interesting edge";
+        text = "Net edge is positive, but sizing should still respect liquidity and resolution risk.";
+        box.classList.add("positive");
+      } else if (calc.netEdgeCents > 0) {
+        title = "Thin edge";
+        text = "Positive but fragile. A small fee, spread, or fair-value miss can erase it.";
+      } else {
+        box.classList.add("negative");
+      }
+
+      els.decisionTitle.textContent = title;
+      els.decisionText.textContent = text;
+    }
+
+    function renderMetrics(calc) {
+      setMetric(els.netEdge, signedCents(calc.netEdgeCents), calc.netEdgeCents);
+      setMetric(els.evTotal, money(calc.evTotal), calc.evTotal);
+      setMetric(els.roiValue, pct(calc.roi), calc.roi);
+      els.impliedValue.textContent = pct(calc.effectivePrice);
+      els.fairSideValue.textContent = pct(calc.fairSide);
+      els.breakevenValue.textContent = pct(calc.breakevenSide);
+      els.cashOutlay.textContent = money(calc.cashOutlay);
+      els.kellyFull.textContent = pct(calc.fullKelly);
+      els.suggestedSize.textContent = money(calc.suggestedStake) + " / " + calc.suggestedContracts;
+      els.winLabel.textContent = "If " + calc.winningOutcome + " wins";
+      els.loseLabel.textContent = "If " + calc.losingOutcome + " wins";
+      els.winSub.textContent = calc.contracts + " " + calc.sideLabel + " contracts pay $1 each";
+      els.loseSub.textContent = "Entry, slippage, and fees are lost";
+      setMetric(els.winProfit, money(calc.winProfit), calc.winProfit);
+      setMetric(els.loseProfit, money(calc.loseProfit), calc.loseProfit);
+      els.contractCount.textContent = String(calc.contracts);
+      els.contractSub.textContent = state.inputs.sizing === "spend" ? "From max spend" : "From contract count";
+    }
+
+    function setMetric(element, text, value) {
+      element.textContent = text;
+      element.classList.remove("positive-text", "negative-text");
+      if (value > 0) element.classList.add("positive-text");
+      if (value < 0) element.classList.add("negative-text");
+    }
+
+    async function handleSearch(event) {
+      event.preventDefault();
+      readInputs();
+      const query = els.searchInput.value.trim();
+      if (state.inputs.source === "manual") {
+        setStatus("Switch source to Polymarket or Kalshi before searching.", "bad");
+        return;
+      }
+      setStatus("Searching " + labelForSource(state.inputs.source) + "...", "");
+      els.searchBtn.disabled = true;
+      try {
+        const results = state.inputs.source === "polymarket"
+          ? await searchPolymarket(query)
+          : await searchKalshi(query);
+        state.searchResults = results.slice(0, 25);
+        renderSearchResults();
+        if (state.searchResults.length) {
+          setStatus("Loaded " + state.searchResults.length + " public market results.", "good");
+        } else {
+          setStatus("No matching public markets found. Manual entry still works.", "bad");
+        }
+      } catch (error) {
+        state.searchResults = [];
+        renderSearchResults();
+        setStatus("Browser fetch failed: " + error.message + ". Manual entry still works.", "bad");
+      } finally {
+        els.searchBtn.disabled = false;
+      }
+    }
+
+    async function searchPolymarket(query) {
+      const urls = [];
+      if (query) {
+        urls.push("https://gamma-api.polymarket.com/public-search?query=" + encodeURIComponent(query) + "&limit=25");
+      }
+      urls.push("https://gamma-api.polymarket.com/markets?limit=100&active=true&closed=false&archived=false");
+
+      for (const url of urls) {
+        const data = await fetchJson(url);
+        let results = normalizePolymarket(data, query);
+        if (results.length) return results;
+      }
+      return [];
+    }
+
+    async function searchKalshi(query) {
+      const params = new URLSearchParams({ limit: "100", status: "open" });
+      if (/^[A-Z0-9_,.-]{6,}$/i.test(query)) {
+        params.set("tickers", query.toUpperCase());
+      }
+      const data = await fetchJson("https://external-api.kalshi.com/trade-api/v2/markets?" + params.toString());
+      let markets = Array.isArray(data.markets) ? data.markets : [];
+      if (query && !params.has("tickers")) {
+        const needle = query.toLowerCase();
+        markets = markets.filter((market) => {
+          return [
+            market.title,
+            market.subtitle,
+            market.ticker,
+            market.event_ticker,
+            market.yes_sub_title,
+            market.no_sub_title
+          ].filter(Boolean).join(" ").toLowerCase().includes(needle);
+        });
+      }
+      return markets.map(normalizeKalshiMarket).filter(Boolean);
+    }
+
+    async function fetchJson(url) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 9000);
+      try {
+        const response = await fetch(url, {
+          headers: { accept: "application/json" },
+          signal: controller.signal
+        });
+        if (!response.ok) throw new Error(response.status + " " + response.statusText);
+        return await response.json();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function normalizePolymarket(data, query) {
+      const results = [];
+      const seen = new Set();
+      const needle = (query || "").toLowerCase();
+
+      function visitEvent(event) {
+        const markets = Array.isArray(event.markets) ? event.markets : [];
+        markets.forEach((market) => addMarket(market, event));
+      }
+
+      function visit(value) {
+        if (!value) return;
+        if (Array.isArray(value)) {
+          value.forEach(visit);
+          return;
+        }
+        if (value.markets && Array.isArray(value.markets) && (value.title || value.slug || value.eventSlug)) {
+          visitEvent(value);
+        }
+        if (value.question || value.outcomes || value.outcomePrices) {
+          addMarket(value, null);
+        }
+        ["events", "markets", "results", "data"].forEach((key) => {
+          if (value[key] && value[key] !== value) visit(value[key]);
+        });
+      }
+
+      function addMarket(market, event) {
+        const outcomes = parseMaybeArray(market.outcomes);
+        const prices = parseMaybeArray(market.outcomePrices);
+        if (!outcomes.length || !prices.length) return;
+        const yesIndex = Math.max(0, outcomes.findIndex((name) => /^yes$/i.test(String(name))));
+        const noIndex = outcomes.findIndex((name) => /^no$/i.test(String(name)));
+        const yesPrice = decimalToCents(prices[yesIndex]);
+        const noPrice = noIndex >= 0 ? decimalToCents(prices[noIndex]) : clamp(100 - yesPrice, 0, 100);
+        if (!Number.isFinite(yesPrice)) return;
+        const title = market.question || market.title || (event && (event.title || event.question)) || "Polymarket market";
+        if (needle && !title.toLowerCase().includes(needle) && !String(market.slug || "").toLowerCase().includes(needle)) return;
+        const id = "poly-" + (market.id || market.conditionId || market.marketSlug || market.slug || title);
+        if (seen.has(id)) return;
+        seen.add(id);
+        const eventSlug = (event && event.slug) || market.eventSlug || market.event_slug || market.groupSlug;
+        const marketSlug = market.slug || market.marketSlug;
+        results.push({
+          platform: "Polymarket",
+          id,
+          title,
+          yesPrice,
+          noPrice,
+          volume: formatVolume(market.volumeNum || market.volume || market.volume24hr || market.liquidityNum || market.liquidity),
+          meta: [marketSlug, market.endDate || market.end_date].filter(Boolean).join(" | "),
+          url: market.url || (eventSlug ? "https://polymarket.com/event/" + eventSlug : marketSlug ? "https://polymarket.com/market/" + marketSlug : "")
+        });
+      }
+
+      visit(data);
+      return results;
+    }
+
+    function normalizeKalshiMarket(market) {
+      const yesAsk = dollarsToCents(market.yes_ask_dollars ?? market.yes_ask);
+      const yesBid = dollarsToCents(market.yes_bid_dollars ?? market.yes_bid);
+      const noAsk = dollarsToCents(market.no_ask_dollars ?? market.no_ask);
+      const noBid = dollarsToCents(market.no_bid_dollars ?? market.no_bid);
+      const last = dollarsToCents(market.last_price_dollars ?? market.last_price);
+      const yesPrice = firstFinite(yesAsk, last, yesBid);
+      const noPrice = firstFinite(noAsk, Number.isFinite(yesBid) ? 100 - yesBid : NaN, Number.isFinite(yesAsk) ? 100 - yesAsk : NaN, noBid);
+      if (!Number.isFinite(yesPrice) && !Number.isFinite(noPrice)) return null;
+      const title = [market.title, market.subtitle].filter(Boolean).join(" - ") || market.ticker || "Kalshi market";
+      return {
+        platform: "Kalshi",
+        id: "kalshi-" + (market.ticker || title),
+        title,
+        yesPrice,
+        noPrice,
+        volume: formatVolume(market.volume_24h_fp || market.volume_fp || market.open_interest_fp || market.liquidity_dollars),
+        meta: [market.ticker, market.event_ticker].filter(Boolean).join(" | "),
+        url: market.ticker ? "https://kalshi.com/markets/" + encodeURIComponent(market.ticker) : ""
+      };
+    }
+
+    function renderSearchResults() {
+      if (!state.searchResults.length) {
+        els.resultRows.innerHTML = "";
+        els.resultBoard.classList.remove("visible");
+        return;
+      }
+      els.resultRows.innerHTML = state.searchResults.map((result, index) => {
+        return '<tr>' +
+          '<td><div class="result-title">' + esc(result.title) + '</div><div class="result-meta">' + esc(result.platform + (result.meta ? " | " + result.meta : "")) + '</div></td>' +
+          '<td>' + formatMaybeCents(result.yesPrice) + '</td>' +
+          '<td>' + formatMaybeCents(result.noPrice) + '</td>' +
+          '<td>' + esc(result.volume || "-") + '</td>' +
+          '<td><div class="result-actions">' +
+          '<button type="button" data-result="' + index + '" data-side="yes">YES</button>' +
+          '<button type="button" data-result="' + index + '" data-side="no">NO</button>' +
+          '</div></td>' +
+          '</tr>';
+      }).join("");
+      els.resultBoard.classList.add("visible");
+    }
+
+    function handleResultClick(event) {
+      const button = event.target.closest("button[data-result]");
+      if (!button) return;
+      const result = state.searchResults[Number(button.dataset.result)];
+      if (!result) return;
+      applyMarketResult(result, button.dataset.side);
+    }
+
+    function applyMarketResult(result, side) {
+      const price = side === "yes" ? result.yesPrice : result.noPrice;
+      if (!Number.isFinite(price)) {
+        setStatus("That side does not have a usable price in the API result.", "bad");
+        return;
+      }
+      state.inputs.platform = result.platform;
+      state.inputs.marketTitle = result.title;
+      state.inputs.sourceUrl = result.url || "";
+      state.inputs.side = side;
+      state.inputs.entryPrice = round1(price);
+      state.inputs.fairYes = round1(Number.isFinite(result.yesPrice) ? result.yesPrice : 100 - price);
+      if (result.platform === "Kalshi") state.inputs.feePreset = "kalshiTaker";
+      if (result.platform === "Polymarket") state.inputs.feePreset = "polymarketTaker";
+      setStatus(result.platform + " market loaded. Adjust fair value before sizing.", "good");
+      render();
+    }
+
+    function addWatch() {
+      readInputs();
+      const calc = calculate();
+      const snapshot = makeSnapshot(calc, "watch");
+      state.store.watchlist.unshift(snapshot);
+      state.store.watchlist = dedupeByTitle(state.store.watchlist).slice(0, 40);
+      saveStore();
+      render();
+      setStatus("Added to watchlist.", "good");
+    }
+
+    function saveJournal() {
+      readInputs();
+      const calc = calculate();
+      const snapshot = makeSnapshot(calc, "journal");
+      state.store.journal.unshift(snapshot);
+      state.store.journal = state.store.journal.slice(0, 80);
+      saveStore();
+      render();
+      setStatus("Saved journal entry.", "good");
+    }
+
+    function makeSnapshot(calc, type) {
+      return {
+        id: type + "-" + Date.now(),
+        createdAt: new Date().toISOString(),
+        platform: state.inputs.platform,
+        marketTitle: state.inputs.marketTitle,
+        sourceUrl: state.inputs.sourceUrl,
+        side: state.inputs.side,
+        entryPrice: calc.entryPrice,
+        effectivePrice: calc.effectivePrice,
+        fairYes: calc.fairYes,
+        fairSide: calc.fairSide,
+        contracts: calc.contracts,
+        feePreset: state.inputs.feePreset,
+        feeCents: calc.feeCents,
+        netEdgeCents: calc.netEdgeCents,
+        evTotal: calc.evTotal,
+        roi: calc.roi,
+        cashOutlay: calc.cashOutlay,
+        fullKelly: calc.fullKelly,
+        suggestedStake: calc.suggestedStake,
+        suggestedContracts: calc.suggestedContracts,
+        notes: state.inputs.notes
+      };
+    }
+
+    function renderSaved() {
+      els.watchCount.textContent = String(state.store.watchlist.length);
+      els.journalCount.textContent = String(state.store.journal.length);
+      renderList(els.watchList, state.store.watchlist, "watch");
+      renderList(els.journalList, state.store.journal, "journal");
+    }
+
+    function renderList(container, items, type) {
+      if (!items.length) {
+        container.innerHTML = '<div class="empty">No saved ' + (type === "watch" ? "markets" : "entries") + ' yet.</div>';
+        return;
+      }
+      container.innerHTML = items.map((item) => {
+        const edgeClass = item.netEdgeCents >= 0 ? "positive-text" : "negative-text";
+        return '<div class="list-item">' +
+          '<div class="item-top">' +
+          '<button class="item-title" type="button" data-load="' + esc(item.id) + '" data-kind="' + type + '">' + esc(item.marketTitle) + '</button>' +
+          '<button class="item-remove" type="button" data-remove="' + esc(item.id) + '" data-kind="' + type + '" aria-label="Remove">x</button>' +
+          '</div>' +
+          '<div class="item-meta">' + esc(item.platform + " " + item.side.toUpperCase() + " at " + round1(item.entryPrice) + "c") + '</div>' +
+          '<div class="item-meta"><span class="' + edgeClass + '">' + signedCents(item.netEdgeCents) + '</span> edge | ' + money(item.evTotal) + ' EV | ' + pct(item.roi) + '</div>' +
+          '<div class="item-meta">' + esc(formatShortDate(item.createdAt)) + (item.notes ? " | " + esc(item.notes.slice(0, 80)) : "") + '</div>' +
+          '</div>';
+      }).join("");
+    }
+
+    function handleSavedClick(event) {
+      const removeButton = event.target.closest("button[data-remove]");
+      if (removeButton) {
+        removeSaved(removeButton.dataset.kind, removeButton.dataset.remove);
+        return;
+      }
+      const loadButton = event.target.closest("button[data-load]");
+      if (!loadButton) return;
+      const list = loadButton.dataset.kind === "watch" ? state.store.watchlist : state.store.journal;
+      const item = list.find((entry) => entry.id === loadButton.dataset.load);
+      if (item) loadSnapshot(item);
+    }
+
+    function removeSaved(kind, id) {
+      const key = kind === "watch" ? "watchlist" : "journal";
+      state.store[key] = state.store[key].filter((entry) => entry.id !== id);
+      saveStore();
+      render();
+    }
+
+    function loadSnapshot(item) {
+      state.inputs.platform = item.platform || "Manual";
+      state.inputs.marketTitle = item.marketTitle || defaultInputs.marketTitle;
+      state.inputs.sourceUrl = item.sourceUrl || "";
+      state.inputs.side = item.side || "yes";
+      state.inputs.entryPrice = item.entryPrice || defaultInputs.entryPrice;
+      state.inputs.fairYes = item.fairYes || defaultInputs.fairYes;
+      state.inputs.contracts = item.contracts || defaultInputs.contracts;
+      state.inputs.feePreset = item.feePreset || "none";
+      state.inputs.customFeeCents = item.feePreset === "custom" ? item.feeCents || 0 : state.inputs.customFeeCents;
+      state.inputs.notes = item.notes || "";
+      render();
+      setStatus("Loaded saved market.", "good");
+    }
+
+    function resetInputs() {
+      const saved = {
+        watchlist: state.store.watchlist,
+        journal: state.store.journal
+      };
+      state.inputs = { ...defaultInputs };
+      state.store.watchlist = saved.watchlist;
+      state.store.journal = saved.journal;
+      render();
+      setStatus("Inputs reset. Saved data was kept.", "good");
+    }
+
+    function exportData() {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        app: "prediction-market-edge",
+        store: state.store
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "prediction-market-edge.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result));
+          const incoming = parsed.store || parsed;
+          state.store = normalizeStore(incoming);
+          saveStore();
+          render();
+          setStatus("Imported saved data.", "good");
+        } catch {
+          setStatus("Import failed. The selected file was not valid JSON.", "bad");
+        } finally {
+          els.importFile.value = "";
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function clearSaved() {
+      if (!confirm("Clear watchlist and journal from this browser?")) return;
+      state.store = normalizeStore({});
+      saveStore();
+      render();
+      setStatus("Saved data cleared.", "good");
+    }
+
+    function getFeeCents(effectivePrice) {
+      const preset = feePresets[state.inputs.feePreset] || feePresets.none;
+      if (state.inputs.feePreset === "custom") return clamp(state.inputs.customFeeCents, -20, 20);
+      const p = clamp(effectivePrice, 0, 100) / 100;
+      const feeDollars = preset.theta * p * (1 - p);
+      const cents = feeDollars * 100;
+      return preset.rebate ? -cents : cents;
+    }
+
+    function getFeeLabel(effectivePrice, feeCents) {
+      const preset = feePresets[state.inputs.feePreset] || feePresets.none;
+      if (state.inputs.feePreset === "none") return "No fee";
+      return preset.label + " " + signedCents(feeCents) + "/ct";
+    }
+
+    function setStatus(message, className) {
+      els.apiStatus.textContent = message;
+      els.apiStatus.className = "status-line" + (className ? " " + className : "");
+    }
+
+    function loadStore() {
+      try {
+        return normalizeStore(JSON.parse(localStorage.getItem(storeKey)) || {});
+      } catch {
+        return normalizeStore({});
+      }
+    }
+
+    function normalizeStore(store) {
+      return {
+        watchlist: Array.isArray(store.watchlist) ? store.watchlist : [],
+        journal: Array.isArray(store.journal) ? store.journal : []
+      };
+    }
+
+    function saveStore() {
+      localStorage.setItem(storeKey, JSON.stringify(state.store));
+    }
+
+    function setActive(group, button) {
+      [...group.querySelectorAll("button")].forEach((child) => child.classList.remove("active"));
+      button.classList.add("active");
+    }
+
+    function setActiveByData(group, key, value) {
+      const button = group.querySelector("button[data-" + key + "='" + value + "']");
+      if (button) setActive(group, button);
+    }
+
+    function labelForSource(source) {
+      if (source === "polymarket") return "Polymarket";
+      if (source === "kalshi") return "Kalshi";
+      return "Manual";
+    }
+
+    function readNumber(input, fallback) {
+      const value = Number(input.value);
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function formatInputNumber(value) {
+      if (!Number.isFinite(Number(value))) return "0";
+      return String(Math.round(Number(value) * 100) / 100);
+    }
+
+    function round1(value) {
+      return Math.round(Number(value) * 10) / 10;
+    }
+
+    function round2(value) {
+      return Math.round(Number(value) * 100) / 100;
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, Number(value)));
+    }
+
+    function pct(value) {
+      return round1(value).toFixed(1) + "%";
+    }
+
+    function money(value) {
+      const abs = Math.abs(round2(value)).toFixed(2);
+      return (value < 0 ? "-$" : "$") + abs;
+    }
+
+    function signedCents(value) {
+      const rounded = round1(value);
+      return (rounded > 0 ? "+" : "") + rounded.toFixed(1) + "c";
+    }
+
+    function formatMaybeCents(value) {
+      return Number.isFinite(value) ? round1(value).toFixed(1) + "c" : "-";
+    }
+
+    function dollarsToCents(value) {
+      if (value === null || value === undefined || value === "") return NaN;
+      const number = Number(value);
+      if (!Number.isFinite(number)) return NaN;
+      return number <= 1 ? number * 100 : number;
+    }
+
+    function decimalToCents(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return NaN;
+      return number <= 1 ? number * 100 : number;
+    }
+
+    function firstFinite(...values) {
+      return values.find((value) => Number.isFinite(value));
+    }
+
+    function parseMaybeArray(value) {
+      if (Array.isArray(value)) return value;
+      if (typeof value !== "string") return [];
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function formatVolume(value) {
+      const number = Number(String(value ?? "").replace(/,/g, ""));
+      if (!Number.isFinite(number) || number <= 0) return "";
+      if (number >= 1000000) return (number / 1000000).toFixed(1) + "m";
+      if (number >= 1000) return (number / 1000).toFixed(1) + "k";
+      return String(round1(number));
+    }
+
+    function dedupeByTitle(items) {
+      const seen = new Set();
+      return items.filter((item) => {
+        const key = [item.platform, item.marketTitle, item.side].join("|").toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function formatShortDate(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleDateString([], { month: "short", day: "numeric" }) + " " +
+        date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function esc(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

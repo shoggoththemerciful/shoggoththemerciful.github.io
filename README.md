@@ -6,3 +6,4 @@ Static tools hosted at `shoggoththemerciful.github.io`.
 - `/arithmetic-trainer/` is a timed arithmetic practice app.
 - `/market-math-trainer/` is a prediction-market mental math practice app.
 - `/market-math-trainer/tutorial/` explains every market math drill.
+- `/prediction-market-edge/` is a read-only Kalshi and Polymarket edge, sizing, watchlist, and journal tool.
