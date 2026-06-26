@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#eef3ed">
+  <title>Arbitrage Sizer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #eef3ed;
+      --panel: #fffdf7;
+      --ink: #172026;
+      --muted: #62706c;
+      --line: #cfd8d1;
+      --line-dark: #aeb9b0;
+      --teal: #177c76;
+      --teal-dark: #095a55;
+      --coral: #df5f4e;
+      --coral-dark: #a6392e;
+      --gold: #e0a82e;
+      --blue: #2f6fbb;
+      --green-soft: #e8f5ef;
+      --red-soft: #fff0ec;
+      --blue-soft: #eef5ff;
+      --shadow: 0 18px 55px rgba(23, 32, 38, 0.11);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--paper);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(135deg, rgba(23, 124, 118, 0.08) 0 30%, transparent 31%),
+        linear-gradient(315deg, rgba(47, 111, 187, 0.08) 0 22%, transparent 23%),
+        var(--paper);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    input {
+      width: 100%;
+      min-height: 42px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: white;
+      color: var(--ink);
+      padding: 0 11px;
+      outline: none;
+      font-weight: 780;
+    }
+
+    input:focus,
+    button:focus-visible,
+    a:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(47, 111, 187, 0.18);
+    }
+
+    input.invalid {
+      border-color: var(--coral);
+      background: var(--red-soft);
+    }
+
+    .app {
+      width: min(1280px, calc(100vw - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      background: var(--teal);
+      box-shadow: 4px 4px 0 var(--ink);
+      flex: 0 0 auto;
+    }
+
+    .mark svg {
+      width: 31px;
+      height: 31px;
+      stroke: white;
+      stroke-width: 2.35;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 0;
+      font-size: clamp(1.45rem, 3vw, 2.4rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .record {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .button {
+      min-height: 42px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      padding: 0 15px;
+      background: var(--ink);
+      color: #fffaf0;
+      box-shadow: 3px 3px 0 rgba(23, 32, 38, 0.22);
+      font-weight: 850;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .button.secondary {
+      background: var(--panel);
+      color: var(--ink);
+    }
+
+    .button:active,
+    .choice-row button:active {
+      transform: translateY(1px);
+    }
+
+    .button svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .layout {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .workspace {
+      min-width: 0;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel,
+    .result-board {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 247, 0.94);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 16px;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .hint {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 0.81rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .check-row {
+      min-height: 42px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: white;
+      padding: 0 11px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--ink);
+      font-weight: 850;
+    }
+
+    .check-row input {
+      width: 18px;
+      height: 18px;
+      min-height: 18px;
+      padding: 0;
+      accent-color: var(--teal);
+      flex: 0 0 auto;
+    }
+
+    .markets {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      padding-top: 16px;
+    }
+
+    .market-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      margin-bottom: 0;
+      font-size: 1.16rem;
+      line-height: 1.1;
+    }
+
+    .pill {
+      min-height: 28px;
+      border: 2px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 10px;
+      display: inline-flex;
+      align-items: center;
+      color: var(--teal);
+      background: var(--green-soft);
+      font-size: 0.76rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .quote-grid {
+      display: grid;
+      grid-template-columns: 54px repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      align-items: center;
+    }
+
+    .quote-grid .head {
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+    }
+
+    .side-label {
+      min-height: 42px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--blue-soft);
+      display: grid;
+      place-items: center;
+      font-weight: 950;
+    }
+
+    .result-board {
+      padding: 16px;
+      position: sticky;
+      top: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .result-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .result-title {
+      margin-bottom: 6px;
+      font-size: 1.18rem;
+      line-height: 1.16;
+    }
+
+    .status {
+      min-height: 30px;
+      border: 2px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: var(--teal);
+      background: #f8fff8;
+      font-size: 0.78rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .status.warn {
+      color: var(--coral-dark);
+      background: var(--red-soft);
+    }
+
+    .legs {
+      display: grid;
+      gap: 8px;
+    }
+
+    .leg {
+      min-height: 48px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: white;
+      padding: 9px 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .leg strong {
+      display: block;
+      line-height: 1.15;
+    }
+
+    .leg span {
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 730;
+    }
+
+    .leg-price {
+      font-size: 1.08rem;
+      font-weight: 950;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .metric {
+      min-height: 78px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--green-soft);
+      padding: 10px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+    }
+
+    .metric:nth-child(2n) {
+      background: var(--blue-soft);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      font-size: clamp(1.05rem, 3vw, 1.45rem);
+      line-height: 1.05;
+      font-weight: 950;
+    }
+
+    .note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.42;
+      font-weight: 720;
+    }
+
+    .breakdown {
+      display: grid;
+      gap: 12px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      margin-bottom: 0;
+      font-size: 1.02rem;
+      line-height: 1.15;
+    }
+
+    .formula {
+      margin: 0;
+      border-left: 4px solid var(--teal);
+      background: var(--green-soft);
+      padding: 10px 12px;
+      color: var(--ink);
+      font-weight: 820;
+      line-height: 1.45;
+    }
+
+    .formula code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .opportunities {
+      overflow-x: auto;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 10px 11px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.9rem;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      background: #f6f9f5;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .positive {
+      color: var(--teal-dark);
+      font-weight: 950;
+    }
+
+    .negative {
+      color: var(--coral-dark);
+      font-weight: 950;
+    }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .rule {
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: white;
+      padding: 12px;
+    }
+
+    .rule h3 {
+      margin-bottom: 8px;
+    }
+
+    .rule p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-weight: 720;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1040px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .result-board {
+        position: static;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar,
+      .control-grid,
+      .markets,
+      .rules {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M5 22h22"></path>
+            <path d="M8 22l6-9 5 5 5-8"></path>
+            <path d="M21 10h5v5"></path>
+            <path d="M7 8h8"></path>
+            <path d="M7 12h5"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>Arbitrage Sizer</h1>
+          <p class="record">Kalshi and Polymarket binary-market sizing from bid and ask prices.</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="button secondary" id="sampleBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16"></path>
+            <path d="M4 12h10"></path>
+            <path d="M4 17h7"></path>
+          </svg>
+          Sample
+        </button>
+        <button class="button secondary" id="clearBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12"></path>
+            <path d="M18 6L6 18"></path>
+          </svg>
+          Clear
+        </button>
+        <a class="button" href="../">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 12H5"></path>
+            <path d="M11 18l-6-6 6-6"></path>
+          </svg>
+          Tools
+        </a>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="workspace">
+        <section class="panel" aria-label="Arbitrage inputs">
+          <div class="control-grid">
+            <label>
+              <span class="label">Bankroll</span>
+              <input id="budget" inputmode="decimal" value="1000" aria-label="Bankroll in dollars">
+              <span class="hint">Dollars available for the modeled trade.</span>
+            </label>
+            <label>
+              <span class="label">Max contracts</span>
+              <input id="maxContracts" inputmode="decimal" value="500" aria-label="Maximum contracts">
+              <span class="hint">Optional cap before bankroll sizing.</span>
+            </label>
+            <label>
+              <span class="label">Fee or buffer</span>
+              <input id="feeCents" inputmode="decimal" value="0" aria-label="Fee or buffer in cents per leg">
+              <span class="hint">Cents per leg. Use your own fee estimate.</span>
+            </label>
+            <label>
+              <span class="label">Contract sizing</span>
+              <span class="check-row">
+                <input id="wholeContracts" type="checkbox" checked>
+                Whole contracts
+              </span>
+              <span class="hint">Turn off for fractional Polymarket-style sizing.</span>
+            </label>
+          </div>
+
+          <div class="markets">
+            <section aria-label="Kalshi prices">
+              <div class="market-head">
+                <h2>Kalshi</h2>
+                <span class="pill">Cents</span>
+              </div>
+              <div class="quote-grid">
+                <span></span>
+                <span class="head">Bid</span>
+                <span class="head">Ask</span>
+                <span class="side-label">YES</span>
+                <input id="kalshiYesBid" inputmode="decimal" value="46" aria-label="Kalshi YES bid">
+                <input id="kalshiYesAsk" inputmode="decimal" value="47" aria-label="Kalshi YES ask">
+                <span class="side-label">NO</span>
+                <input id="kalshiNoBid" inputmode="decimal" value="54" aria-label="Kalshi NO bid">
+                <input id="kalshiNoAsk" inputmode="decimal" value="55" aria-label="Kalshi NO ask">
+              </div>
+              <p class="hint">Prices accept either cents like 47 or decimals like 0.47.</p>
+            </section>
+
+            <section aria-label="Polymarket prices">
+              <div class="market-head">
+                <h2>Polymarket</h2>
+                <span class="pill">Cents</span>
+              </div>
+              <div class="quote-grid">
+                <span></span>
+                <span class="head">Bid</span>
+                <span class="head">Ask</span>
+                <span class="side-label">YES</span>
+                <input id="polyYesBid" inputmode="decimal" value="48" aria-label="Polymarket YES bid">
+                <input id="polyYesAsk" inputmode="decimal" value="49" aria-label="Polymarket YES ask">
+                <span class="side-label">NO</span>
+                <input id="polyNoBid" inputmode="decimal" value="49" aria-label="Polymarket NO bid">
+                <input id="polyNoAsk" inputmode="decimal" value="50" aria-label="Polymarket NO ask">
+              </div>
+              <p class="hint">Bid/ask spread opportunities assume both legs fill immediately.</p>
+            </section>
+          </div>
+        </section>
+
+        <section class="panel breakdown" aria-label="Calculation breakdown">
+          <div class="section-title">
+            <h2>Calculation Breakdown</h2>
+            <span class="pill" id="modePill">No-short hedge</span>
+          </div>
+          <p class="formula" id="mainFormula"></p>
+          <p class="formula" id="sizeFormula"></p>
+          <div class="rules">
+            <div class="rule">
+              <h3>Buy YES + Buy NO</h3>
+              <p>A matched pair pays $1 in either outcome when both markets resolve the same way. Edge per contract is <strong>100c - YES ask - NO ask - fees</strong>.</p>
+            </div>
+            <div class="rule">
+              <h3>Buy Low + Sell High</h3>
+              <p>A same-side spread uses <strong>high bid - low ask - fees</strong>. It only behaves like locked arbitrage if the sell, short, or inventory leg is actually available.</p>
+            </div>
+          </div>
+          <p class="note">Math only. Confirm the contracts have the same resolution criteria, settlement timing, liquidity, fees, withdrawal costs, and rules before treating a spread as risk-free.</p>
+        </section>
+
+        <section class="panel" aria-label="All opportunities">
+          <div class="section-title">
+            <h2>Opportunity Checks</h2>
+            <span class="pill" id="rowsPill">0 positive</span>
+          </div>
+          <div class="opportunities">
+            <table>
+              <thead>
+                <tr>
+                  <th>Trade</th>
+                  <th>Type</th>
+                  <th>Edge</th>
+                  <th>Size</th>
+                  <th>Modeled Profit</th>
+                </tr>
+              </thead>
+              <tbody id="opportunityRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <aside class="result-board" aria-label="Best arbitrage result">
+        <div class="result-top">
+          <div>
+            <h2 class="result-title" id="bestTitle">Best Trade</h2>
+            <p class="note" id="bestSubtitle"></p>
+          </div>
+          <span class="status" id="bestStatus">Ready</span>
+        </div>
+        <div class="legs" id="bestLegs"></div>
+        <div class="metrics">
+          <div class="metric">
+            <span class="metric-label">Contracts</span>
+            <span class="metric-value" id="contractsMetric">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Edge / Contract</span>
+            <span class="metric-value" id="edgeMetric">0c</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Cash Used</span>
+            <span class="metric-value" id="cashMetric">$0.00</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Modeled Profit</span>
+            <span class="metric-value" id="profitMetric">$0.00</span>
+          </div>
+        </div>
+        <p class="note" id="resultNote"></p>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const fields = [
+      "budget",
+      "maxContracts",
+      "feeCents",
+      "kalshiYesBid",
+      "kalshiYesAsk",
+      "kalshiNoBid",
+      "kalshiNoAsk",
+      "polyYesBid",
+      "polyYesAsk",
+      "polyNoBid",
+      "polyNoAsk"
+    ];
+
+    const els = Object.fromEntries([
+      ...fields.map((id) => [id, document.getElementById(id)]),
+      ["wholeContracts", document.getElementById("wholeContracts")],
+      ["sampleBtn", document.getElementById("sampleBtn")],
+      ["clearBtn", document.getElementById("clearBtn")],
+      ["bestTitle", document.getElementById("bestTitle")],
+      ["bestSubtitle", document.getElementById("bestSubtitle")],
+      ["bestStatus", document.getElementById("bestStatus")],
+      ["bestLegs", document.getElementById("bestLegs")],
+      ["contractsMetric", document.getElementById("contractsMetric")],
+      ["edgeMetric", document.getElementById("edgeMetric")],
+      ["cashMetric", document.getElementById("cashMetric")],
+      ["profitMetric", document.getElementById("profitMetric")],
+      ["resultNote", document.getElementById("resultNote")],
+      ["mainFormula", document.getElementById("mainFormula")],
+      ["sizeFormula", document.getElementById("sizeFormula")],
+      ["modePill", document.getElementById("modePill")],
+      ["rowsPill", document.getElementById("rowsPill")],
+      ["opportunityRows", document.getElementById("opportunityRows")]
+    ]);
+
+    const sampleValues = {
+      budget: "1000",
+      maxContracts: "500",
+      feeCents: "0",
+      kalshiYesBid: "46",
+      kalshiYesAsk: "47",
+      kalshiNoBid: "54",
+      kalshiNoAsk: "55",
+      polyYesBid: "48",
+      polyYesAsk: "49",
+      polyNoBid: "49",
+      polyNoAsk: "50"
+    };
+
+    function parseLooseNumber(value) {
+      const text = String(value || "").trim().replace(/[$,%c]/gi, "");
+      if (!text) return null;
+      const number = Number(text);
+      return Number.isFinite(number) ? number : null;
+    }
+
+    function parsePrice(input) {
+      const text = String(input.value || "").trim();
+      const raw = parseLooseNumber(text);
+      const cents = raw !== null && raw <= 1 && text.includes(".") ? raw * 100 : raw;
+      const valid = cents !== null && cents >= 0 && cents <= 100;
+      input.classList.toggle("invalid", !valid);
+      return valid ? cents : null;
+    }
+
+    function parseMoney(input) {
+      const value = parseLooseNumber(input.value);
+      const valid = value !== null && value >= 0;
+      input.classList.toggle("invalid", !valid);
+      return valid ? value : 0;
+    }
+
+    function parseOptionalCap(input) {
+      const text = String(input.value || "").trim();
+      if (!text) {
+        input.classList.remove("invalid");
+        return Infinity;
+      }
+      const value = parseLooseNumber(text);
+      const valid = value !== null && value > 0;
+      input.classList.toggle("invalid", !valid);
+      return valid ? value : 0;
+    }
+
+    function parseFee(input) {
+      const value = parseLooseNumber(input.value);
+      const valid = value !== null && value >= 0;
+      input.classList.toggle("invalid", !valid);
+      return valid ? value : 0;
+    }
+
+    function formatCents(value) {
+      const rounded = Math.abs(value) >= 10 ? value.toFixed(1) : value.toFixed(2);
+      return `${trimZeros(rounded)}c`;
+    }
+
+    function formatDollars(value) {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value);
+    }
+
+    function formatQty(value) {
+      if (!Number.isFinite(value)) return "0";
+      return Number.isInteger(value) ? String(value) : trimZeros(value.toFixed(4));
+    }
+
+    function trimZeros(value) {
+      return String(value).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
+    }
+
+    function collectInputs() {
+      return {
+        budget: parseMoney(els.budget),
+        maxContracts: parseOptionalCap(els.maxContracts),
+        fee: parseFee(els.feeCents),
+        whole: els.wholeContracts.checked,
+        kalshi: {
+          yesBid: parsePrice(els.kalshiYesBid),
+          yesAsk: parsePrice(els.kalshiYesAsk),
+          noBid: parsePrice(els.kalshiNoBid),
+          noAsk: parsePrice(els.kalshiNoAsk)
+        },
+        poly: {
+          yesBid: parsePrice(els.polyYesBid),
+          yesAsk: parsePrice(els.polyYesAsk),
+          noBid: parsePrice(els.polyNoBid),
+          noAsk: parsePrice(els.polyNoAsk)
+        }
+      };
+    }
+
+    function validPrices(...prices) {
+      return prices.every((price) => price !== null);
+    }
+
+    function buildCandidates(input) {
+      const candidates = [];
+      const { kalshi, poly, fee } = input;
+
+      addComplement(candidates, {
+        label: "Buy Kalshi YES + Polymarket NO",
+        yesVenue: "Kalshi",
+        yesAsk: kalshi.yesAsk,
+        noVenue: "Polymarket",
+        noAsk: poly.noAsk,
+        fee
+      });
+
+      addComplement(candidates, {
+        label: "Buy Polymarket YES + Kalshi NO",
+        yesVenue: "Polymarket",
+        yesAsk: poly.yesAsk,
+        noVenue: "Kalshi",
+        noAsk: kalshi.noAsk,
+        fee
+      });
+
+      addSpread(candidates, {
+        label: "Buy Kalshi YES + Sell Polymarket YES",
+        side: "YES",
+        buyVenue: "Kalshi",
+        buyAsk: kalshi.yesAsk,
+        sellVenue: "Polymarket",
+        sellBid: poly.yesBid,
+        fee
+      });
+
+      addSpread(candidates, {
+        label: "Buy Polymarket YES + Sell Kalshi YES",
+        side: "YES",
+        buyVenue: "Polymarket",
+        buyAsk: poly.yesAsk,
+        sellVenue: "Kalshi",
+        sellBid: kalshi.yesBid,
+        fee
+      });
+
+      addSpread(candidates, {
+        label: "Buy Kalshi NO + Sell Polymarket NO",
+        side: "NO",
+        buyVenue: "Kalshi",
+        buyAsk: kalshi.noAsk,
+        sellVenue: "Polymarket",
+        sellBid: poly.noBid,
+        fee
+      });
+
+      addSpread(candidates, {
+        label: "Buy Polymarket NO + Sell Kalshi NO",
+        side: "NO",
+        buyVenue: "Polymarket",
+        buyAsk: poly.noAsk,
+        sellVenue: "Kalshi",
+        sellBid: kalshi.noBid,
+        fee
+      });
+
+      return candidates.map((candidate) => sizeCandidate(candidate, input));
+    }
+
+    function addComplement(candidates, config) {
+      if (!validPrices(config.yesAsk, config.noAsk)) return;
+      const feeTotal = config.fee * 2;
+      const entryCents = config.yesAsk + config.noAsk + feeTotal;
+      candidates.push({
+        label: config.label,
+        type: "No-short hedge",
+        mode: "complement",
+        edgeCents: 100 - entryCents,
+        capitalCents: entryCents,
+        feeTotal,
+        legs: [
+          { action: "Buy", venue: config.yesVenue, side: "YES", price: config.yesAsk },
+          { action: "Buy", venue: config.noVenue, side: "NO", price: config.noAsk }
+        ],
+        formulaParts: {
+          left: "100c payout",
+          components: [config.yesAsk, config.noAsk, feeTotal],
+          operator: "-"
+        }
+      });
+    }
+
+    function addSpread(candidates, config) {
+      if (!validPrices(config.buyAsk, config.sellBid)) return;
+      const feeTotal = config.fee * 2;
+      candidates.push({
+        label: config.label,
+        type: "Bid/ask spread",
+        mode: "spread",
+        edgeCents: config.sellBid - config.buyAsk - feeTotal,
+        capitalCents: config.buyAsk + config.fee,
+        feeTotal,
+        legs: [
+          { action: "Buy", venue: config.buyVenue, side: config.side, price: config.buyAsk },
+          { action: "Sell", venue: config.sellVenue, side: config.side, price: config.sellBid }
+        ],
+        formulaParts: {
+          left: `${formatCents(config.sellBid)} sell bid`,
+          components: [config.buyAsk, feeTotal],
+          operator: "-"
+        }
+      });
+    }
+
+    function sizeCandidate(candidate, input) {
+      const budgetContracts = candidate.capitalCents > 0
+        ? (input.budget * 100) / candidate.capitalCents
+        : 0;
+      const cappedContracts = Math.min(budgetContracts, input.maxContracts);
+      const quantity = input.whole
+        ? Math.max(0, Math.floor(cappedContracts))
+        : Math.max(0, Math.floor(cappedContracts * 10000) / 10000);
+      const cashUsed = quantity * candidate.capitalCents / 100;
+      const profit = quantity * candidate.edgeCents / 100;
+      const roi = cashUsed > 0 ? profit / cashUsed : 0;
+      return {
+        ...candidate,
+        quantity,
+        cashUsed,
+        profit,
+        roi,
+        viable: candidate.edgeCents > 0 && quantity > 0
+      };
+    }
+
+    function render() {
+      const input = collectInputs();
+      const candidates = buildCandidates(input)
+        .sort((a, b) => b.profit - a.profit || b.edgeCents - a.edgeCents);
+      const viable = candidates.filter((candidate) => candidate.viable);
+      const best = viable[0] || candidates[0] || null;
+
+      renderBest(best, viable.length);
+      renderRows(candidates);
+      saveState();
+    }
+
+    function renderBest(best, positiveCount) {
+      els.rowsPill.textContent = `${positiveCount} positive`;
+
+      if (!best) {
+        els.bestTitle.textContent = "Enter Prices";
+        els.bestSubtitle.textContent = "Fill in bid and ask prices to check the cross-market spread.";
+        els.bestStatus.textContent = "Waiting";
+        els.bestStatus.classList.add("warn");
+        els.bestLegs.innerHTML = "";
+        els.contractsMetric.textContent = "0";
+        els.edgeMetric.textContent = "0c";
+        els.cashMetric.textContent = "$0.00";
+        els.profitMetric.textContent = "$0.00";
+        els.resultNote.textContent = "The calculator needs valid prices from 0 to 100 cents.";
+        els.modePill.textContent = "Waiting";
+        els.mainFormula.textContent = "Enter both venues' bid and ask prices to build the formulas.";
+        els.sizeFormula.textContent = "Size is limited by bankroll and the optional max-contract cap.";
+        return;
+      }
+
+      const hasEdge = best.viable;
+      els.bestTitle.textContent = hasEdge ? best.label : "No Positive Arbitrage";
+      els.bestSubtitle.textContent = hasEdge
+        ? `${best.type} with ${formatCents(best.edgeCents)} modeled edge per contract.`
+        : `${best.label} is the closest check, but its edge is ${formatCents(best.edgeCents)}.`;
+      els.bestStatus.textContent = hasEdge ? "Positive" : "No edge";
+      els.bestStatus.classList.toggle("warn", !hasEdge);
+      els.modePill.textContent = best.type;
+      els.bestLegs.innerHTML = best.legs.map((leg) => `
+        <div class="leg">
+          <div>
+            <strong>${leg.action} ${leg.venue} ${leg.side}</strong>
+            <span>${best.mode === "spread" && leg.action === "Sell" ? "High-bid leg" : "Entry leg"}</span>
+          </div>
+          <div class="leg-price">${formatCents(leg.price)}</div>
+        </div>
+      `).join("");
+      els.contractsMetric.textContent = formatQty(best.quantity);
+      els.edgeMetric.textContent = formatCents(best.edgeCents);
+      els.cashMetric.textContent = formatDollars(best.cashUsed);
+      els.profitMetric.textContent = formatDollars(best.profit);
+      els.resultNote.textContent = noteFor(best, hasEdge);
+      renderFormula(best);
+    }
+
+    function renderFormula(best) {
+      const feeText = best.feeTotal > 0 ? ` - ${formatCents(best.feeTotal)} fees` : "";
+      if (best.mode === "complement") {
+        const yesLeg = best.legs[0];
+        const noLeg = best.legs[1];
+        els.mainFormula.innerHTML = `<code>Edge = 100c - ${formatCents(yesLeg.price)} YES ask - ${formatCents(noLeg.price)} NO ask${feeText} = ${formatCents(best.edgeCents)}</code>`;
+        els.sizeFormula.innerHTML = `<code>Contracts = min(max contracts, bankroll / ${formatCents(best.capitalCents)} cost) = ${formatQty(best.quantity)}</code>. Payout is ${formatDollars(best.quantity)} in either outcome, so modeled profit is ${formatDollars(best.profit)}.`;
+        return;
+      }
+
+      const buyLeg = best.legs[0];
+      const sellLeg = best.legs[1];
+      els.mainFormula.innerHTML = `<code>Edge = ${formatCents(sellLeg.price)} sell bid - ${formatCents(buyLeg.price)} buy ask${feeText} = ${formatCents(best.edgeCents)}</code>`;
+      els.sizeFormula.innerHTML = `<code>Contracts = min(max contracts, bankroll / ${formatCents(best.capitalCents)} buy-side cash) = ${formatQty(best.quantity)}</code>. Modeled profit is ${formatDollars(best.profit)} if both legs fill and offset at resolution.`;
+    }
+
+    function noteFor(best, hasEdge) {
+      if (!hasEdge) {
+        return "There is no positive modeled edge after the fee or buffer input. Lower asks, higher bids, or lower costs are needed.";
+      }
+      if (best.mode === "complement") {
+        return `ROI on cash used is ${formatPercent(best.roi)}. This hedge does not require shorting, but both contracts must settle on the same event.`;
+      }
+      return `ROI on buy-side cash is ${formatPercent(best.roi)}. This spread requires a real sell fill, short ability, or existing inventory on the high-bid venue.`;
+    }
+
+    function formatPercent(value) {
+      return `${(value * 100).toFixed(2)}%`;
+    }
+
+    function renderRows(candidates) {
+      if (!candidates.length) {
+        els.opportunityRows.innerHTML = `
+          <tr>
+            <td colspan="5">Enter valid prices to see opportunity checks.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      els.opportunityRows.innerHTML = candidates.map((candidate) => {
+        const edgeClass = candidate.edgeCents > 0 ? "positive" : "negative";
+        const profitClass = candidate.profit > 0 ? "positive" : "negative";
+        const legs = candidate.legs.map((leg) => `${leg.action} ${leg.venue} ${leg.side} @ ${formatCents(leg.price)}`).join("<br>");
+        return `
+          <tr>
+            <td><strong>${candidate.label}</strong>${legs}</td>
+            <td>${candidate.type}</td>
+            <td class="${edgeClass}">${formatCents(candidate.edgeCents)}</td>
+            <td>${formatQty(candidate.quantity)}</td>
+            <td class="${profitClass}">${formatDollars(candidate.profit)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function saveState() {
+      const data = Object.fromEntries(fields.map((id) => [id, els[id].value]));
+      data.wholeContracts = els.wholeContracts.checked;
+      localStorage.setItem("arbitrage-sizer", JSON.stringify(data));
+    }
+
+    function loadState() {
+      try {
+        const data = JSON.parse(localStorage.getItem("arbitrage-sizer"));
+        if (!data) return;
+        fields.forEach((id) => {
+          if (Object.prototype.hasOwnProperty.call(data, id)) {
+            els[id].value = data[id];
+          }
+        });
+        els.wholeContracts.checked = data.wholeContracts !== false;
+      } catch (error) {
+        localStorage.removeItem("arbitrage-sizer");
+      }
+    }
+
+    function applySample() {
+      Object.entries(sampleValues).forEach(([id, value]) => {
+        els[id].value = value;
+      });
+      els.wholeContracts.checked = true;
+      render();
+    }
+
+    function clearInputs() {
+      fields.forEach((id) => {
+        els[id].value = id === "budget" ? "1000" : "";
+      });
+      els.wholeContracts.checked = true;
+      render();
+    }
+
+    fields.forEach((id) => els[id].addEventListener("input", render));
+    els.wholeContracts.addEventListener("change", render);
+    els.sampleBtn.addEventListener("click", applySample);
+    els.clearBtn.addEventListener("click", clearInputs);
+
+    loadState();
+    render();
+  </script>
+</body>
+</html>
