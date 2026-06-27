@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#eef4f1">
+  <meta name="description" content="A fast probability puzzle grinder with exact-answer mental math drills for dice, coins, cards, bags, Bayes, counting, and expected value.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <title>Probability Grinder</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #eef4f1;
+      --panel: #fffaf0;
+      --ink: #172026;
+      --muted: #66716f;
+      --line: #d1dad3;
+      --teal: #177c76;
+      --teal-dark: #095a55;
+      --coral: #df5f4e;
+      --gold: #e0a82e;
+      --blue: #2f6fbb;
+      --green-soft: #e8f5ef;
+      --blue-soft: #eef5ff;
+      --gold-soft: #fff5d8;
+      --red-soft: #fff0ec;
+      --shadow: 0 18px 55px rgba(23, 32, 38, 0.12);
+      --radius: 8px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--paper);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(180deg, rgba(255, 250, 240, 0.82), rgba(238, 244, 241, 0.94) 360px),
+        var(--paper);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    code {
+      font-family: var(--mono);
+      font-weight: 760;
+    }
+
+    .app {
+      width: min(1180px, calc(100vw - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      background: var(--teal);
+      box-shadow: 4px 4px 0 var(--ink);
+      flex: 0 0 auto;
+    }
+
+    .mark svg {
+      width: 30px;
+      height: 30px;
+      stroke: white;
+      stroke-width: 2.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 0;
+      font-size: clamp(1.55rem, 3vw, 2.45rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .record {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+      font-weight: 680;
+      line-height: 1.35;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .button {
+      min-height: 42px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      padding: 0 16px;
+      background: var(--ink);
+      color: #fffaf0;
+      box-shadow: 3px 3px 0 rgba(23, 32, 38, 0.22);
+      font-weight: 850;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .button.secondary {
+      background: var(--panel);
+      color: var(--ink);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .workspace {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .controls,
+    .panel,
+    .sidebar {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: rgba(255, 250, 240, 0.94);
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 930;
+      text-transform: uppercase;
+    }
+
+    .segmented {
+      min-height: 40px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      padding: 3px;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      gap: 3px;
+      background: #e6eee9;
+    }
+
+    .segmented button {
+      min-width: 0;
+      min-height: 32px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--ink);
+      font-weight: 900;
+      padding: 2px 6px;
+      line-height: 1.1;
+      white-space: normal;
+    }
+
+    .segmented button.active {
+      background: var(--teal);
+      color: white;
+    }
+
+    .topic-control .segmented {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .select {
+      width: 100%;
+      min-height: 40px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0 10px;
+      font-weight: 850;
+    }
+
+    .panel {
+      padding: clamp(16px, 4vw, 32px);
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: 18px;
+      align-content: start;
+      overflow: hidden;
+    }
+
+    .panel > .actions {
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .chip {
+      min-height: 28px;
+      border: 2px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 10px;
+      background: white;
+      color: var(--teal-dark);
+      font-size: 0.76rem;
+      font-weight: 930;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .chip.blue {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .chip.gold {
+      color: #725301;
+      background: var(--gold-soft);
+    }
+
+    .problem-card {
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: white;
+      padding: clamp(16px, 4vw, 28px);
+      display: grid;
+      gap: 18px;
+      align-content: start;
+      min-width: 0;
+    }
+
+    .prompt {
+      margin: 0;
+      color: var(--ink);
+      font-size: clamp(1.4rem, 4vw, 2.35rem);
+      font-weight: 880;
+      line-height: 1.12;
+    }
+
+    .answer-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .answer {
+      width: 100%;
+      min-height: 54px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0 14px;
+      font-size: 1.2rem;
+      font-weight: 850;
+    }
+
+    .answer::placeholder {
+      color: #9aa39d;
+    }
+
+    .feedback {
+      min-height: 52px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--green-soft);
+      padding: 11px 12px;
+      display: grid;
+      gap: 4px;
+      font-weight: 780;
+    }
+
+    .feedback.bad {
+      background: var(--red-soft);
+    }
+
+    .feedback.neutral {
+      background: var(--blue-soft);
+    }
+
+    .feedback span {
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .solution {
+      display: none;
+      border-left: 4px solid var(--teal);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      background: var(--green-soft);
+      padding: 12px 14px;
+      color: #31403c;
+      line-height: 1.48;
+      font-weight: 720;
+    }
+
+    .solution.visible {
+      display: block;
+    }
+
+    .solution strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink);
+    }
+
+    .sidebar {
+      padding: 16px;
+      display: grid;
+      align-content: start;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      min-height: 86px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: white;
+      padding: 10px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 930;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .bank-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .bank-row {
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: baseline;
+      font-weight: 800;
+    }
+
+    .bank-row span {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 760;
+    }
+
+    .note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      font-weight: 680;
+    }
+
+    .kbd {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: white;
+      padding: 0 5px;
+      font-family: var(--mono);
+      font-size: 0.86em;
+      font-weight: 800;
+    }
+
+    .button:active,
+    .segmented button:active {
+      transform: translateY(1px);
+    }
+
+    .button:focus-visible,
+    .segmented button:focus-visible,
+    .answer:focus-visible,
+    .select:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(47, 111, 187, 0.18);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar,
+      .controls,
+      .status-row,
+      .answer-row {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+
+      .topic-control .segmented {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M7 23h18"></path>
+            <path d="M10 23c2-9 5-14 9-14 3 0 5 2 5 5 0 6-8 7-8 12"></path>
+            <path d="M9 9h2"></path>
+            <path d="M7 13h2"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>Probability Grinder</h1>
+          <p class="record">Fast exact-answer probability puzzles designed for mental reps.</p>
+        </div>
+      </div>
+      <div class="actions">
+        <a class="button secondary" href="../">All Tools</a>
+        <button class="button" id="resetStats" type="button">Reset Stats</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="workspace" aria-label="Practice workspace">
+        <div class="controls">
+          <div class="topic-control">
+            <span class="label">Topic</span>
+            <div class="segmented" id="topicButtons">
+              <button type="button" class="active" data-topic="all">All</button>
+              <button type="button" data-topic="dice-coins">Dice & Coins</button>
+              <button type="button" data-topic="cards-bags">Cards & Bags</button>
+              <button type="button" data-topic="conditional">Conditional</button>
+              <button type="button" data-topic="counting">Counting</button>
+              <button type="button" data-topic="expected">EV Games</button>
+            </div>
+          </div>
+          <div>
+            <label class="label" for="difficultySelect">Difficulty</label>
+            <select class="select" id="difficultySelect">
+              <option value="all">All levels</option>
+              <option value="1">Level 1: warmups</option>
+              <option value="2">Level 2: core drills</option>
+              <option value="3">Level 3: contest basics</option>
+              <option value="4">Level 4: traps</option>
+            </select>
+          </div>
+          <button class="button" id="newProblem" type="button">New Problem</button>
+        </div>
+
+        <section class="panel" aria-live="polite">
+          <div class="status-row">
+            <div class="chips">
+              <span class="chip" id="topicChip">Topic</span>
+              <span class="chip blue" id="difficultyChip">Level</span>
+              <span class="chip gold" id="templateChip">Template</span>
+            </div>
+            <span class="chip" id="bankChip">0 templates</span>
+          </div>
+
+          <div class="problem-card">
+            <p class="prompt" id="prompt">Loading...</p>
+            <div class="answer-row">
+              <input class="answer" id="answerInput" autocomplete="off" inputmode="text" placeholder="Fraction, decimal, or percent">
+              <button class="button" id="submitAnswer" type="button">Submit</button>
+              <button class="button secondary" id="showHint" type="button">Hint</button>
+            </div>
+            <div class="feedback neutral" id="feedback">
+              Type a fraction, decimal, percentage, or integer. Press <span class="kbd">Enter</span> to submit.
+            </div>
+            <div class="solution" id="solution"></div>
+          </div>
+
+          <div class="actions">
+            <button class="button secondary" id="showSolution" type="button">Show Solution</button>
+            <button class="button" id="nextProblem" type="button">Next</button>
+          </div>
+        </section>
+      </section>
+
+      <aside class="sidebar" aria-label="Practice stats and bank summary">
+        <div>
+          <h2>Session</h2>
+          <p class="note">The goal is speed through recognition: complements, symmetry, conditioning, and small combinatorial counts.</p>
+        </div>
+        <div class="stat-grid">
+          <div class="stat">
+            <span>Solved</span>
+            <strong id="solvedStat">0</strong>
+          </div>
+          <div class="stat">
+            <span>Accuracy</span>
+            <strong id="accuracyStat">0%</strong>
+          </div>
+          <div class="stat">
+            <span>Streak</span>
+            <strong id="streakStat">0</strong>
+          </div>
+          <div class="stat">
+            <span>Best</span>
+            <strong id="bestStat">0</strong>
+          </div>
+        </div>
+        <div>
+          <h2>Bank</h2>
+          <div class="bank-list" id="bankList"></div>
+        </div>
+        <p class="note">
+          Problems are generated from templates, so the bank has thousands of variants while keeping arithmetic mental-friendly.
+        </p>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const gcd = (a, b) => {
+      a = Math.abs(Math.round(a));
+      b = Math.abs(Math.round(b));
+      while (b) [a, b] = [b, a % b];
+      return a || 1;
+    };
+
+    const frac = (n, d = 1) => {
+      if (d === 0) throw new Error("zero denominator");
+      if (d < 0) [n, d] = [-n, -d];
+      const g = gcd(n, d);
+      return { n: Math.round(n / g), d: Math.round(d / g) };
+    };
+
+    const add = (a, b) => frac(a.n * b.d + b.n * a.d, a.d * b.d);
+    const sub = (a, b) => frac(a.n * b.d - b.n * a.d, a.d * b.d);
+    const mul = (a, b) => frac(a.n * b.n, a.d * b.d);
+    const div = (a, b) => frac(a.n * b.d, a.d * b.n);
+    const oneMinus = (a) => frac(a.d - a.n, a.d);
+    const powFrac = (a, k) => frac(a.n ** k, a.d ** k);
+    const val = (a) => a.n / a.d;
+
+    const C = (n, k) => {
+      if (k < 0 || k > n) return 0;
+      k = Math.min(k, n - k);
+      let out = 1;
+      for (let i = 1; i <= k; i++) out = (out * (n - k + i)) / i;
+      return Math.round(out);
+    };
+
+    const fib = (n) => {
+      let a = 0, b = 1;
+      for (let i = 0; i < n; i++) [a, b] = [b, a + b];
+      return a;
+    };
+
+    const randInt = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+    const pick = (xs) => xs[randInt(0, xs.length - 1)];
+    const fmt = (f) => f.d === 1 ? String(f.n) : `${f.n}/${f.d}`;
+    const pct = (f) => `${(100 * val(f)).toFixed(1).replace(/\\.0$/, "")}%`;
+    const ord = (n) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th"}`;
+
+    const parseAnswer = (raw) => {
+      const s = raw.trim().toLowerCase().replace(/\s+/g, "");
+      if (!s) return null;
+      if (s.endsWith("%")) {
+        const x = Number(s.slice(0, -1));
+        return Number.isFinite(x) ? frac(Math.round(x * 1000000), 100000000) : null;
+      }
+      if (s.includes("/")) {
+        const [a, b] = s.split("/");
+        const n = Number(a), d = Number(b);
+        return Number.isFinite(n) && Number.isFinite(d) && d !== 0 ? frac(n, d) : null;
+      }
+      const x = Number(s);
+      if (!Number.isFinite(x)) return null;
+      if (Number.isInteger(x)) return frac(x, 1);
+      return frac(Math.round(x * 1000000), 1000000);
+    };
+
+    const equivalent = (a, b) => Math.abs(val(a) - val(b)) < 0.0008;
+    const dieSumWays = (s) => s < 2 || s > 12 ? 0 : 6 - Math.abs(7 - s);
+    const sumRangeWays = (lo, hi) => {
+      let total = 0;
+      for (let s = lo; s <= hi; s++) total += dieSumWays(s);
+      return total;
+    };
+
+    const make = (id, title, topic, difficulty, generate) => ({ id, title, topic, difficulty, generate });
+
+    const templates = [
+      make("coin-exact-heads", "Exactly k Heads", "dice-coins", 1, () => {
+        const n = randInt(3, 8), k = randInt(0, n);
+        const answer = frac(C(n, k), 2 ** n);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability of getting exactly ${k} heads?`,
+          answer,
+          hint: "Use the binomial count: choose which flips are heads.",
+          solution: `There are 2^${n} equally likely strings and C(${n}, ${k}) = ${C(n, k)} with exactly ${k} heads, so the probability is ${fmt(answer)}.`,
+          mental: "Pascal triangle over powers of 2."
+        };
+      }),
+      make("coin-at-least-heads", "At Least k Heads", "dice-coins", 2, () => {
+        const n = randInt(4, 8), k = randInt(Math.ceil(n / 2), n);
+        let ways = 0;
+        for (let i = k; i <= n; i++) ways += C(n, i);
+        const answer = frac(ways, 2 ** n);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability of getting at least ${k} heads?`,
+          answer,
+          hint: "Add the binomial row entries from k through n.",
+          solution: `Favorable strings: ${Array.from({ length: n - k + 1 }, (_, j) => `C(${n}, ${k + j})`).join(" + ")} = ${ways}. Total strings: 2^${n} = ${2 ** n}. Probability: ${fmt(answer)}.`,
+          mental: "Use Pascal row tails."
+        };
+      }),
+      make("coin-majority", "Coin Majority", "dice-coins", 1, () => {
+        const n = pick([3, 5, 7, 9]);
+        const answer = frac(1, 2);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability that heads are the majority?`,
+          answer,
+          hint: "For an odd number of fair flips, ties are impossible.",
+          solution: `By symmetry, heads-majority and tails-majority are equally likely. Since ${n} is odd, there is no tie, so each has probability ${fmt(answer)}.`,
+          mental: "Symmetry beats arithmetic."
+        };
+      }),
+      make("coin-more-heads-even", "More Heads Than Tails", "dice-coins", 3, () => {
+        const n = pick([4, 6, 8]);
+        const tie = frac(C(n, n / 2), 2 ** n);
+        const answer = div(oneMinus(tie), frac(2, 1));
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability that heads outnumber tails?`,
+          answer,
+          hint: "Symmetry, but remove the tie cases first.",
+          solution: `The tie probability is C(${n}, ${n / 2})/2^${n} = ${fmt(tie)}. The remaining probability splits equally between heads-majority and tails-majority, so the answer is ${fmt(answer)}.`,
+          mental: "Even flips: subtract ties, then halve."
+        };
+      }),
+      make("coin-first-head", "First Head", "dice-coins", 1, () => {
+        const k = randInt(1, 8);
+        const answer = frac(1, 2 ** k);
+        return {
+          prompt: `Flip a fair coin until the first head appears. What is the probability it happens on flip ${k}?`,
+          answer,
+          hint: "You need tails before it, then one head.",
+          solution: `The required sequence is ${"T".repeat(k - 1)}H, which has probability (1/2)^${k} = ${fmt(answer)}.`,
+          mental: "Exact geometric pattern."
+        };
+      }),
+      make("coin-no-adjacent-heads", "No Consecutive Heads", "dice-coins", 3, () => {
+        const n = randInt(4, 8);
+        const good = fib(n + 2);
+        const answer = frac(good, 2 ** n);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability there are no two heads in a row?`,
+          answer,
+          hint: "Valid H/T strings with no adjacent heads follow Fibonacci numbers.",
+          solution: `The number of valid strings is F(${n + 2}) = ${good}. There are 2^${n} = ${2 ** n} total strings, so the probability is ${fmt(answer)}.`,
+          mental: "Fibonacci count over powers of 2."
+        };
+      }),
+      make("coin-at-least-one-hh", "At Least One HH", "dice-coins", 3, () => {
+        const n = randInt(4, 8);
+        const noHH = frac(fib(n + 2), 2 ** n);
+        const answer = oneMinus(noHH);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability that HH appears somewhere?`,
+          answer,
+          hint: "Use the complement: no consecutive heads.",
+          solution: `No-HH strings: F(${n + 2}) = ${fib(n + 2)} out of ${2 ** n}. So the probability of at least one HH is 1 - ${fmt(noHH)} = ${fmt(answer)}.`,
+          mental: "Complement of Fibonacci count."
+        };
+      }),
+      make("coin-all-same", "All Coins Same", "dice-coins", 1, () => {
+        const n = randInt(3, 8);
+        const answer = frac(2, 2 ** n);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability all flips are the same?`,
+          answer,
+          hint: "Only all heads and all tails work.",
+          solution: `There are 2 favorable strings, H...H and T...T, out of 2^${n}. Probability: ${fmt(answer)}.`,
+          mental: "Two outcomes, not one."
+        };
+      }),
+      make("coin-one-different", "Exactly One Different", "dice-coins", 2, () => {
+        const n = randInt(3, 8);
+        const answer = frac(2 * n, 2 ** n);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability exactly one coin differs from all the others?`,
+          answer,
+          hint: "Choose the odd-position coin and choose the majority face.",
+          solution: `Choose the one different flip in ${n} ways, and choose whether the majority is H or T in 2 ways. Favorable strings: ${2 * n}; total: ${2 ** n}. Probability: ${fmt(answer)}.`,
+          mental: "Odd one out: 2n strings."
+        };
+      }),
+      make("die-first-six", "First Six", "dice-coins", 2, () => {
+        const k = randInt(1, 4);
+        const answer = mul(powFrac(frac(5, 6), k - 1), frac(1, 6));
+        return {
+          prompt: `Roll a die until the first 6 appears. What is the probability it happens on roll ${k}?`,
+          answer,
+          hint: "Fail k-1 times, then succeed.",
+          solution: `The first ${k - 1} rolls must not be 6, then roll ${k} must be 6: (5/6)^${k - 1} * (1/6) = ${fmt(answer)}.`,
+          mental: "Geometric waiting time."
+        };
+      }),
+      make("dice-sum-exact", "Two Dice Sum", "dice-coins", 1, () => {
+        const s = randInt(2, 12);
+        const ways = dieSumWays(s);
+        const answer = frac(ways, 36);
+        return {
+          prompt: `Roll two fair dice. What is the probability their sum is ${s}?`,
+          answer,
+          hint: "The sum counts rise to 7, then fall symmetrically.",
+          solution: `Sum ${s} has ${ways} ordered outcomes out of 36, so the probability is ${fmt(answer)}.`,
+          mental: "1,2,3,4,5,6,5,4,3,2,1."
+        };
+      }),
+      make("dice-sum-at-least", "Two Dice At Least", "dice-coins", 2, () => {
+        const s = randInt(5, 11);
+        const ways = sumRangeWays(s, 12);
+        const answer = frac(ways, 36);
+        return {
+          prompt: `Roll two fair dice. What is the probability their sum is at least ${s}?`,
+          answer,
+          hint: "Add the upper tail of the two-dice sum table.",
+          solution: `The sums ${s} through 12 have ${ways} ordered outcomes total. Out of 36 outcomes, the probability is ${fmt(answer)}.`,
+          mental: "Upper triangle count."
+        };
+      }),
+      make("dice-sum-even", "Even Dice Sum", "dice-coins", 1, () => {
+        const answer = frac(1, 2);
+        return {
+          prompt: "Roll two fair dice. What is the probability their sum is even?",
+          answer,
+          hint: "The sum is even when the dice have the same parity.",
+          solution: `Both odd has probability 1/4 and both even has probability 1/4. Total: ${fmt(answer)}.`,
+          mental: "Same parity."
+        };
+      }),
+      make("dice-doubles", "Doubles", "dice-coins", 1, () => ({
+        prompt: "Roll two fair dice. What is the probability of doubles?",
+        answer: frac(1, 6),
+        hint: "After the first die, the second die has one matching face.",
+        solution: "The first die is free. The second must match it, which has probability 1/6.",
+        mental: "Condition on the first die."
+      })),
+      make("dice-no-doubles-n", "No Doubles Repeated", "dice-coins", 2, () => {
+        const n = randInt(2, 4);
+        const answer = powFrac(frac(5, 6), n);
+        return {
+          prompt: `Roll a pair of dice ${n} times. What is the probability you never roll doubles?`,
+          answer,
+          hint: "One pair-roll avoids doubles with probability 5/6.",
+          solution: `Each pair-roll has probability 5/6 of not being doubles. Across ${n} independent rolls: (5/6)^${n} = ${fmt(answer)}.`,
+          mental: "Repeat the complement."
+        };
+      }),
+      make("dice-max-exact", "Maximum Exactly m", "dice-coins", 2, () => {
+        const n = randInt(2, 4), m = randInt(2, 6);
+        const answer = sub(powFrac(frac(m, 6), n), powFrac(frac(m - 1, 6), n));
+        return {
+          prompt: `Roll ${n} fair dice. What is the probability the maximum roll is exactly ${m}?`,
+          answer,
+          hint: "At most m, minus at most m-1.",
+          solution: `P(max = ${m}) = (${m}/6)^${n} - (${m - 1}/6)^${n} = ${fmt(answer)}.`,
+          mental: "Cumulative difference."
+        };
+      }),
+      make("dice-min-exact", "Minimum Exactly m", "dice-coins", 2, () => {
+        const n = randInt(2, 4), m = randInt(1, 5);
+        const answer = sub(powFrac(frac(7 - m, 6), n), powFrac(frac(6 - m, 6), n));
+        return {
+          prompt: `Roll ${n} fair dice. What is the probability the minimum roll is exactly ${m}?`,
+          answer,
+          hint: "At least m, minus at least m+1.",
+          solution: `P(min = ${m}) = ((${7 - m})/6)^${n} - ((${6 - m})/6)^${n} = ${fmt(answer)}.`,
+          mental: "Cumulative difference from below."
+        };
+      }),
+      make("dice-all-different", "All Dice Different", "dice-coins", 2, () => {
+        const n = randInt(3, 6);
+        let good = 1;
+        for (let i = 0; i < n; i++) good *= 6 - i;
+        const answer = frac(good, 6 ** n);
+        return {
+          prompt: `Roll ${n} fair dice. What is the probability all results are different?`,
+          answer,
+          hint: "First die free, then avoid previous faces.",
+          solution: `Favorable ordered rolls: ${Array.from({ length: n }, (_, i) => 6 - i).join(" * ")} = ${good}. Total: 6^${n} = ${6 ** n}. Probability: ${fmt(answer)}.`,
+          mental: "Birthday-style complement."
+        };
+      }),
+      make("dice-exactly-one-pair-three", "Exactly One Pair", "dice-coins", 2, () => ({
+        prompt: "Roll three fair dice. What is the probability of exactly one pair?",
+        answer: frac(5, 12),
+        hint: "Choose the pair value, pair positions, and the odd value.",
+        solution: "Favorable rolls: 6 choices for pair value, C(3,2)=3 choices for pair positions, and 5 choices for the odd die: 90. Total: 216. Probability: 90/216 = 5/12.",
+        mental: "Exclude triples by choosing the odd value from the other 5 faces."
+      })),
+      make("dice-product-odd", "Odd Product", "dice-coins", 1, () => {
+        const n = randInt(2, 5);
+        const answer = frac(1, 2 ** n);
+        return {
+          prompt: `Roll ${n} dice. What is the probability the product of all rolls is odd?`,
+          answer,
+          hint: "The product is odd only if every roll is odd.",
+          solution: `Each die is odd with probability 1/2. All ${n} dice must be odd, so the probability is (1/2)^${n} = ${fmt(answer)}.`,
+          mental: "All factors odd."
+        };
+      }),
+
+      make("cards-same-suit", "Same Suit", "cards-bags", 1, () => ({
+        prompt: "Draw 2 cards from a standard deck without replacement. What is the probability they have the same suit?",
+        answer: frac(4, 17),
+        hint: "After the first card, 12 of the remaining 51 match its suit.",
+        solution: "The first card is arbitrary. The second has 12 matching-suit cards among 51 remaining, so the probability is 12/51 = 4/17.",
+        mental: "Condition on the first card."
+      })),
+      make("cards-same-color", "Same Color", "cards-bags", 1, () => ({
+        prompt: "Draw 2 cards from a standard deck without replacement. What is the probability they have the same color?",
+        answer: frac(25, 51),
+        hint: "After the first card, 25 cards of that color remain.",
+        solution: "The first card fixes the color. Of the 51 remaining cards, 25 match that color, so the probability is 25/51.",
+        mental: "Not exactly 1/2 because one card was removed."
+      })),
+      make("cards-red-black", "One Red One Black", "cards-bags", 1, () => ({
+        prompt: "Draw 2 cards from a standard deck without replacement. What is the probability one is red and one is black?",
+        answer: frac(26, 51),
+        hint: "Use the complement of same color, or count red-black and black-red.",
+        solution: "P(red then black or black then red) = 2 * (26/52) * (26/51) = 26/51.",
+        mental: "Two orders."
+      })),
+      make("cards-pair", "Two-Card Pair", "cards-bags", 1, () => ({
+        prompt: "Draw 2 cards from a standard deck without replacement. What is the probability the two cards have the same rank?",
+        answer: frac(1, 17),
+        hint: "After the first card, 3 cards match its rank.",
+        solution: "The first card is arbitrary. The second card must be one of the 3 remaining cards of that rank among 51 cards, so the probability is 3/51 = 1/17.",
+        mental: "Same rank, not same suit."
+      })),
+      make("cards-at-least-one-ace", "At Least One Ace", "cards-bags", 2, () => {
+        const k = 2;
+        const answer = oneMinus(frac(C(48, k), C(52, k)));
+        return {
+          prompt: `Draw ${k} cards from a standard deck without replacement. What is the probability of at least one ace?`,
+          answer,
+          hint: "Use the complement: no aces.",
+          solution: `P(at least one ace) = 1 - C(48, ${k})/C(52, ${k}) = ${fmt(answer)}.`,
+          mental: "No-ace complement."
+        };
+      }),
+      make("cards-exactly-one-rank", "Exactly One Rank", "cards-bags", 2, () => {
+        const rank = pick(["ace", "king", "queen", "jack", "ten"]);
+        const k = 2;
+        const answer = frac(4 * C(48, k - 1), C(52, k));
+        return {
+          prompt: `Draw ${k} cards from a standard deck without replacement. What is the probability of drawing exactly one ${rank}?`,
+          answer,
+          hint: "Choose 1 of the 4 target-rank cards, then the rest are non-targets.",
+          solution: `Favorable hands: C(4,1)C(48,${k - 1}). Total hands: C(52,${k}). Probability: ${fmt(answer)}.`,
+          mental: "Hypergeometric split."
+        };
+      }),
+      make("cards-at-least-one-heart", "At Least One Heart", "cards-bags", 2, () => {
+        const k = 2;
+        const answer = oneMinus(frac(C(39, k), C(52, k)));
+        return {
+          prompt: `Draw ${k} cards from a standard deck without replacement. What is the probability of at least one heart?`,
+          answer,
+          hint: "Use the complement: all cards are non-hearts.",
+          solution: `There are 39 non-hearts. P(at least one heart) = 1 - C(39,${k})/C(52,${k}) = ${fmt(answer)}.`,
+          mental: "Complement avoids many cases."
+        };
+      }),
+      make("cards-top-two-ace", "Top Two Include Ace", "cards-bags", 2, () => {
+        const answer = oneMinus(mul(frac(48, 52), frac(47, 51)));
+        return {
+          prompt: "Shuffle a standard deck. What is the probability the top two cards include at least one ace?",
+          answer,
+          hint: "Use the complement: neither top card is an ace.",
+          solution: `P(no ace in top two) = (48/52)(47/51). So the desired probability is ${fmt(answer)}.`,
+          mental: "Complement over first two positions."
+        };
+      }),
+      make("cards-replacement-same-rank", "Same Rank With Replacement", "cards-bags", 1, () => ({
+        prompt: "Draw a card, replace it, reshuffle, then draw again. What is the probability the two cards have the same rank?",
+        answer: frac(1, 13),
+        hint: "The second card must match the first card's rank.",
+        solution: "With replacement, after the first card there are 4 cards of its rank out of 52, so the probability is 4/52 = 1/13.",
+        mental: "Replacement changes 1/17 to 1/13."
+      })),
+      make("bag-exactly-red-no-replace", "Exactly r Red", "cards-bags", 2, () => {
+        const [R, B] = pick([[3, 3], [3, 5], [4, 4], [4, 6], [5, 5], [6, 4], [5, 7]]);
+        const n = randInt(2, 3);
+        const r = randInt(Math.max(0, n - B), Math.min(n, R));
+        const answer = frac(C(R, r) * C(B, n - r), C(R + B, n));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Draw ${n} without replacement. What is the probability of exactly ${r} red?`,
+          answer,
+          hint: "Choose the red balls and blue balls separately.",
+          solution: `Favorable draws: C(${R},${r})C(${B},${n - r}). Total draws: C(${R + B},${n}). Probability: ${fmt(answer)}.`,
+          mental: "Hypergeometric count."
+        };
+      }),
+      make("bag-at-least-one-red-no-replace", "At Least One Red", "cards-bags", 1, () => {
+        const [R, B] = pick([[2, 4], [3, 3], [3, 5], [4, 4], [4, 6], [5, 5]]);
+        const n = randInt(2, 3);
+        const answer = oneMinus(frac(C(B, n), C(R + B, n)));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Draw ${n} without replacement. What is the probability of at least one red?`,
+          answer,
+          hint: "Use the complement: all drawn balls are blue.",
+          solution: `P(no red) = C(${B},${n})/C(${R + B},${n}). So the answer is 1 - that = ${fmt(answer)}.`,
+          mental: "No-red complement."
+        };
+      }),
+      make("bag-two-different", "Two Different Colors", "cards-bags", 1, () => {
+        const R = randInt(3, 10), B = randInt(3, 10);
+        const answer = frac(2 * R * B, (R + B) * (R + B - 1));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Draw 2 without replacement. What is the probability the colors are different?`,
+          answer,
+          hint: "Count red-then-blue and blue-then-red.",
+          solution: `P(different) = 2RB / [(${R + B})(${R + B - 1})] = ${fmt(answer)}.`,
+          mental: "Two ordered color patterns."
+        };
+      }),
+      make("bag-with-replace-exact", "Binomial Bag Draws", "cards-bags", 2, () => {
+        const pairs = [[1, 1], [1, 2], [2, 1], [1, 3], [3, 1]];
+        const [R, B] = pick(pairs);
+        const n = randInt(3, 4), r = randInt(1, n - 1);
+        const p = frac(R, R + B), q = frac(B, R + B);
+        const answer = mul(frac(C(n, r), 1), mul(powFrac(p, r), powFrac(q, n - r)));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Draw ${n} times with replacement. What is the probability of exactly ${r} red draws?`,
+          answer,
+          hint: "This is binomial because the ball is replaced each time.",
+          solution: `C(${n},${r})(${R}/${R + B})^${r}(${B}/${R + B})^${n - r} = ${fmt(answer)}.`,
+          mental: "Binomial coefficient times powers."
+        };
+      }),
+      make("bag-first-red-with-replace", "First Red With Replacement", "cards-bags", 1, () => {
+        const [R, B] = pick([[1, 1], [1, 2], [2, 1], [1, 3], [3, 1]]);
+        const k = randInt(1, 4);
+        const answer = mul(powFrac(frac(B, R + B), k - 1), frac(R, R + B));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. You draw with replacement until the first red. What is the probability it happens on draw ${k}?`,
+          answer,
+          hint: "Blue before it, then red.",
+          solution: `The first ${k - 1} draws must be blue, then draw ${k} red: (${B}/${R + B})^${k - 1}(${R}/${R + B}) = ${fmt(answer)}.`,
+          mental: "Geometric pattern."
+        };
+      }),
+      make("bag-second-red-given-blue", "Update the Bag", "conditional", 1, () => {
+        const R = randInt(2, 9), B = randInt(2, 9);
+        const answer = frac(R, R + B - 1);
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. One blue ball is drawn and not replaced. What is the probability the next draw is red?`,
+          answer,
+          hint: "Use the new bag contents after the blue ball is removed.",
+          solution: `After one blue is removed, the bag has ${R} red and ${B - 1} blue, ${R + B - 1} total. Probability of red: ${fmt(answer)}.`,
+          mental: "Condition means update the state."
+        };
+      }),
+      make("bag-both-red-given-at-least-one", "Both Given At Least One", "conditional", 3, () => {
+        const R = randInt(3, 8), B = randInt(3, 8);
+        const both = frac(R * (R - 1), (R + B) * (R + B - 1));
+        const none = frac(B * (B - 1), (R + B) * (R + B - 1));
+        const answer = div(both, oneMinus(none));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Draw 2 without replacement. Given that at least one is red, what is the probability both are red?`,
+          answer,
+          hint: "Use P(both red) divided by P(at least one red).",
+          solution: `P(both red) = ${fmt(both)}. P(at least one red) = 1 - P(both blue) = 1 - ${fmt(none)}. Conditional probability: ${fmt(answer)}.`,
+          mental: "At least one is not the same as first one."
+        };
+      }),
+      make("bag-red-before-blue", "Red Before Blue", "conditional", 3, () => {
+        const R = randInt(2, 8), B = randInt(2, 8), N = randInt(1, 8);
+        const answer = frac(R, R + B);
+        return {
+          prompt: `A bag has ${R} red, ${B} blue, and ${N} white balls. Draw without replacement until you see a red or blue ball. What is the probability red appears before blue?`,
+          answer,
+          hint: "Ignore the white balls; among red and blue balls, which color appears first?",
+          solution: `White balls only delay the race. Among the ${R + B} red/blue balls, the first one is red with probability ${R}/(${R}+${B}) = ${fmt(answer)}.`,
+          mental: "Neutral outcomes do not change the race."
+        };
+      }),
+
+      make("bayes-medical", "Base Rate Test", "conditional", 3, () => {
+        const prevalence = pick([1, 2, 5, 10]);
+        const sensitivity = pick([80, 90, 95]);
+        const falsePositive = pick([5, 10, 20]);
+        const tp = prevalence * sensitivity;
+        const fp = (100 - prevalence) * falsePositive;
+        const answer = frac(tp, tp + fp);
+        return {
+          prompt: `A condition affects ${prevalence}% of people. A test is positive for ${sensitivity}% of affected people and falsely positive for ${falsePositive}% of unaffected people. If someone tests positive, what is the probability they have the condition?`,
+          answer,
+          hint: "Imagine 10,000 people and count true positives and false positives.",
+          solution: `Per 10,000 people: true positives are ${prevalence} * ${sensitivity} = ${tp} units; false positives are ${100 - prevalence} * ${falsePositive} = ${fp} units. Among positives, the affected fraction is ${tp}/(${tp}+${fp}) = ${fmt(answer)}.`,
+          mental: "Natural frequencies beat formula memorization."
+        };
+      }),
+      make("conditional-dice-at-least-one", "Given One Die Is", "conditional", 2, () => {
+        const face = randInt(1, 6);
+        const targetSum = face + randInt(2, 6);
+        const totalGiven = 11;
+        let favorable = 0;
+        for (let a = 1; a <= 6; a++) {
+          for (let b = 1; b <= 6; b++) {
+            if ((a === face || b === face) && a + b === targetSum) favorable++;
+          }
+        }
+        const answer = frac(favorable, totalGiven);
+        return {
+          prompt: `Roll two dice. Given that at least one die shows ${face}, what is the probability the sum is ${targetSum}?`,
+          answer,
+          hint: `There are 11 ordered outcomes where at least one die is ${face}.`,
+          solution: `Conditioned sample space: 6 outcomes with first die ${face}, plus 6 with second die ${face}, minus the double-counted (${face},${face}) = 11. Favorable outcomes with sum ${targetSum}: ${favorable}. Probability: ${fmt(answer)}.`,
+          mental: "At least one face gives 11 ordered outcomes."
+        };
+      }),
+      make("conditional-even-sum", "Given Sum Is Even", "conditional", 2, () => {
+        const answer = frac(1, 2);
+        return {
+          prompt: "Roll two dice. Given that the sum is even, what is the probability both dice are odd?",
+          answer,
+          hint: "Even sum means same parity.",
+          solution: "Even sum occurs when both dice are odd or both are even. These cases have equal probability, so the conditional probability both are odd is 1/2.",
+          mental: "Same parity splits evenly."
+        };
+      }),
+      make("conditional-coin-at-least-one-head", "Both Heads Given A Head", "conditional", 2, () => ({
+        prompt: "Flip two fair coins. Given that at least one is heads, what is the probability both are heads?",
+        answer: frac(1, 3),
+        hint: "The possible outcomes are HH, HT, TH.",
+        solution: "Given at least one head, the sample space is HH, HT, TH. Only HH has both heads, so the probability is 1/3.",
+        mental: "At least one is not first one."
+      })),
+      make("conditional-exact-heads-given-some", "Exact Heads Given Some", "conditional", 2, () => {
+        const n = randInt(3, 8), k = randInt(1, n);
+        const answer = frac(C(n, k), 2 ** n - 1);
+        return {
+          prompt: `Flip ${n} fair coins. Given that at least one head occurred, what is the probability of exactly ${k} heads?`,
+          answer,
+          hint: "Remove only the all-tails string from the sample space.",
+          solution: `The condition leaves ${2 ** n - 1} possible non-all-tail strings. Exactly ${k} heads occurs in C(${n},${k}) = ${C(n, k)} strings. Probability: ${fmt(answer)}.`,
+          mental: "Condition changes the denominator to 2^n - 1."
+        };
+      }),
+      make("conditional-exact-heads-first-head", "Exact Heads Given First", "conditional", 2, () => {
+        const n = randInt(3, 8), k = randInt(1, n);
+        const answer = frac(C(n - 1, k - 1), 2 ** (n - 1));
+        return {
+          prompt: `Flip ${n} fair coins. Given that the first flip is heads, what is the probability of exactly ${k} heads total?`,
+          answer,
+          hint: "The first head is fixed; count the remaining flips.",
+          solution: `Choose the other ${k - 1} heads among the remaining ${n - 1} flips: C(${n - 1},${k - 1}) = ${C(n - 1, k - 1)}. Total conditioned strings: 2^${n - 1}. Probability: ${fmt(answer)}.`,
+          mental: "First is fixed, not merely guaranteed somewhere."
+        };
+      }),
+      make("conditional-dice-given-sum", "One Face Given Sum", "conditional", 2, () => {
+        const s = randInt(4, 10);
+        const feasible = [];
+        for (let a = 1; a <= 6; a++) {
+          const b = s - a;
+          if (b >= 1 && b <= 6) feasible.push(a);
+        }
+        const a = pick(feasible);
+        const favorable = s === 2 * a ? 1 : 2;
+        const total = dieSumWays(s);
+        const answer = frac(favorable, total);
+        return {
+          prompt: `Roll two dice. Given that their sum is ${s}, what is the probability at least one die shows ${a}?`,
+          answer,
+          hint: `There are ${total} ordered pairs with sum ${s}.`,
+          solution: `With sum ${s}, there are ${total} ordered outcomes. Outcomes with a ${a}: ${favorable}. Conditional probability: ${fmt(answer)}.`,
+          mental: "Condition on the diagonal sum table."
+        };
+      }),
+      make("choose-box-bayes", "Which Box?", "conditional", 3, () => {
+        const boxes = [
+          { a: [2, 1], b: [1, 2] },
+          { a: [3, 1], b: [1, 3] },
+          { a: [2, 3], b: [4, 1] },
+          { a: [5, 5], b: [2, 8] }
+        ];
+        const { a, b } = pick(boxes);
+        const pa = frac(1, 2);
+        const likeA = frac(a[0], a[0] + a[1]);
+        const likeB = frac(b[0], b[0] + b[1]);
+        const answer = div(mul(pa, likeA), add(mul(pa, likeA), mul(pa, likeB)));
+        return {
+          prompt: `Box A has ${a[0]} red and ${a[1]} blue balls. Box B has ${b[0]} red and ${b[1]} blue balls. A box is chosen at random, then a red ball is drawn. What is the probability Box A was chosen?`,
+          answer,
+          hint: "Compare the red-producing weight from each box.",
+          solution: `A contributes (1/2)(${a[0]}/${a[0] + a[1]}). B contributes (1/2)(${b[0]}/${b[0] + b[1]}). Normalize A's contribution among red draws: ${fmt(answer)}.`,
+          mental: "Bayes as weighted evidence."
+        };
+      }),
+      make("conditional-card-given-suit", "Face Card Given Suit", "conditional", 1, () => {
+        const suit = pick(["heart", "spade", "diamond", "club"]);
+        const answer = frac(3, 13);
+        return {
+          prompt: `Draw one card from a standard deck. Given that it is a ${suit}, what is the probability it is a face card?`,
+          answer,
+          hint: "Restrict to the 13 cards in that suit.",
+          solution: `In one suit there are 13 cards and 3 face cards: jack, queen, king. Probability: ${fmt(answer)}.`,
+          mental: "Conditioned deck is just one suit."
+        };
+      }),
+      make("conditional-card-both-aces", "Both Aces Given One", "conditional", 3, () => ({
+        prompt: "Draw 2 cards from a standard deck without replacement. Given that at least one card is an ace, what is the probability both are aces?",
+        answer: frac(1, 33),
+        hint: "Use two-card hands and remove hands with no ace.",
+        solution: "Hands with at least one ace: C(52,2) - C(48,2) = 198. Hands with two aces: C(4,2) = 6. Probability: 6/198 = 1/33.",
+        mental: "At least one ace is not first ace."
+      })),
+      make("bayes-student-knows", "Knows or Guesses", "conditional", 3, () => {
+        const priors = [frac(1, 4), frac(1, 3), frac(1, 2), frac(2, 3)];
+        const k = pick(priors), m = pick([3, 4, 5]);
+        const guessPath = mul(oneMinus(k), frac(1, m));
+        const answer = div(k, add(k, guessPath));
+        return {
+          prompt: `A student knows the answer with probability ${fmt(k)}. If they know it, they answer correctly; otherwise they guess among ${m} choices. Given the answer is correct, what is the probability they knew it?`,
+          answer,
+          hint: "Correct answers come from knowing or from a lucky guess.",
+          solution: `Knowing contributes ${fmt(k)}. Lucky guessing contributes (1 - ${fmt(k)})/${m} = ${fmt(guessPath)}. Posterior probability of knowing: ${fmt(answer)}.`,
+          mental: "Normalize the ways to be correct."
+        };
+      }),
+      make("bayes-biased-coin-head", "Which Coin After Heads", "conditional", 2, () => {
+        const [p, q] = pick([
+          [frac(3, 4), frac(1, 4)],
+          [frac(2, 3), frac(1, 3)],
+          [frac(3, 5), frac(2, 5)],
+          [frac(4, 5), frac(1, 5)],
+          [frac(1, 2), frac(1, 4)]
+        ]);
+        const answer = div(p, add(p, q));
+        return {
+          prompt: `One of two coins is chosen at random. Coin A lands heads with probability ${fmt(p)}; Coin B lands heads with probability ${fmt(q)}. The coin is flipped once and lands heads. What is the probability Coin A was chosen?`,
+          answer,
+          hint: "With equal priors, normalize the head likelihoods.",
+          solution: `A's head likelihood is ${fmt(p)} and B's is ${fmt(q)}. Posterior for A is ${fmt(p)} / (${fmt(p)} + ${fmt(q)}) = ${fmt(answer)}.`,
+          mental: "Posterior proportional to likelihood."
+        };
+      }),
+      make("bayes-biased-coin-all-heads", "Which Coin After Streak", "conditional", 4, () => {
+        const [p, q] = pick([
+          [frac(3, 4), frac(1, 4)],
+          [frac(2, 3), frac(1, 3)],
+          [frac(3, 5), frac(2, 5)],
+          [frac(4, 5), frac(1, 5)]
+        ]);
+        const n = randInt(2, 4);
+        const lp = powFrac(p, n), lq = powFrac(q, n);
+        const answer = div(lp, add(lp, lq));
+        return {
+          prompt: `One of two coins is chosen at random. Coin A has heads probability ${fmt(p)}; Coin B has heads probability ${fmt(q)}. It is flipped ${n} times and all flips are heads. What is the probability Coin A was chosen?`,
+          answer,
+          hint: "Repeated evidence raises each likelihood to the nth power.",
+          solution: `Likelihoods are (${fmt(p)})^${n} = ${fmt(lp)} for A and (${fmt(q)})^${n} = ${fmt(lq)} for B. Normalize: ${fmt(answer)}.`,
+          mental: "Streaks amplify the more head-biased coin."
+        };
+      }),
+
+      make("integer-divisible", "Divisible Integer", "counting", 1, () => {
+        const N = pick([20, 24, 30, 36, 40, 60, 100]);
+        const d = pick([2, 3, 4, 5, 6, 10]);
+        const answer = frac(Math.floor(N / d), N);
+        return {
+          prompt: `Choose an integer uniformly from 1 to ${N}. What is the probability it is divisible by ${d}?`,
+          answer,
+          hint: `Count multiples of ${d} up to ${N}.`,
+          solution: `There are floor(${N}/${d}) = ${Math.floor(N / d)} multiples out of ${N} integers. Probability: ${fmt(answer)}.`,
+          mental: "Count multiples."
+        };
+      }),
+      make("two-digit-divisible", "Two-Digit Divisibility", "counting", 1, () => {
+        const d = pick([2, 3, 4, 5, 6, 9, 10, 11, 12, 15]);
+        const count = Math.floor(99 / d) - Math.floor(9 / d);
+        const answer = frac(count, 90);
+        return {
+          prompt: `Choose a random two-digit positive integer. What is the probability it is divisible by ${d}?`,
+          answer,
+          hint: "Count multiples from 10 through 99.",
+          solution: `Multiples: floor(99/${d}) - floor(9/${d}) = ${count}. There are 90 two-digit integers. Probability: ${fmt(answer)}.`,
+          mental: "Two-digit means 90 outcomes."
+        };
+      }),
+      make("integer-divisible-or", "Divisible by a or b", "counting", 2, () => {
+        const choices = [[30, 2, 3], [60, 4, 6], [100, 4, 10], [120, 6, 10], [90, 3, 5]];
+        const [N, a, b] = pick(choices);
+        const l = (a * b) / gcd(a, b);
+        const good = Math.floor(N / a) + Math.floor(N / b) - Math.floor(N / l);
+        const answer = frac(good, N);
+        return {
+          prompt: `Choose an integer uniformly from 1 to ${N}. What is the probability it is divisible by ${a} or ${b}?`,
+          answer,
+          hint: "Use inclusion-exclusion.",
+          solution: `Multiples of ${a}: ${Math.floor(N / a)}. Multiples of ${b}: ${Math.floor(N / b)}. Multiples of lcm(${a},${b})=${l}: ${Math.floor(N / l)}. Favorable: ${good}. Probability: ${fmt(answer)}.`,
+          mental: "Add, subtract overlap."
+        };
+      }),
+      make("sum-odd-integers", "Odd Sum", "counting", 1, () => {
+        const N = pick([6, 8, 10, 12, 20]);
+        const odds = Math.ceil(N / 2), evens = Math.floor(N / 2);
+        const answer = frac(2 * odds * evens, N * N);
+        return {
+          prompt: `Choose two integers independently from 1 to ${N}. What is the probability their sum is odd?`,
+          answer,
+          hint: "The sum is odd when one number is odd and the other is even.",
+          solution: `There are ${odds} odds and ${evens} evens. Favorable ordered pairs: 2(${odds})(${evens}). Total ordered pairs: ${N}^2. Probability: ${fmt(answer)}.`,
+          mental: "Opposite parity."
+        };
+      }),
+      make("digit-string-distinct", "Distinct Digit String", "counting", 2, () => {
+        const k = randInt(2, 4);
+        let good = 1;
+        for (let i = 0; i < k; i++) good *= 10 - i;
+        const answer = frac(good, 10 ** k);
+        return {
+          prompt: `A ${k}-digit string is chosen using digits 0 through 9, with leading zeros allowed. What is the probability all digits are distinct?`,
+          answer,
+          hint: "Choose each digit while avoiding previous digits.",
+          solution: `Favorable strings: ${Array.from({ length: k }, (_, i) => 10 - i).join(" * ")} = ${good}. Total strings: 10^${k}. Probability: ${fmt(answer)}.`,
+          mental: "Strings allow leading zero."
+        };
+      }),
+      make("number-distinct-digits", "Distinct Digits Number", "counting", 2, () => {
+        const k = randInt(2, 4);
+        let good = 9;
+        for (let i = 1; i < k; i++) good *= 10 - i;
+        const total = 9 * 10 ** (k - 1);
+        const answer = frac(good, total);
+        return {
+          prompt: `Choose a random ${k}-digit positive integer. What is the probability all digits are distinct?`,
+          answer,
+          hint: "The first digit cannot be zero; after that zero is allowed if unused.",
+          solution: `Favorable numbers: 9 * ${Array.from({ length: k - 1 }, (_, i) => 10 - i).join(" * ")} = ${good}. Total ${k}-digit numbers: ${total}. Probability: ${fmt(answer)}.`,
+          mental: "First digit has 9 choices; second also has 9."
+        };
+      }),
+      make("permutation-fixed", "Fixed Position", "counting", 1, () => {
+        const n = randInt(4, 9);
+        const answer = frac(1, n);
+        return {
+          prompt: `${n} distinct books are randomly arranged on a shelf. What is the probability a particular book is in the leftmost position?`,
+          answer,
+          hint: "Each book is equally likely to occupy that position.",
+          solution: `There are ${n} equally likely books for the leftmost slot, so the chosen book has probability ${fmt(answer)}.`,
+          mental: "Symmetry over positions."
+        };
+      }),
+      make("permutation-before", "Before Another", "counting", 1, () => ({
+        prompt: "Alice and Bob are randomly placed in a line with several other people. What is the probability Alice is before Bob?",
+        answer: frac(1, 2),
+        hint: "Only their relative order matters.",
+        solution: "For every arrangement with Alice before Bob, swapping their names gives one with Bob before Alice. The two cases are equally likely, so the probability is 1/2.",
+        mental: "Pairing symmetry."
+      })),
+      make("seating-adjacent-line", "Adjacent in a Line", "counting", 2, () => {
+        const n = randInt(5, 9);
+        const answer = frac(2, n);
+        return {
+          prompt: `${n} people are randomly seated in a row. What is the probability Alice and Bob sit next to each other?`,
+          answer,
+          hint: "Place Alice first; Bob must be in one of her neighboring slots on average.",
+          solution: `Treat Alice and Bob as a block: 2(${n - 1})! arrangements. Total arrangements: ${n}!. Probability: 2(${n - 1})!/${n}! = ${fmt(answer)}.`,
+          mental: "Block method."
+        };
+      }),
+      make("seating-three-consecutive", "Three Consecutive", "counting", 3, () => {
+        const n = randInt(5, 10);
+        const answer = frac(6, n * (n - 1));
+        return {
+          prompt: `${n} people are randomly arranged in a row. What is the probability three specified people stand consecutively?`,
+          answer,
+          hint: "Treat the three specified people as one block.",
+          solution: `The trio can be internally ordered in 3! = 6 ways. Probability = 6/(n(n-1)) = 6/(${n}*${n - 1}) = ${fmt(answer)}.`,
+          mental: "One trio block among n people."
+        };
+      }),
+      make("seating-circular-adjacent", "Adjacent Around Circle", "counting", 2, () => {
+        const n = randInt(5, 12);
+        const answer = frac(2, n - 1);
+        return {
+          prompt: `${n} people sit randomly around a circular table. What is the probability Alice and Bob sit next to each other?`,
+          answer,
+          hint: "Fix Alice; Bob has two neighboring seats.",
+          solution: `After fixing Alice, Bob has ${n - 1} possible seats and 2 are adjacent to Alice. Probability: ${fmt(answer)}.`,
+          mental: "Circle formula is 2/(n-1), not 2/n."
+        };
+      }),
+      make("committee-exact-group", "Committee Exact Group Count", "counting", 3, () => {
+        const [a, b] = pick([[4, 4], [4, 5], [5, 5], [5, 6], [6, 4], [6, 6]]);
+        const k = randInt(3, 4);
+        const r = randInt(Math.max(0, k - b), Math.min(k, a));
+        const answer = frac(C(a, r) * C(b, k - r), C(a + b, k));
+        return {
+          prompt: `From ${a} students in group A and ${b} in group B, choose ${k} students. What is the probability exactly ${r} are from group A?`,
+          answer,
+          hint: "Choose group A members and group B members separately.",
+          solution: `Favorable committees: C(${a},${r})C(${b},${k - r}). Total committees: C(${a + b},${k}). Probability: ${fmt(answer)}.`,
+          mental: "Same structure as urn draws."
+        };
+      }),
+      make("permutation-derangement", "No Fixed Points", "counting", 4, () => {
+        const der = { 3: 2, 4: 9, 5: 44, 6: 265, 7: 1854 };
+        const n = pick([3, 4, 5, 6, 7]);
+        let fact = 1;
+        for (let i = 2; i <= n; i++) fact *= i;
+        const answer = frac(der[n], fact);
+        return {
+          prompt: `A random permutation of ${n} objects is chosen. What is the probability no object remains in its original position?`,
+          answer,
+          hint: "Use the small derangement count for n.",
+          solution: `The number of derangements is !${n} = ${der[n]}; total permutations are ${n}! = ${fact}. Probability: ${fmt(answer)}.`,
+          mental: "Derangements are not independent misses."
+        };
+      }),
+      make("balls-boxes-same", "Same Box", "counting", 1, () => {
+        const boxes = randInt(3, 8);
+        const answer = frac(1, boxes);
+        return {
+          prompt: `Two labeled balls are independently placed into one of ${boxes} boxes. What is the probability they land in the same box?`,
+          answer,
+          hint: "After the first ball lands, the second must choose that box.",
+          solution: `The first ball is free. The second matches its box with probability 1/${boxes}, so the answer is ${fmt(answer)}.`,
+          mental: "Condition on the first ball."
+        };
+      }),
+      make("balls-boxes-all-different", "All Different Boxes", "counting", 2, () => {
+        const boxes = randInt(4, 6), balls = randInt(3, Math.min(4, boxes));
+        let good = 1;
+        for (let i = 0; i < balls; i++) good *= boxes - i;
+        const answer = frac(good, boxes ** balls);
+        return {
+          prompt: `${balls} labeled balls are independently placed into ${boxes} boxes. What is the probability no two balls land in the same box?`,
+          answer,
+          hint: "First ball free, each next ball avoids occupied boxes.",
+          solution: `Favorable placements: ${Array.from({ length: balls }, (_, i) => boxes - i).join(" * ")} = ${good}. Total placements: ${boxes}^${balls}. Probability: ${fmt(answer)}.`,
+          mental: "Birthday-style count."
+        };
+      }),
+
+      make("ev-die", "Expected Die Roll", "expected", 1, () => {
+        const mult = randInt(1, 5);
+        const answer = frac(7 * mult, 2);
+        return {
+          prompt: `You roll one fair die and win $${mult} times the number shown. What is your expected winnings?`,
+          answer,
+          hint: "The average die roll is 3.5.",
+          solution: `The expected die roll is (1+2+3+4+5+6)/6 = 7/2. Multiply by ${mult}: ${fmt(answer)} dollars.`,
+          mental: "Average of 1 through 6 is 3.5."
+        };
+      }),
+      make("ev-keep-or-reroll", "Reroll Threshold", "expected", 3, () => {
+        const t = randInt(2, 5);
+        let total = 0;
+        for (let x = 1; x <= 6; x++) total += Math.max(x, t);
+        const answer = frac(total, 6);
+        return {
+          prompt: `You roll a die. If it is below ${t}, you may replace it with a guaranteed ${t}; otherwise keep the roll. What is the expected final value?`,
+          answer,
+          hint: `Average max(roll, ${t}) over rolls 1 through 6.`,
+          solution: `Final values are ${Array.from({ length: 6 }, (_, i) => Math.max(i + 1, t)).join(", ")}. Their sum is ${total}, so the expected value is ${fmt(answer)}.`,
+          mental: "Average the upgraded outcomes."
+        };
+      }),
+      make("ev-coin-game", "Coin Payout EV", "expected", 1, () => {
+        const h = randInt(2, 10), t = randInt(0, 6);
+        const answer = frac(h + t, 2);
+        return {
+          prompt: `Flip a fair coin. Heads pays $${h}; tails pays $${t}. What is the expected payout?`,
+          answer,
+          hint: "Average the two payouts.",
+          solution: `EV = (1/2)${h} + (1/2)${t} = (${h}+${t})/2 = ${fmt(answer)} dollars.`,
+          mental: "Fair coin average."
+        };
+      }),
+      make("ev-first-head", "Expected First Head", "expected", 2, () => ({
+        prompt: "Flip a fair coin until the first head appears. What is the expected number of flips?",
+        answer: frac(2, 1),
+        hint: "A success probability p has expected wait 1/p.",
+        solution: "Each flip succeeds with probability 1/2. The expected waiting time for the first success is 1/(1/2) = 2 flips.",
+        mental: "Geometric mean wait."
+      })),
+      make("ev-first-six", "Expected First Six", "expected", 2, () => ({
+        prompt: "Roll a fair die until the first 6 appears. What is the expected number of rolls?",
+        answer: frac(6, 1),
+        hint: "A success probability p has expected wait 1/p.",
+        solution: "Each roll succeeds with probability 1/6. The expected waiting time is 1/(1/6) = 6 rolls.",
+        mental: "Geometric mean wait."
+      })),
+      make("ev-biased-first-success", "Biased First Success", "expected", 2, () => {
+        const p = pick([frac(1, 2), frac(1, 3), frac(1, 4), frac(2, 3), frac(3, 4), frac(2, 5)]);
+        const answer = div(frac(1, 1), p);
+        return {
+          prompt: `An event succeeds with probability ${fmt(p)} each try. What is the expected number of tries until the first success?`,
+          answer,
+          hint: "Geometric waiting time is 1/p.",
+          solution: `Expected tries until first success = 1 / (${fmt(p)}) = ${fmt(answer)}.`,
+          mental: "Include the successful try."
+        };
+      }),
+      make("ev-expected-heads", "Expected Heads", "expected", 1, () => {
+        const n = pick([4, 5, 6, 8, 10, 12, 20]);
+        const p = pick([frac(1, 2), frac(1, 3), frac(1, 4), frac(2, 3), frac(3, 4)]);
+        const answer = mul(frac(n, 1), p);
+        return {
+          prompt: `A coin lands heads with probability ${fmt(p)}. If it is flipped ${n} times, what is the expected number of heads?`,
+          answer,
+          hint: "Use linearity: n times the success probability.",
+          solution: `Expected heads = ${n} * ${fmt(p)} = ${fmt(answer)}.`,
+          mental: "Expected count = trials * probability."
+        };
+      }),
+      make("ev-dice-sum", "Expected Sum of Dice", "expected", 1, () => {
+        const n = pick([2, 3, 4, 5, 6, 10]);
+        const answer = frac(7 * n, 2);
+        return {
+          prompt: `Roll ${n} fair dice. What is the expected sum?`,
+          answer,
+          hint: "One die has expected value 7/2.",
+          solution: `Expected sum = ${n} * 7/2 = ${fmt(answer)}.`,
+          mental: "Linearity avoids distribution counting."
+        };
+      }),
+      make("ev-matching-pairs", "Expected Matching Pairs", "expected", 3, () => {
+        const n = pick([3, 4, 5, 6, 8]);
+        const pairs = C(n, 2);
+        const answer = frac(pairs, 6);
+        return {
+          prompt: `Roll ${n} fair dice. What is the expected number of unordered pairs of dice that show the same face?`,
+          answer,
+          hint: "Each pair of dice matches with probability 1/6.",
+          solution: `There are C(${n},2) = ${pairs} pairs. Each pair matches with probability 1/6, so the expectation is ${fmt(answer)}.`,
+          mental: "Indicator variables."
+        };
+      }),
+      make("ev-fixed-points", "Expected Fixed Points", "expected", 3, () => {
+        const n = pick([3, 4, 5, 6, 10, 20]);
+        return {
+          prompt: `A random permutation of ${n} objects is chosen. What is the expected number of objects left in their original positions?`,
+          answer: frac(1, 1),
+          hint: "Each object is fixed with probability 1/n.",
+          solution: `For each object, P(fixed) = 1/${n}. Summing over ${n} objects gives ${n} * 1/${n} = 1.`,
+          mental: "The expectation is always 1."
+        };
+      }),
+      make("ev-random-walk-position", "Expected Walk Position", "expected", 2, () => {
+        const n = pick([4, 5, 6, 8, 10, 12]);
+        const p = pick([frac(1, 2), frac(1, 3), frac(2, 3), frac(1, 4), frac(3, 4)]);
+        const step = sub(mul(frac(2, 1), p), frac(1, 1));
+        const answer = mul(frac(n, 1), step);
+        return {
+          prompt: `A walker starts at 0. Each step is +1 with probability ${fmt(p)} and -1 otherwise. What is the expected position after ${n} steps?`,
+          answer,
+          hint: "Expected step is p - (1-p) = 2p - 1.",
+          solution: `Expected step = 2(${fmt(p)}) - 1 = ${fmt(step)}. After ${n} steps, expected position is ${n} * ${fmt(step)} = ${fmt(answer)}.`,
+          mental: "Expected step times number of steps."
+        };
+      }),
+      make("ev-gamblers-ruin-win", "Fair Ruin Win Chance", "expected", 3, () => {
+        const N = pick([4, 5, 6, 8, 10, 12]);
+        const i = randInt(1, N - 1);
+        const answer = frac(i, N);
+        return {
+          prompt: `A fair random walk starts at ${i} and stops when it hits 0 or ${N}. What is the probability it hits ${N} before 0?`,
+          answer,
+          hint: "For a fair walk, the win probability is linear in the starting point.",
+          solution: `For fair gambler's ruin, P(hit ${N} before 0) = start/target = ${i}/${N} = ${fmt(answer)}.`,
+          mental: "Fair ruin: i/N."
+        };
+      }),
+      make("ev-first-hh", "Expected HH Wait", "expected", 4, () => ({
+        prompt: "Flip a fair coin until HH appears for the first time. What is the expected number of flips?",
+        answer: frac(6, 1),
+        hint: "Overlapping patterns make this longer than 1/P(HH).",
+        solution: "The classic state calculation gives 6 flips: from no current H streak and from one-H streak. The answer is not 4 because HH can overlap with failed starts.",
+        mental: "HH wait is 6; HT wait is 4."
+      })),
+      make("ev-lottery-ticket", "Fair Ticket Price", "expected", 2, () => {
+        const outcomes = [
+          [1, 6, 12],
+          [1, 4, 8],
+          [1, 10, 20],
+          [2, 5, 15],
+          [3, 10, 30]
+        ];
+        const [num, den, prize] = pick(outcomes);
+        const answer = frac(num * prize, den);
+        return {
+          prompt: `A ticket pays $${prize} with probability ${num}/${den}, otherwise $0. What is the fair price of the ticket?`,
+          answer,
+          hint: "Fair price equals expected payout.",
+          solution: `EV = (${num}/${den}) * ${prize} = ${fmt(answer)} dollars.`,
+          mental: "Probability times prize."
+        };
+      })
+    ];
+
+    const state = {
+      topic: "all",
+      difficulty: "all",
+      current: null,
+      answered: false,
+      stats: JSON.parse(localStorage.getItem("probabilityGrinderStats") || "{\"attempts\":0,\"correct\":0,\"streak\":0,\"best\":0}")
+    };
+
+    const els = {
+      topicButtons: document.getElementById("topicButtons"),
+      difficultySelect: document.getElementById("difficultySelect"),
+      newProblem: document.getElementById("newProblem"),
+      prompt: document.getElementById("prompt"),
+      answerInput: document.getElementById("answerInput"),
+      submitAnswer: document.getElementById("submitAnswer"),
+      showHint: document.getElementById("showHint"),
+      showSolution: document.getElementById("showSolution"),
+      nextProblem: document.getElementById("nextProblem"),
+      feedback: document.getElementById("feedback"),
+      solution: document.getElementById("solution"),
+      topicChip: document.getElementById("topicChip"),
+      difficultyChip: document.getElementById("difficultyChip"),
+      templateChip: document.getElementById("templateChip"),
+      bankChip: document.getElementById("bankChip"),
+      solvedStat: document.getElementById("solvedStat"),
+      accuracyStat: document.getElementById("accuracyStat"),
+      streakStat: document.getElementById("streakStat"),
+      bestStat: document.getElementById("bestStat"),
+      resetStats: document.getElementById("resetStats"),
+      bankList: document.getElementById("bankList")
+    };
+
+    const topicNames = {
+      "dice-coins": "Dice & Coins",
+      "cards-bags": "Cards & Bags",
+      "conditional": "Conditional",
+      "counting": "Counting",
+      "expected": "EV Games"
+    };
+
+    const filteredTemplates = () => templates.filter((t) => {
+      const topicOk = state.topic === "all" || t.topic === state.topic;
+      const diffOk = state.difficulty === "all" || t.difficulty === Number(state.difficulty);
+      return topicOk && diffOk;
+    });
+
+    const updateStats = () => {
+      localStorage.setItem("probabilityGrinderStats", JSON.stringify(state.stats));
+      els.solvedStat.textContent = state.stats.attempts;
+      els.accuracyStat.textContent = state.stats.attempts ? `${Math.round(100 * state.stats.correct / state.stats.attempts)}%` : "0%";
+      els.streakStat.textContent = state.stats.streak;
+      els.bestStat.textContent = state.stats.best;
+    };
+
+    const renderBank = () => {
+      const counts = templates.reduce((acc, t) => {
+        acc[t.topic] = (acc[t.topic] || 0) + 1;
+        return acc;
+      }, {});
+      els.bankChip.textContent = `${templates.length} templates`;
+      els.bankList.innerHTML = Object.entries(topicNames).map(([key, label]) => `
+        <div class="bank-row"><strong>${label}</strong><span>${counts[key] || 0} templates</span></div>
+      `).join("");
+    };
+
+    const setFeedback = (kind, text, sub = "") => {
+      els.feedback.className = `feedback ${kind}`;
+      els.feedback.innerHTML = `${text}${sub ? `<span>${sub}</span>` : ""}`;
+    };
+
+    const answerDetail = () => state.current?.template.topic === "expected" ? "" : ` (${pct(state.current.answer)})`;
+
+    const showSolution = () => {
+      if (!state.current) return;
+      els.solution.classList.add("visible");
+      els.solution.innerHTML = `<strong>Solution</strong>${state.current.solution}<br><br><strong>Mental hook</strong>${state.current.mental}<br><br><strong>Exact answer</strong>${fmt(state.current.answer)}${answerDetail()}`;
+    };
+
+    const nextProblem = () => {
+      const pool = filteredTemplates();
+      const template = pick(pool.length ? pool : templates);
+      const generated = template.generate();
+      state.current = { ...generated, template };
+      state.answered = false;
+      els.prompt.textContent = generated.prompt;
+      els.answerInput.value = "";
+      els.solution.classList.remove("visible");
+      els.solution.innerHTML = "";
+      els.topicChip.textContent = topicNames[template.topic];
+      els.difficultyChip.textContent = `Level ${template.difficulty}`;
+      els.templateChip.textContent = template.title;
+      setFeedback("neutral", "Ready.", "Enter an exact fraction like 5/12, a decimal, a percent, or an integer.");
+      if (window.matchMedia("(min-width: 721px) and (pointer: fine)").matches) {
+        requestAnimationFrame(() => els.answerInput.focus({ preventScroll: true }));
+      }
+    };
+
+    const submit = () => {
+      if (!state.current) return;
+      const parsed = parseAnswer(els.answerInput.value);
+      if (!parsed) {
+        setFeedback("bad", "I could not parse that answer.", "Use a fraction like 7/12, a decimal like 0.583, or a percent like 58.3%.");
+        return;
+      }
+      const ok = equivalent(parsed, state.current.answer);
+      if (!state.answered) {
+        state.stats.attempts += 1;
+        if (ok) {
+          state.stats.correct += 1;
+          state.stats.streak += 1;
+          state.stats.best = Math.max(state.stats.best, state.stats.streak);
+        } else {
+          state.stats.streak = 0;
+        }
+        updateStats();
+      }
+      state.answered = true;
+      if (ok) {
+        setFeedback("good", `Correct: ${fmt(state.current.answer)}`, `${state.current.template.topic === "expected" ? "Press Enter for the next problem." : `${pct(state.current.answer)}. Press Enter for the next problem.`}`);
+      } else {
+        setFeedback("bad", `Not quite. Correct answer: ${fmt(state.current.answer)}`, `${state.current.template.topic === "expected" ? "Review the solution, then go next." : `${pct(state.current.answer)}. Review the solution, then go next.`}`);
+      }
+      showSolution();
+    };
+
+    els.topicButtons.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-topic]");
+      if (!button) return;
+      state.topic = button.dataset.topic;
+      els.topicButtons.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === button));
+      nextProblem();
+    });
+
+    els.difficultySelect.addEventListener("change", () => {
+      state.difficulty = els.difficultySelect.value;
+      nextProblem();
+    });
+
+    els.newProblem.addEventListener("click", nextProblem);
+    els.nextProblem.addEventListener("click", nextProblem);
+    els.submitAnswer.addEventListener("click", submit);
+    els.showHint.addEventListener("click", () => {
+      if (state.current) setFeedback("neutral", "Hint", state.current.hint);
+    });
+    els.showSolution.addEventListener("click", showSolution);
+    els.resetStats.addEventListener("click", () => {
+      state.stats = { attempts: 0, correct: 0, streak: 0, best: 0 };
+      updateStats();
+    });
+    els.answerInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      if (state.answered) nextProblem();
+      else submit();
+    });
+
+    renderBank();
+    updateStats();
+    nextProblem();
+  </script>
+</body>
+</html>
