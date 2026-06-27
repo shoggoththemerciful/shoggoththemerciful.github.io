@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#eef3ed">
   <meta name="description" content="A Kalshi and Polymarket arbitrage sizing calculator with bid/ask inputs, hedge sizing, modeled profit, and formula breakdowns.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <title>Arbitrage Sizer</title>
   <style>
     :root {
@@ -220,6 +221,7 @@
 
     .panel {
       padding: 16px;
+      min-width: 0;
     }
 
     .control-grid {
@@ -482,6 +484,7 @@
     }
 
     .opportunities {
+      max-width: 100%;
       overflow-x: auto;
       border: 2px solid var(--line);
       border-radius: var(--radius);

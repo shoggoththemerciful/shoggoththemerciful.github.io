@@ -5,7 +5,8 @@ const state = {
   selectedSide: "yes",
   selectedRange: "7d",
   history: [],
-  stream: null
+  stream: null,
+  apiAvailable: true
 };
 
 const els = {
@@ -50,8 +51,8 @@ window.addEventListener("resize", () => drawChart());
 boot();
 
 async function boot() {
-  await loadWatchlist();
-  connectStream();
+  const loaded = await loadWatchlist();
+  if (loaded) connectStream();
 }
 
 async function handleSearch(event) {
@@ -67,34 +68,45 @@ async function handleSearch(event) {
     setStatus(state.searchResults.length + " search results");
   } catch (error) {
     state.searchResults = [];
-    renderResults([{ venue: "search", error: error.message }]);
-    setStatus("Search failed");
+    renderResults([{ venue: "local api", error: apiErrorMessage(error) }]);
+    setStatus(apiErrorMessage(error));
   }
 }
 
 async function loadWatchlist() {
   try {
     const data = await fetchJson("/api/watchlist");
+    state.apiAvailable = true;
     applyLivePayload(data);
+    return true;
   } catch (error) {
-    setStatus("Could not load watchlist: " + error.message);
+    state.apiAvailable = false;
+    state.watchlist = [];
+    state.selectedKey = "";
+    renderWatchlist();
+    setStatus(apiErrorMessage(error));
+    setLiveBadge("offline", "error");
+    return false;
   }
 }
 
 function connectStream() {
+  if (!state.apiAvailable) return;
   if (state.stream) state.stream.close();
   const stream = new EventSource("/api/stream");
   state.stream = stream;
   stream.addEventListener("open", () => {
-    els.liveBadge.textContent = "live";
-    els.liveBadge.className = "live-badge live";
+    setLiveBadge("live", "live");
   });
   stream.addEventListener("live", (event) => {
-    applyLivePayload(JSON.parse(event.data));
+    try {
+      applyLivePayload(JSON.parse(event.data));
+    } catch {
+      setStatus("Live update was not valid JSON.");
+    }
   });
   stream.addEventListener("error", () => {
-    els.liveBadge.textContent = "reconnecting";
-    els.liveBadge.className = "live-badge error";
+    setLiveBadge("reconnecting", "error");
   });
 }
 
@@ -195,7 +207,7 @@ async function loadHistory() {
     drawChart();
     renderMetrics(item);
   } catch (error) {
-    els.chartEmpty.textContent = "History failed: " + error.message;
+    els.chartEmpty.textContent = apiErrorMessage(error);
     els.chartEmpty.classList.remove("hidden");
   }
 }
@@ -329,8 +341,24 @@ async function handleWatchClick(event) {
 
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, options);
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || response.statusText);
+  const contentType = response.headers.get("content-type") || "";
+  const text = await response.text();
+  let data = null;
+
+  if (text && (contentType.includes("application/json") || text.trim().startsWith("{") || text.trim().startsWith("["))) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("Server returned invalid JSON.");
+    }
+  }
+
+  if (!response.ok) {
+    const apiPath = String(url).startsWith("/api/");
+    throw new Error(data?.error || (apiPath ? "Local API is offline." : response.statusText || "Request failed."));
+  }
+
+  if (!data) throw new Error("Server returned a non-JSON response.");
   return data;
 }
 
@@ -370,6 +398,18 @@ function setActive(group, button) {
 
 function setStatus(text) {
   els.statusLine.textContent = text;
+}
+
+function setLiveBadge(text, stateClass) {
+  els.liveBadge.textContent = text;
+  els.liveBadge.className = "live-badge" + (stateClass ? " " + stateClass : "");
+}
+
+function apiErrorMessage(error) {
+  if (error.message === "Local API is offline.") {
+    return "Local API offline. Start the tracker server to load watchlists and search markets.";
+  }
+  return error.message || "Request failed.";
 }
 
 function formatCents(value) {
