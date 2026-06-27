@@ -10,21 +10,23 @@
   <style>
     :root {
       color-scheme: light;
-      --paper: #eef4f1;
-      --panel: #fffaf0;
-      --ink: #172026;
-      --muted: #66716f;
-      --line: #d1dad3;
+      --paper: #edf5f4;
+      --panel: #ffffff;
+      --ink: #121c24;
+      --muted: #5f6c70;
+      --line: #cbd9d5;
+      --line-strong: #1b2930;
       --teal: #177c76;
       --teal-dark: #095a55;
       --coral: #df5f4e;
       --gold: #e0a82e;
       --blue: #2f6fbb;
+      --soft: #f6faf8;
       --green-soft: #e8f5ef;
       --blue-soft: #eef5ff;
       --gold-soft: #fff5d8;
       --red-soft: #fff0ec;
-      --shadow: 0 18px 55px rgba(23, 32, 38, 0.12);
+      --shadow: 0 14px 34px rgba(18, 28, 36, 0.08);
       --radius: 8px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
@@ -44,7 +46,8 @@
       color: var(--ink);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        linear-gradient(180deg, rgba(255, 250, 240, 0.82), rgba(238, 244, 241, 0.94) 360px),
+        radial-gradient(circle at 18% 0, rgba(23, 124, 118, 0.12), transparent 320px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(237, 245, 244, 0.96) 420px),
         var(--paper);
     }
 
@@ -67,9 +70,10 @@
       width: min(1180px, calc(100vw - 28px));
       min-height: 100vh;
       margin: 0 auto;
-      padding: 22px 0;
+      padding: 20px 0 28px;
       display: grid;
-      grid-template-rows: auto 1fr;
+      grid-template-rows: auto auto;
+      align-content: start;
       gap: 18px;
     }
 
@@ -90,12 +94,12 @@
     .mark {
       width: 44px;
       height: 44px;
-      border: 2px solid var(--ink);
+      border: 2px solid var(--line-strong);
       border-radius: var(--radius);
       display: grid;
       place-items: center;
       background: var(--teal);
-      box-shadow: 4px 4px 0 var(--ink);
+      box-shadow: 3px 3px 0 rgba(18, 28, 36, 0.9);
       flex: 0 0 auto;
     }
 
@@ -118,7 +122,7 @@
 
     h1 {
       margin-bottom: 0;
-      font-size: clamp(1.55rem, 3vw, 2.45rem);
+      font-size: clamp(1.55rem, 2.6vw, 2.35rem);
       line-height: 1;
       letter-spacing: 0;
     }
@@ -140,12 +144,12 @@
 
     .button {
       min-height: 42px;
-      border: 2px solid var(--ink);
+      border: 2px solid var(--line-strong);
       border-radius: var(--radius);
       padding: 0 16px;
-      background: var(--ink);
+      background: var(--line-strong);
       color: #fffaf0;
-      box-shadow: 3px 3px 0 rgba(23, 32, 38, 0.22);
+      box-shadow: 3px 3px 0 rgba(18, 28, 36, 0.14);
       font-weight: 850;
       text-decoration: none;
       display: inline-flex;
@@ -161,9 +165,10 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 330px;
+      grid-template-columns: minmax(0, 1fr) 310px;
       gap: 18px;
-      align-items: stretch;
+      align-items: start;
+      align-content: start;
     }
 
     .workspace {
@@ -177,16 +182,16 @@
     .controls,
     .panel,
     .sidebar {
-      border: 2px solid var(--ink);
+      border: 1px solid var(--line-strong);
       border-radius: var(--radius);
-      background: rgba(255, 250, 240, 0.94);
+      background: rgba(255, 255, 255, 0.92);
       box-shadow: var(--shadow);
     }
 
     .controls {
       padding: 12px;
       display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) auto;
+      grid-template-columns: minmax(0, 1.35fr) minmax(190px, 0.75fr) auto;
       gap: 12px;
       align-items: end;
     }
@@ -209,7 +214,7 @@
       grid-auto-flow: column;
       grid-auto-columns: 1fr;
       gap: 3px;
-      background: #e6eee9;
+      background: #eef5f2;
     }
 
     .segmented button {
@@ -247,10 +252,10 @@
     }
 
     .panel {
-      padding: clamp(16px, 4vw, 32px);
+      padding: clamp(16px, 3vw, 26px);
       display: grid;
       grid-template-rows: auto auto auto;
-      gap: 18px;
+      gap: 16px;
       align-content: start;
       overflow: hidden;
     }
@@ -276,9 +281,9 @@
 
     .chip {
       min-height: 28px;
-      border: 2px solid var(--line);
+      border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 3px 10px;
+      padding: 3px 10px 2px;
       background: white;
       color: var(--teal-dark);
       font-size: 0.76rem;
@@ -299,10 +304,10 @@
     }
 
     .problem-card {
-      border: 2px solid var(--line);
-      border-radius: var(--radius);
-      background: white;
-      padding: clamp(16px, 4vw, 28px);
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
       display: grid;
       gap: 18px;
       align-content: start;
@@ -312,9 +317,13 @@
     .prompt {
       margin: 0;
       color: var(--ink);
-      font-size: clamp(1.4rem, 4vw, 2.35rem);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--soft);
+      padding: clamp(18px, 3vw, 28px);
+      font-size: clamp(1.35rem, 2.5vw, 2.08rem);
       font-weight: 880;
-      line-height: 1.12;
+      line-height: 1.16;
       text-wrap: balance;
       overflow-wrap: anywhere;
     }
@@ -358,7 +367,7 @@
 
     .answer-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
+      grid-template-columns: minmax(0, 1fr) minmax(96px, auto) minmax(76px, auto);
       gap: 10px;
       align-items: center;
     }
@@ -366,7 +375,7 @@
     .answer {
       width: 100%;
       min-height: 54px;
-      border: 2px solid var(--ink);
+      border: 2px solid var(--line-strong);
       border-radius: var(--radius);
       background: var(--panel);
       color: var(--ink);
@@ -381,7 +390,7 @@
 
     .feedback {
       min-height: 52px;
-      border: 2px solid var(--line);
+      border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--green-soft);
       padding: 11px 12px;
@@ -407,8 +416,9 @@
 
     .solution {
       display: none;
+      border: 1px solid var(--line);
       border-left: 4px solid var(--teal);
-      border-radius: 0 var(--radius) var(--radius) 0;
+      border-radius: var(--radius);
       background: var(--green-soft);
       padding: 12px 14px;
       color: #31403c;
@@ -434,6 +444,12 @@
       min-width: 0;
     }
 
+    .sidebar h2 {
+      margin-bottom: 9px;
+      font-size: 1.45rem;
+      line-height: 1.05;
+    }
+
     .stat-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -441,10 +457,10 @@
     }
 
     .stat {
-      min-height: 86px;
-      border: 2px solid var(--line);
+      min-height: 76px;
+      border: 1px solid var(--line);
       border-radius: var(--radius);
-      background: white;
+      background: var(--soft);
       padding: 10px;
       display: grid;
       align-content: center;
@@ -464,19 +480,54 @@
       line-height: 1;
     }
 
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .memory-pill {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--blue-soft);
+      padding: 9px 10px;
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .memory-pill span {
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-weight: 930;
+      text-transform: uppercase;
+    }
+
+    .memory-pill strong {
+      color: var(--ink);
+      font-size: 1.02rem;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
     .bank-list {
       display: grid;
-      gap: 8px;
+      gap: 0;
+      border-top: 1px solid var(--line);
     }
 
     .bank-row {
       border-top: 1px solid var(--line);
-      padding-top: 8px;
+      padding: 8px 0;
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 10px;
       align-items: baseline;
       font-weight: 800;
+    }
+
+    .bank-row:first-child {
+      border-top: 0;
     }
 
     .bank-row span {
@@ -521,9 +572,19 @@
       .layout {
         grid-template-columns: 1fr;
       }
+
+      .sidebar {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 720px) {
+      .app {
+        width: min(100% - 14px, 1180px);
+        padding-top: 16px;
+        gap: 16px;
+      }
+
       .topbar,
       .controls,
       .status-row,
@@ -531,12 +592,65 @@
         grid-template-columns: 1fr;
       }
 
+      .brand {
+        align-items: flex-start;
+      }
+
+      .mark {
+        width: 46px;
+        height: 46px;
+      }
+
       .actions {
-        justify-content: flex-start;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: stretch;
+      }
+
+      .button {
+        width: 100%;
+        padding-inline: 12px;
       }
 
       .topic-control .segmented {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .chips {
+        gap: 7px;
+      }
+
+      .prompt {
+        padding: 17px;
+        font-size: clamp(1.45rem, 6vw, 1.72rem);
+      }
+
+      .panel > .actions {
+        grid-template-columns: minmax(0, 1fr) 80px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .record {
+        font-size: 0.88rem;
+      }
+
+      .segmented button {
+        min-height: 34px;
+        padding-inline: 4px;
+      }
+
+      .answer {
+        min-height: 52px;
+      }
+
+      .stat-grid,
+      .memory-grid {
+        gap: 8px;
       }
     }
   </style>
@@ -642,6 +756,19 @@
           <div class="stat">
             <span>Best</span>
             <strong id="bestStat">0</strong>
+          </div>
+        </div>
+        <div>
+          <h2>Spacing</h2>
+          <div class="memory-grid">
+            <div class="memory-pill">
+              <span>Seen</span>
+              <strong id="seenStat">0/0</strong>
+            </div>
+            <div class="memory-pill">
+              <span>History</span>
+              <strong id="historyStat">0</strong>
+            </div>
           </div>
         </div>
         <div>
@@ -3249,6 +3376,8 @@
       accuracyStat: document.getElementById("accuracyStat"),
       streakStat: document.getElementById("streakStat"),
       bestStat: document.getElementById("bestStat"),
+      seenStat: document.getElementById("seenStat"),
+      historyStat: document.getElementById("historyStat"),
       resetStats: document.getElementById("resetStats"),
       bankList: document.getElementById("bankList")
     };
@@ -3398,6 +3527,14 @@
       els.bestStat.textContent = state.stats.best;
     };
 
+    const updateMemory = () => {
+      const pool = filteredTemplates();
+      const activePool = pool.length ? pool : templates;
+      const seenInPool = activePool.filter((template) => state.scheduler.seenTemplates[template.id]).length;
+      els.seenStat.textContent = `${seenInPool}/${activePool.length}`;
+      els.historyStat.textContent = `${state.scheduler.history.length}/500`;
+    };
+
     const renderBank = () => {
       const counts = templates.reduce((acc, t) => {
         acc[t.topic] = (acc[t.topic] || 0) + 1;
@@ -3461,6 +3598,7 @@
       els.difficultyChip.textContent = `Level ${template.difficulty}`;
       els.templateChip.textContent = template.title;
       setFeedback("neutral", "Ready.", "Enter an exact fraction like 5/12, a decimal, a percent, or an integer.");
+      updateMemory();
       if (window.matchMedia("(min-width: 721px) and (pointer: fine)").matches) {
         requestAnimationFrame(() => els.answerInput.focus({ preventScroll: true }));
       }
@@ -3527,6 +3665,7 @@
 
     renderBank();
     updateStats();
+    updateMemory();
     nextProblem();
   </script>
 </body>
