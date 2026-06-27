@@ -1096,10 +1096,15 @@
       border-radius: var(--radius);
       background: white;
       padding: 14px;
+      margin: 0;
       display: grid;
       gap: 12px;
       min-width: 0;
       overflow: hidden;
+    }
+
+    .diagram-card.wide {
+      grid-column: 1 / -1;
     }
 
     .token-flow {
@@ -1141,8 +1146,8 @@
 
     .gqa-row {
       display: grid;
-      grid-template-columns: 78px repeat(8, minmax(34px, 1fr));
-      gap: 4px;
+      grid-template-columns: 96px repeat(8, minmax(42px, 1fr));
+      gap: 6px;
       align-items: center;
       font-size: 0.76rem;
       font-weight: 900;
@@ -2137,7 +2142,7 @@
             updated, and why long-context cache memory is uneven across layer types.
           </p>
           <div class="diagram-grid" style="margin-top: 14px;">
-            <figure class="diagram-card">
+            <figure class="diagram-card wide">
               <h3>One Token's Journey</h3>
               <div class="token-flow" aria-label="One token journey diagram">
                 <div class="token-step">Token<br><code>x_t</code></div>
@@ -2154,7 +2159,7 @@
               </figcaption>
             </figure>
 
-            <figure class="diagram-card">
+            <figure class="diagram-card wide">
               <h3>Grouped-Query Attention</h3>
               <div class="gqa-map" aria-label="Grouped-query attention map">
                 <div class="gqa-row">
