@@ -2656,28 +2656,41 @@
           <p class="eyebrow">Compact form</p>
           <h2>The Whole Text Forward Pass</h2>
           <div class="pseudo">
-<pre><code>H = embed_tokens(input_ids) * sqrt(5376)
-positions = cache_offset + arange(T)
+<pre><code># Text-only input IDs path. If inputs_embeds are supplied, start with those instead.
+H = embedding_table[input_ids] * sqrt(5376)
+positions = past_seen_tokens + arange(T_current)
+
+full_mask = causal_mask                 # keys s <= query t
+sliding_mask = causal_mask & last_1024  # keys t - 1024 < s <= t
+# Supplied padding or packed-sequence masks further restrict these masks.
 
 for layer_index in 0..59:
     kind = "full" if (layer_index + 1) % 6 == 0 else "sliding"
+    head_dim = 512 if kind == "full" else 256
+    kv_heads = 4 if kind == "full" else 16
+    group_size = 32 // kv_heads
+    mask = full_mask if kind == "full" else sliding_mask
 
     U = input_rmsnorm[layer_index](H)
 
-    Q = q_norm(q_proj(U))
-    K_raw = k_proj(U)
-    V_raw = v_proj(U) if kind == "sliding" else K_raw
+    Q = reshape_heads(q_proj(U), heads=32, dim=head_dim)
+    K_raw = reshape_heads(k_proj(U), heads=kv_heads, dim=head_dim)
+    V_raw = reshape_heads(v_proj(U), heads=kv_heads, dim=head_dim) if kind == "sliding" else K_raw
 
+    Q = to_attention_layout(rope_kind(q_norm(Q), positions))
     K = k_norm(K_raw)
-    V = v_norm_without_scale(V_raw)
+    K = to_attention_layout(rope_kind(K, positions))
+    V = to_attention_layout(v_norm_without_scale(V_raw))
 
-    Q = rope_kind(Q, positions)
-    K = rope_kind(K, positions)
+    # In cached generation, append the new layer K/V before attention.
+    if use_cache:
+        K, V = cache[layer_index].append_and_return(K, V)
 
-    K = repeat_kv_to_32_query_heads(K)
-    V = repeat_kv_to_32_query_heads(V)
+    # Shown explicitly; the eager backend performs this repeat internally.
+    K = repeat_kv_to_32_query_heads(K, repeats=group_size)
+    V = repeat_kv_to_32_query_heads(V, repeats=group_size)
 
-    scores = Q @ K.transpose(-1, -2) + causal_mask_kind
+    scores = (Q @ K.transpose(-1, -2)) * 1.0 + mask
     P = softmax(scores, dtype=float32)
     A = o_proj(concat_heads(P @ V))
 
@@ -2688,9 +2701,12 @@ for layer_index in 0..59:
     H = Y + post_ffn_rmsnorm[layer_index](F)
 
 H = final_rmsnorm(H)
-logits = H @ embed_tokens.weight.T
+logits = H @ embedding_table.T  # tied LM head
 logits = 30 * tanh(logits / 30)
-next_token_probs = softmax(logits[:, -1, :])</code></pre>
+next_token_probs = softmax(logits[:, -1, :])
+
+if labels are supplied:
+    loss = cross_entropy(logits[:, :-1, :], labels[:, 1:], ignore_masked_labels=True)</code></pre>
           </div>
         </section>
 
