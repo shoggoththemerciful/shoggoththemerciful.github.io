@@ -8,4 +8,5 @@ Static tools hosted at `shoggoththemerciful.github.io`.
 - `/market-math-trainer/tutorial/` explains every market math drill.
 - `/prediction-market-edge/` is a read-only Kalshi and Polymarket edge, sizing, watchlist, and journal tool.
 - `/arbitrage-sizer/` calculates cross-market Kalshi and Polymarket arbitrage sizing from bid and ask prices.
+- `/gemma-4-31b-architecture/` is a visual guide to the Gemma 4 31B-it text model architecture.
 - `/time-zone-trainer/` is a fast time zone conversion trainer for Bergen, UTC, New York, PT, and trading schedule times.
