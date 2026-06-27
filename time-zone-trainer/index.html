@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#eef4f1">
+  <meta name="description" content="A fast time-zone conversion trainer for Bergen, UTC, New York, Pacific time, London, and market schedule times.">
   <title>Time Zone Trainer</title>
   <style>
     :root {
@@ -126,6 +127,11 @@
       color: #fffaf0;
       box-shadow: 3px 3px 0 rgba(23, 32, 38, 0.22);
       font-weight: 850;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
     }
 
     .button.secondary {
@@ -136,6 +142,13 @@
     .button:active,
     .segmented button:active {
       transform: translateY(1px);
+    }
+
+    .button:focus-visible,
+    .segmented button:focus-visible,
+    .answer:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(47, 111, 187, 0.18);
     }
 
     .layout {
@@ -560,6 +573,7 @@
         </div>
       </div>
       <div class="actions">
+        <a class="button secondary" href="../">Tools</a>
         <button class="button" id="startBtn" type="button">Start</button>
         <button class="button secondary" id="resetBtn" type="button">Reset</button>
       </div>

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#eef3ed">
+  <meta name="description" content="A visual, pedagogical explanation of the Gemma 4 31B-it text model architecture, including layers, attention, RoPE, MLPs, logits, and generation.">
   <title>Gemma 4 31B-it Architecture</title>
   <style>
     :root {
@@ -54,6 +55,22 @@
       color: inherit;
     }
 
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(47, 111, 187, 0.18);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
     code,
     pre {
       font-family: var(--mono);
@@ -78,6 +95,26 @@
       padding: 22px 0 44px;
       display: grid;
       gap: 18px;
+    }
+
+    .skip-link {
+      position: fixed;
+      left: 12px;
+      top: 12px;
+      z-index: 100;
+      transform: translateY(-140%);
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--gold);
+      color: var(--ink);
+      padding: 8px 12px;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 3px 3px 0 var(--ink);
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
     }
 
     .topbar {
@@ -358,6 +395,10 @@
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
+      position: sticky;
+      top: 8px;
+      z-index: 10;
+      backdrop-filter: blur(10px);
     }
 
     .toc a {
@@ -372,6 +413,12 @@
       font-weight: 850;
       display: inline-flex;
       align-items: center;
+    }
+
+    .toc a.active {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: #fffaf0;
     }
 
     .main-grid {
@@ -401,6 +448,33 @@
 
     .section > p + p {
       margin-top: 12px;
+    }
+
+    .takeaway-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .takeaway {
+      min-height: 128px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: white;
+      padding: 12px;
+      display: grid;
+      align-content: start;
+      gap: 8px;
+    }
+
+    .takeaway strong {
+      font-size: 1.02rem;
+      line-height: 1.12;
+    }
+
+    .takeaway p {
+      font-size: 0.9rem;
+      line-height: 1.45;
     }
 
     .split {
@@ -447,6 +521,17 @@
 
     .card p + p {
       margin-top: 10px;
+    }
+
+    .callout {
+      padding: 14px;
+      background: var(--blue-soft);
+      display: grid;
+      gap: 8px;
+    }
+
+    .callout p {
+      color: #33403f;
     }
 
     .formula {
@@ -705,6 +790,457 @@
       gap: 12px;
     }
 
+    .explorer {
+      display: grid;
+      gap: 14px;
+    }
+
+    .explorer-controls {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 12px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: white;
+      box-shadow: 2px 2px 0 rgba(23, 32, 38, 0.2);
+      display: grid;
+      place-items: center;
+      font-weight: 950;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--teal);
+    }
+
+    .layer-dots {
+      display: grid;
+      grid-template-columns: repeat(60, minmax(5px, 1fr));
+      gap: 3px;
+    }
+
+    .layer-dot {
+      min-width: 0;
+      height: 22px;
+      border: 0;
+      border-radius: 4px;
+      background: var(--green-soft);
+      padding: 0;
+    }
+
+    .layer-dot.full {
+      background: var(--blue);
+    }
+
+    .layer-dot.active {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px;
+      background: var(--gold);
+    }
+
+    .explorer-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 12px;
+    }
+
+    .layer-summary {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: white;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .layer-number {
+      font-size: clamp(2.3rem, 8vw, 4.6rem);
+      line-height: 0.9;
+      font-weight: 950;
+    }
+
+    .layer-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 12px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .detail {
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--green-soft);
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .detail:nth-child(2n) {
+      background: var(--blue-soft);
+    }
+
+    .detail span {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .detail strong {
+      line-height: 1.15;
+    }
+
+    .weight-bars {
+      display: grid;
+      gap: 10px;
+    }
+
+    .weight-row {
+      display: grid;
+      grid-template-columns: 142px minmax(0, 1fr) 90px;
+      gap: 10px;
+      align-items: center;
+      font-weight: 850;
+    }
+
+    .weight-track {
+      height: 24px;
+      border: 2px solid var(--ink);
+      border-radius: 6px;
+      background: white;
+      overflow: hidden;
+    }
+
+    .weight-fill {
+      height: 100%;
+      display: block;
+      background: var(--teal);
+    }
+
+    .weight-fill.blue {
+      background: var(--blue);
+    }
+
+    .weight-fill.gold {
+      background: var(--gold);
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .calc-card {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: white;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    label.calc-field {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .calc-field input,
+    .calc-field select {
+      width: 100%;
+      min-height: 40px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0 10px;
+      font-weight: 850;
+    }
+
+    .output-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .output-tile {
+      min-height: 86px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--green-soft);
+      padding: 10px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+    }
+
+    .output-tile:nth-child(2n) {
+      background: var(--blue-soft);
+    }
+
+    .output-tile span {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .output-tile strong {
+      font-size: clamp(1.05rem, 3vw, 1.55rem);
+      line-height: 1.05;
+    }
+
+    .stack-meter {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .stack-row {
+      display: grid;
+      grid-template-columns: 104px minmax(0, 1fr) 78px;
+      gap: 8px;
+      align-items: center;
+      color: var(--ink);
+      font-size: 0.8rem;
+      font-weight: 850;
+    }
+
+    .stack-track {
+      height: 22px;
+      border: 2px solid var(--ink);
+      border-radius: 6px;
+      background: white;
+      overflow: hidden;
+    }
+
+    .stack-fill {
+      height: 100%;
+      width: 0%;
+      display: block;
+      background: var(--teal);
+    }
+
+    .stack-fill.blue {
+      background: var(--blue);
+    }
+
+    .stack-fill.gold {
+      background: var(--gold);
+    }
+
+    .diagram-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .diagram-card {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: white;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .token-flow {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 7px;
+      align-items: center;
+    }
+
+    .token-step {
+      min-height: 92px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--green-soft);
+      padding: 9px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: 0.82rem;
+      font-weight: 900;
+      line-height: 1.18;
+      position: relative;
+    }
+
+    .token-step:nth-child(2n) {
+      background: var(--blue-soft);
+    }
+
+    .token-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      width: 8px;
+      height: 2px;
+      background: var(--ink);
+    }
+
+    .gqa-map {
+      display: grid;
+      gap: 8px;
+    }
+
+    .gqa-row {
+      display: grid;
+      grid-template-columns: 76px repeat(8, minmax(0, 1fr));
+      gap: 4px;
+      align-items: center;
+      font-size: 0.76rem;
+      font-weight: 900;
+    }
+
+    .gqa-row b {
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .gqa-cell {
+      min-height: 26px;
+      border: 2px solid var(--line);
+      border-radius: 5px;
+      display: grid;
+      place-items: center;
+      background: var(--green-soft);
+    }
+
+    .gqa-cell.kv-a {
+      background: var(--gold-soft);
+    }
+
+    .gqa-cell.kv-b {
+      background: var(--blue-soft);
+    }
+
+    .residual-river {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .river-line {
+      min-height: 42px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      overflow: hidden;
+    }
+
+    .river-line span {
+      display: grid;
+      place-items: center;
+      border-right: 2px solid var(--line);
+      font-size: 0.74rem;
+      font-weight: 900;
+      text-align: center;
+      padding: 4px;
+    }
+
+    .river-line span:last-child {
+      border-right: 0;
+    }
+
+    .cache-layers {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 5px;
+      align-items: end;
+      min-height: 160px;
+    }
+
+    .cache-layer {
+      border: 2px solid var(--ink);
+      border-radius: 5px 5px 0 0;
+      background: var(--green-soft);
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      font-size: 0.72rem;
+      font-weight: 950;
+      min-height: 42px;
+    }
+
+    .cache-layer.full {
+      background: var(--blue);
+      color: white;
+      min-height: 142px;
+    }
+
+    .softcap-demo {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 120px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .softcap-demo input[type="range"] {
+      width: 100%;
+    }
+
+    .softcap-value {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--gold-soft);
+      padding: 10px;
+      display: grid;
+      gap: 3px;
+      text-align: center;
+    }
+
+    .softcap-value span {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .softcap-value strong {
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
     .shape-card {
       border: 2px solid var(--ink);
       border-radius: var(--radius);
@@ -813,6 +1349,20 @@
       line-height: 1.28;
     }
 
+    .progress-shell {
+      height: 12px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: white;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--teal);
+    }
+
     .source-list {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -861,9 +1411,15 @@
       .fact-grid,
       .two-col,
       .three-col,
+      .takeaway-grid,
+      .tool-grid,
       .pipeline,
       .mask-grid,
       .shape-grid,
+      .explorer-grid,
+      .diagram-grid,
+      .input-grid,
+      .output-grid,
       .source-list {
         grid-template-columns: 1fr;
       }
@@ -873,6 +1429,14 @@
       }
 
       .pipe-box:not(:last-child)::after {
+        display: none;
+      }
+
+      .token-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .token-step:not(:last-child)::after {
         display: none;
       }
 
@@ -886,8 +1450,22 @@
     }
 
     @media (max-width: 560px) {
+      .toc {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        top: 0;
+      }
+
+      .toc a {
+        flex: 0 0 auto;
+      }
+
       .layer-rail {
         grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+
+      .layer-dots {
+        grid-template-columns: repeat(30, minmax(6px, 1fr));
       }
 
       .bar-row {
@@ -897,10 +1475,22 @@
       .bar-row span:last-child {
         grid-column: 2;
       }
+
+      .weight-row,
+      .range-row,
+      .stack-row,
+      .softcap-demo {
+        grid-template-columns: 1fr;
+      }
+
+      .gqa-row {
+        grid-template-columns: 1fr repeat(4, minmax(0, 1fr));
+      }
     }
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#overview">Skip to content</a>
   <main class="page">
     <header class="topbar">
       <div class="brand">
@@ -975,6 +1565,7 @@
           <span class="chip">Text decoder</span>
           <span class="chip blue">GQA</span>
           <span class="chip gold">RoPE</span>
+          <span class="chip blue">256K context</span>
         </div>
         <div class="mini-flow">
           <div class="mini-node">
@@ -1010,11 +1601,16 @@
     <nav class="toc" aria-label="Page sections">
       <a href="#map">Forward Map</a>
       <a href="#config">Configuration</a>
+      <a href="#scope">Scope</a>
+      <a href="#tools">Tools</a>
       <a href="#layers">Layer Rhythm</a>
+      <a href="#explorer">Layer Explorer</a>
+      <a href="#diagrams">Diagrams</a>
       <a href="#block">Decoder Block</a>
       <a href="#attention">Attention</a>
       <a href="#rope">RoPE</a>
       <a href="#mlp">MLP</a>
+      <a href="#weights">Weights</a>
       <a href="#logits">Logits</a>
       <a href="#generation">Generation</a>
       <a href="#pseudocode">Pseudocode</a>
@@ -1065,6 +1661,20 @@
               diagram starts at the text decoder input.
             </figcaption>
           </figure>
+          <div class="takeaway-grid" style="margin-top: 12px;">
+            <div class="takeaway">
+              <strong>Width stays fixed.</strong>
+              <p>Embeddings, residual stream, decoder outputs, and final norm all live at <code>D = 5376</code>.</p>
+            </div>
+            <div class="takeaway">
+              <strong>Context alternates by layer.</strong>
+              <p>Most layers do local work; every sixth layer reconnects the token to the full causal history.</p>
+            </div>
+            <div class="takeaway">
+              <strong>The head is tied.</strong>
+              <p>The final vocabulary projection reuses the input embedding table, then softcaps logits at <code>30</code>.</p>
+            </div>
+          </div>
         </section>
 
         <section class="section" id="config">
@@ -1136,6 +1746,225 @@
           </div>
         </section>
 
+        <section class="section" id="scope">
+          <p class="eyebrow">What the checkpoint is</p>
+          <h2>Scope: Dense Text Decoder Inside a Multimodal Model</h2>
+          <p>
+            The public model card describes Gemma 4 31B as the dense 31B member of the
+            Gemma 4 family, with 60 layers, a 1024-token sliding window on local layers,
+            256K context length, a 262K vocabulary, and text+image input support. It
+            also lists a roughly 550M-parameter vision encoder and no audio encoder
+            for the 31B dense model.
+          </p>
+          <div class="three-col" style="margin-top: 12px;">
+            <div class="card soft">
+              <h3>This page focuses on</h3>
+              <p>
+                The language backbone: scaled token embeddings, decoder layers,
+                attention, MLPs, final norm, tied LM head, logits, generation cache,
+                and text-path memory/compute estimates.
+              </p>
+            </div>
+            <div class="card blue">
+              <h3>Outside the layer math</h3>
+              <p>
+                Vision preprocessing, variable image resolution, chat templates,
+                system-role formatting, function-calling protocols, and serving engines
+                such as vLLM or SGLang wrap the decoder but are not decoder-layer equations.
+              </p>
+            </div>
+            <div class="card gold">
+              <h3>Separate acceleration path</h3>
+              <p>
+                Gemma 4 also has Multi-Token Prediction assistant checkpoints for
+                speculative decoding. They can share KV cache with the target model,
+                but they are separate models, not extra layers inside this 31B decoder.
+              </p>
+            </div>
+          </div>
+          <div class="callout" style="margin-top: 12px;">
+            <h3>Why this distinction matters</h3>
+            <p>
+              Deployment docs may discuss reasoning mode, native system prompts, image
+              input, tool use, and speculative decoding. Those are real Gemma 4
+              capabilities, but the tensor diagrams here describe the dense text
+              decoder forward pass after any multimodal tokens have already been placed
+              into the sequence.
+            </p>
+          </div>
+        </section>
+
+        <section class="section" id="tools">
+          <p class="eyebrow">Interactive tools</p>
+          <h2>Memory and Compute Estimators</h2>
+          <p>
+            These calculators are architecture-level estimates for the Gemma 4 31B-it
+            text path. They account for the tied text weights and the K/V cache implied
+            by the layer pattern. They do not include framework overhead, allocator
+            fragmentation, vision-model memory, temporary activations, or hardware
+            throughput limits.
+          </p>
+          <div class="tool-grid" style="margin-top: 14px;">
+            <section class="calc-card" aria-label="Memory estimator">
+              <div>
+                <h3>Memory by Quantization and Context</h3>
+                <p>
+                  Estimate text weights plus generation KV cache. Sliding layers can
+                  be capped at the 1024-token window; full layers keep the whole causal
+                  history.
+                </p>
+              </div>
+              <div class="input-grid">
+                <label class="calc-field">
+                  Context length
+                  <input id="memContext" type="number" min="1" step="1" value="8192">
+                </label>
+                <label class="calc-field">
+                  Batch size
+                  <input id="memBatch" type="number" min="1" step="1" value="1">
+                </label>
+                <label class="calc-field">
+                  Weight format
+                  <select id="weightBits">
+                    <option value="16">BF16 / FP16 weights</option>
+                    <option value="32">FP32 weights</option>
+                    <option value="8">8-bit weights</option>
+                    <option value="6">6-bit weights</option>
+                    <option value="4" selected>4-bit weights</option>
+                    <option value="3">3-bit weights</option>
+                    <option value="2">2-bit weights</option>
+                  </select>
+                </label>
+                <label class="calc-field">
+                  Quant overhead
+                  <input id="quantOverhead" type="number" min="0" step="1" value="20">
+                </label>
+                <label class="calc-field">
+                  KV cache format
+                  <select id="kvBytes">
+                    <option value="2" selected>BF16 / FP16 KV</option>
+                    <option value="1">8-bit KV</option>
+                    <option value="4">FP32 KV</option>
+                  </select>
+                </label>
+                <label class="calc-field">
+                  Sliding cache mode
+                  <select id="kvMode">
+                    <option value="capped" selected>Cap sliding layers at 1024</option>
+                    <option value="full">Keep full KV for every layer</option>
+                  </select>
+                </label>
+              </div>
+              <div class="output-grid">
+                <div class="output-tile">
+                  <span>Weights</span>
+                  <strong id="weightsOut">0 GiB</strong>
+                </div>
+                <div class="output-tile">
+                  <span>KV cache</span>
+                  <strong id="kvOut">0 GiB</strong>
+                </div>
+                <div class="output-tile">
+                  <span>Total estimate</span>
+                  <strong id="totalMemOut">0 GiB</strong>
+                </div>
+                <div class="output-tile">
+                  <span>KV elements</span>
+                  <strong id="kvElementsOut">0B</strong>
+                </div>
+              </div>
+              <div class="stack-meter" aria-label="Memory composition">
+                <div class="stack-row">
+                  <span>Weights</span>
+                  <div class="stack-track"><i class="stack-fill" id="weightsBar"></i></div>
+                  <span id="weightsShare">0%</span>
+                </div>
+                <div class="stack-row">
+                  <span>Sliding KV</span>
+                  <div class="stack-track"><i class="stack-fill blue" id="slidingKvBar"></i></div>
+                  <span id="slidingKvShare">0%</span>
+                </div>
+                <div class="stack-row">
+                  <span>Full KV</span>
+                  <div class="stack-track"><i class="stack-fill gold" id="fullKvBar"></i></div>
+                  <span id="fullKvShare">0%</span>
+                </div>
+              </div>
+              <p class="footnote" id="memoryFormula"></p>
+              <p class="footnote">
+                Google's public memory table gives approximate load-memory planning
+                numbers for Gemma 4 31B at BF16, 8-bit, and Q4_0. This calculator uses
+                the released text dimensions, reports binary GiB, and adds KV cache
+                separately, so treat it as a transparent planning estimate rather than
+                an exact allocator measurement.
+              </p>
+            </section>
+
+            <section class="calc-card" aria-label="Compute estimator">
+              <div>
+                <h3>Forward-Pass Compute</h3>
+                <p>
+                  Estimate multiply-accumulate operations for either a prompt prefill
+                  or one decode step at a chosen context length. FLOPs are shown as
+                  approximately <code>2 * MACs</code>.
+                </p>
+              </div>
+              <div class="input-grid">
+                <label class="calc-field">
+                  Mode
+                  <select id="computeMode">
+                    <option value="decode" selected>Decode one new token</option>
+                    <option value="prefill">Prefill full prompt</option>
+                  </select>
+                </label>
+                <label class="calc-field">
+                  Context / prompt length
+                  <input id="computeContext" type="number" min="1" step="1" value="8192">
+                </label>
+                <label class="calc-field">
+                  Batch size
+                  <input id="computeBatch" type="number" min="1" step="1" value="1">
+                </label>
+                <label class="calc-field">
+                  Sliding window
+                  <input id="computeWindow" type="number" min="1" step="1" value="1024">
+                </label>
+              </div>
+              <div class="output-grid">
+                <div class="output-tile">
+                  <span>Linear MACs</span>
+                  <strong id="linearMacOut">0</strong>
+                </div>
+                <div class="output-tile">
+                  <span>Attention MACs</span>
+                  <strong id="attentionMacOut">0</strong>
+                </div>
+                <div class="output-tile">
+                  <span>Total MACs</span>
+                  <strong id="totalMacOut">0</strong>
+                </div>
+                <div class="output-tile">
+                  <span>Approx FLOPs</span>
+                  <strong id="flopOut">0</strong>
+                </div>
+              </div>
+              <div class="stack-meter" aria-label="Compute composition">
+                <div class="stack-row">
+                  <span>Linear</span>
+                  <div class="stack-track"><i class="stack-fill" id="linearBar"></i></div>
+                  <span id="linearShare">0%</span>
+                </div>
+                <div class="stack-row">
+                  <span>Attention</span>
+                  <div class="stack-track"><i class="stack-fill blue" id="attentionBar"></i></div>
+                  <span id="attentionShare">0%</span>
+                </div>
+              </div>
+              <p class="footnote" id="computeFormula"></p>
+            </section>
+          </div>
+        </section>
+
         <section class="section" id="layers">
           <p class="eyebrow">Figure 2</p>
           <h2>The 5-Sliding / 1-Full Layer Rhythm</h2>
@@ -1168,6 +1997,189 @@
               the checkpoint configuration's <code>layer_types</code> list.
             </figcaption>
           </figure>
+        </section>
+
+        <section class="section" id="explorer">
+          <p class="eyebrow">Interactive figure</p>
+          <h2>Layer Explorer</h2>
+          <p>
+            Move through the 60 layers to see how the attention geometry changes.
+            The repeated pattern is easy to miss in code because the same module class
+            covers both layer types; this explorer makes the active dimensions visible.
+          </p>
+          <div class="explorer" aria-label="Interactive layer explorer">
+            <div class="explorer-controls">
+              <div class="range-row">
+                <button class="icon-button" type="button" id="prevLayer" aria-label="Previous layer">-</button>
+                <input id="layerRange" type="range" min="1" max="60" value="6" aria-label="Layer number">
+                <button class="icon-button" type="button" id="nextLayer" aria-label="Next layer">+</button>
+              </div>
+              <div class="layer-dots" id="layerDots" aria-label="Layer selector"></div>
+              <div class="legend">
+                <span><i class="swatch"></i>Sliding</span>
+                <span><i class="swatch full"></i>Full</span>
+                <span><i class="swatch" style="background: var(--gold);"></i>Selected</span>
+              </div>
+            </div>
+
+            <div class="explorer-grid">
+              <div class="layer-summary" aria-live="polite">
+                <div class="layer-title">
+                  <div>
+                    <div class="layer-number" id="layerNumber">6</div>
+                    <h3 id="layerName">Full Attention Layer</h3>
+                  </div>
+                  <span class="chip blue" id="layerChip">Full</span>
+                </div>
+                <p id="layerDescription">
+                  Every sixth layer uses full causal attention and can read the entire previous context.
+                </p>
+                <div class="detail-grid">
+                  <div class="detail">
+                    <span>Mask</span>
+                    <strong id="detailMask">Full causal</strong>
+                  </div>
+                  <div class="detail">
+                    <span>Head dim</span>
+                    <strong id="detailHeadDim">512</strong>
+                  </div>
+                  <div class="detail">
+                    <span>KV heads</span>
+                    <strong id="detailKvHeads">4</strong>
+                  </div>
+                  <div class="detail">
+                    <span>GQA group</span>
+                    <strong id="detailGroup">8 query heads per KV head</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="layer-summary">
+                <h3>Projection Shapes</h3>
+                <div class="detail-grid">
+                  <div class="detail">
+                    <span>Q projection</span>
+                    <strong id="detailQ">5376 -> 16384</strong>
+                  </div>
+                  <div class="detail">
+                    <span>K projection</span>
+                    <strong id="detailK">5376 -> 2048</strong>
+                  </div>
+                  <div class="detail">
+                    <span>V projection</span>
+                    <strong id="detailV">Raw K tensor, then V norm</strong>
+                  </div>
+                  <div class="detail">
+                    <span>Output projection</span>
+                    <strong id="detailO">16384 -> 5376</strong>
+                  </div>
+                </div>
+                <p id="detailRope">
+                  Full layers use proportional RoPE: 128 of 512 head dimensions are rotated.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="diagrams">
+          <p class="eyebrow">More diagrams</p>
+          <h2>How the Pieces Work Together</h2>
+          <p>
+            The architecture is easiest to understand as a set of conserved shapes and
+            repeated transformations. These diagrams emphasize the flow of one token,
+            how grouped-query attention shares KV heads, how the residual stream is
+            updated, and why long-context cache memory is uneven across layer types.
+          </p>
+          <div class="diagram-grid" style="margin-top: 14px;">
+            <figure class="diagram-card">
+              <h3>One Token's Journey</h3>
+              <div class="token-flow" aria-label="One token journey diagram">
+                <div class="token-step">Token ID<br><code>x_t</code></div>
+                <div class="token-step">Embedding<br><code>5376</code></div>
+                <div class="token-step">Layer 1<br>local</div>
+                <div class="token-step">Layers 2-5<br>local</div>
+                <div class="token-step">Layer 6<br>global</div>
+                <div class="token-step">Layer 60<br>global</div>
+                <div class="token-step">Logits<br><code>262144</code></div>
+              </div>
+              <figcaption>
+                The residual width stays 5376 throughout. Only the internal attention
+                head geometry changes between sliding and full layers.
+              </figcaption>
+            </figure>
+
+            <figure class="diagram-card">
+              <h3>Grouped-Query Attention</h3>
+              <div class="gqa-map" aria-label="Grouped-query attention map">
+                <div class="gqa-row">
+                  <b>Queries</b>
+                  <span class="gqa-cell">Q0</span><span class="gqa-cell">Q1</span><span class="gqa-cell">Q2</span><span class="gqa-cell">Q3</span>
+                  <span class="gqa-cell">Q4</span><span class="gqa-cell">Q5</span><span class="gqa-cell">Q6</span><span class="gqa-cell">Q7</span>
+                </div>
+                <div class="gqa-row">
+                  <b>Sliding KV</b>
+                  <span class="gqa-cell kv-a">KV0</span><span class="gqa-cell kv-a">KV0</span><span class="gqa-cell kv-b">KV1</span><span class="gqa-cell kv-b">KV1</span>
+                  <span class="gqa-cell kv-a">KV2</span><span class="gqa-cell kv-a">KV2</span><span class="gqa-cell kv-b">KV3</span><span class="gqa-cell kv-b">KV3</span>
+                </div>
+                <div class="gqa-row">
+                  <b>Full KV</b>
+                  <span class="gqa-cell kv-a">KV0</span><span class="gqa-cell kv-a">KV0</span><span class="gqa-cell kv-a">KV0</span><span class="gqa-cell kv-a">KV0</span>
+                  <span class="gqa-cell kv-a">KV0</span><span class="gqa-cell kv-a">KV0</span><span class="gqa-cell kv-a">KV0</span><span class="gqa-cell kv-a">KV0</span>
+                </div>
+              </div>
+              <figcaption>
+                This shows the first 8 query heads. Sliding layers share one KV head
+                across 2 query heads; full layers share one KV head across 8 query heads.
+              </figcaption>
+            </figure>
+
+            <figure class="diagram-card">
+              <h3>Residual Stream Update</h3>
+              <div class="residual-river" aria-label="Residual stream update diagram">
+                <div class="river-line">
+                  <span>H_l</span>
+                  <span>Norm</span>
+                  <span>Attention</span>
+                  <span>Post-norm</span>
+                  <span>Add</span>
+                </div>
+                <div class="river-line">
+                  <span>Y</span>
+                  <span>Norm</span>
+                  <span>Gated MLP</span>
+                  <span>Post-norm</span>
+                  <span>H_(l+1)</span>
+                </div>
+              </div>
+              <figcaption>
+                The architecture is not just pre-norm. It also normalizes each sublayer
+                output before adding it back to the residual stream.
+              </figcaption>
+            </figure>
+
+            <figure class="diagram-card">
+              <h3>KV Cache Shape at Long Context</h3>
+              <div class="cache-layers" aria-label="KV cache layer height diagram">
+                <div class="cache-layer">S</div>
+                <div class="cache-layer">S</div>
+                <div class="cache-layer">S</div>
+                <div class="cache-layer">S</div>
+                <div class="cache-layer">S</div>
+                <div class="cache-layer full">F</div>
+                <div class="cache-layer">S</div>
+                <div class="cache-layer">S</div>
+                <div class="cache-layer">S</div>
+                <div class="cache-layer">S</div>
+                <div class="cache-layer">S</div>
+                <div class="cache-layer full">F</div>
+              </div>
+              <figcaption>
+                For generation, sliding layers need only the latest window. Full layers
+                keep growing with context length, so they dominate KV cache at long contexts.
+              </figcaption>
+            </figure>
+          </div>
         </section>
 
         <section class="section" id="block">
@@ -1261,6 +2273,32 @@
               <p>
                 Q and K receive scaled RMSNorm over the head dimension. V receives an
                 unscaled RMSNorm. RoPE is applied to Q and K only, not to V.
+              </p>
+            </div>
+          </div>
+          <div class="callout" style="margin-top: 12px;">
+            <h3>Attention score detail</h3>
+            <p>
+              In the Hugging Face Gemma 4 text attention module, the score scaling
+              passed to the attention function is <code>1.0</code>. So the reference
+              path is <code>scores = QK^T + mask</code>, not an explicit
+              <code>QK^T / sqrt(head_dim)</code> expression.
+            </p>
+          </div>
+          <div class="two-col" style="margin-top: 12px;">
+            <div class="card soft">
+              <h3>Grouped-query mapping</h3>
+              <div class="formula"><code>kv_head = floor(query_head / group_size)</code></div>
+              <p style="margin-top: 10px;">
+                Sliding layers use group size <code>2</code>; full layers use group
+                size <code>8</code>.
+              </p>
+            </div>
+            <div class="card blue">
+              <h3>Cache consequence</h3>
+              <p>
+                Fewer KV heads means fewer cached key/value vectors per token. The
+                full layers widen each head to 512 dimensions but reduce KV heads to 4.
               </p>
             </div>
           </div>
@@ -1402,6 +2440,41 @@
           </div>
         </section>
 
+        <section class="section" id="weights">
+          <p class="eyebrow">Parameter budget</p>
+          <h2>Where the Text-Path Weights Live</h2>
+          <p>
+            The checkpoint is called 31B because the large dense matrices in the text
+            path add up to roughly that scale. This figure is approximate and ignores
+            small norm vectors, but it gives the right intuition: the dense gated MLPs
+            dominate.
+          </p>
+          <figure class="figure">
+            <div class="weight-bars" aria-label="Approximate text weight budget">
+              <div class="weight-row">
+                <span>MLP linears</span>
+                <div class="weight-track"><i class="weight-fill" style="width: 100%;"></i></div>
+                <span>20.81B</span>
+              </div>
+              <div class="weight-row">
+                <span>Attention linears</span>
+                <div class="weight-track"><i class="weight-fill blue" style="width: 40.7%;"></i></div>
+                <span>8.48B</span>
+              </div>
+              <div class="weight-row">
+                <span>Tied embedding</span>
+                <div class="weight-track"><i class="weight-fill gold" style="width: 6.8%;"></i></div>
+                <span>1.41B</span>
+              </div>
+            </div>
+            <figcaption>
+              Computed from the public dimensions: <code>60 * 3 * 5376 * 21504</code>
+              for MLP matrices, sliding/full attention projection shapes from the
+              layer pattern, and <code>262144 * 5376</code> for the tied embedding table.
+            </figcaption>
+          </figure>
+        </section>
+
         <section class="section" id="norms">
           <p class="eyebrow">Normalization</p>
           <h2>RMSNorm Is the Stabilizer Everywhere</h2>
@@ -1462,6 +2535,16 @@
               <figcaption>
                 The output is bounded near -30 and +30 while the center remains almost linear.
               </figcaption>
+              <div class="softcap-demo">
+                <label class="calc-field">
+                  Raw logit
+                  <input id="softcapInput" type="range" min="-100" max="100" value="45" step="1">
+                </label>
+                <div class="softcap-value">
+                  <span>Softcapped</span>
+                  <strong id="softcapOut">27.15</strong>
+                </div>
+              </div>
             </figure>
           </div>
         </section>
@@ -1570,9 +2653,21 @@ next_token_probs = softmax(logits[:, -1, :])</code></pre>
             paths can be inspected.
           </p>
           <div class="source-list" style="margin-top: 12px;">
+            <a href="https://ai.google.dev/gemma/docs/core/model_card_4">
+              Google AI Gemma 4 model card
+              <small>Family overview, dense 31B table, hybrid attention, modalities, context length, and p-RoPE framing.</small>
+            </a>
+            <a href="https://ai.google.dev/gemma/docs/core">
+              Google AI Gemma 4 overview
+              <small>Quantization and inference-memory planning table, function calling, system prompts, and MTP notes.</small>
+            </a>
             <a href="https://huggingface.co/google/gemma-4-31B-it/blob/main/config.json">
               Hugging Face config
               <small>Layer count, dimensions, RoPE parameters, layer types, tied embeddings, softcap.</small>
+            </a>
+            <a href="https://huggingface.co/google/gemma-4-31B-it">
+              Hugging Face model card
+              <small>31B-it usage context, capabilities, modalities, and model-family notes.</small>
             </a>
             <a href="https://raw.githubusercontent.com/huggingface/transformers/main/src/transformers/models/gemma4/modeling_gemma4.py">
               Transformers Gemma 4 implementation
@@ -1590,9 +2685,9 @@ next_token_probs = softmax(logits[:, -1, :])</code></pre>
               Transformers activations
               <small><code>gelu_pytorch_tanh</code> activation mapping.</small>
             </a>
-            <a href="https://huggingface.co/google/gemma-4-31B-it">
-              Model repository
-              <small>Checkpoint page and usage context for <code>google/gemma-4-31B-it</code>.</small>
+            <a href="https://huggingface.co/blog/gemma4">
+              Hugging Face Gemma 4 launch guide
+              <small>Multi-Token Prediction drafter explanation and deployment ecosystem notes.</small>
             </a>
           </div>
         </section>
@@ -1626,8 +2721,347 @@ next_token_probs = softmax(logits[:, -1, :])</code></pre>
             <span>Total text path: about 30.7B large-matrix weights, before small norm parameters.</span>
           </div>
         </section>
+        <section class="side-card">
+          <h2>Estimator Scope</h2>
+          <div class="side-list">
+            <span>Memory tools estimate text weights plus generation KV cache.</span>
+            <span>Compute tools count approximate MACs and report FLOPs as 2x MACs.</span>
+            <span>Runtime depends on kernels, bandwidth, batching, and hardware utilization.</span>
+          </div>
+        </section>
+        <section class="side-card">
+          <h2>Reading Progress</h2>
+          <div class="progress-shell" aria-hidden="true">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <p class="footnote">Use the sticky section links to move through the page.</p>
+        </section>
       </aside>
     </div>
   </main>
+  <script>
+    const layerRange = document.getElementById("layerRange");
+    const layerDots = document.getElementById("layerDots");
+    const prevLayer = document.getElementById("prevLayer");
+    const nextLayer = document.getElementById("nextLayer");
+    const progressBar = document.getElementById("progressBar");
+    const softcapInput = document.getElementById("softcapInput");
+    const softcapOut = document.getElementById("softcapOut");
+
+    const model = {
+      hidden: 5376,
+      vocab: 262144,
+      layers: 60,
+      slidingLayers: 50,
+      fullLayers: 10,
+      slidingWindow: 1024,
+      qHeads: 32,
+      slidingKvHeads: 16,
+      fullKvHeads: 4,
+      slidingHeadDim: 256,
+      fullHeadDim: 512,
+      ffn: 21504
+    };
+
+    model.mlpWeights = model.layers * 3 * model.hidden * model.ffn;
+    model.slidingAttentionWeights = model.slidingLayers * (
+      model.hidden * model.qHeads * model.slidingHeadDim +
+      model.hidden * model.slidingKvHeads * model.slidingHeadDim +
+      model.hidden * model.slidingKvHeads * model.slidingHeadDim +
+      model.qHeads * model.slidingHeadDim * model.hidden
+    );
+    model.fullAttentionWeights = model.fullLayers * (
+      model.hidden * model.qHeads * model.fullHeadDim +
+      model.hidden * model.fullKvHeads * model.fullHeadDim +
+      model.qHeads * model.fullHeadDim * model.hidden
+    );
+    model.embeddingWeights = model.vocab * model.hidden;
+    model.textWeights = model.mlpWeights + model.slidingAttentionWeights + model.fullAttentionWeights + model.embeddingWeights;
+    model.layerLinearMacPerToken = model.mlpWeights + model.slidingAttentionWeights + model.fullAttentionWeights;
+    model.lmHeadMacPerToken = model.embeddingWeights;
+
+    const layerEls = {
+      number: document.getElementById("layerNumber"),
+      name: document.getElementById("layerName"),
+      chip: document.getElementById("layerChip"),
+      description: document.getElementById("layerDescription"),
+      mask: document.getElementById("detailMask"),
+      headDim: document.getElementById("detailHeadDim"),
+      kvHeads: document.getElementById("detailKvHeads"),
+      group: document.getElementById("detailGroup"),
+      q: document.getElementById("detailQ"),
+      k: document.getElementById("detailK"),
+      v: document.getElementById("detailV"),
+      o: document.getElementById("detailO"),
+      rope: document.getElementById("detailRope")
+    };
+
+    function layerInfo(layer) {
+      const isFull = layer % 6 === 0;
+      if (isFull) {
+        return {
+          kind: "Full",
+          chipClass: "chip blue",
+          name: "Full Attention Layer",
+          description: "Every sixth layer uses full causal attention and can read the entire previous context.",
+          mask: "Full causal",
+          headDim: "512",
+          kvHeads: "4",
+          group: "8 query heads per KV head",
+          q: "5376 -> 16384",
+          k: "5376 -> 2048",
+          v: "Raw K tensor, then V norm",
+          o: "16384 -> 5376",
+          rope: "Full layers use proportional RoPE: 128 of 512 head dimensions are rotated; the rest pass through unchanged."
+        };
+      }
+      return {
+        kind: "Sliding",
+        chipClass: "chip",
+        name: "Sliding Attention Layer",
+        description: "This layer uses causal local attention over the most recent 1024 positions.",
+        mask: "Sliding causal window",
+        headDim: "256",
+        kvHeads: "16",
+        group: "2 query heads per KV head",
+        q: "5376 -> 8192",
+        k: "5376 -> 4096",
+        v: "5376 -> 4096",
+        o: "8192 -> 5376",
+        rope: "Sliding layers use default RoPE over the full 256-dimensional head with rope_theta = 10000."
+      };
+    }
+
+    function setLayer(layer) {
+      const value = Math.max(1, Math.min(60, Number(layer) || 1));
+      const info = layerInfo(value);
+      layerRange.value = String(value);
+      layerEls.number.textContent = String(value);
+      layerEls.name.textContent = info.name;
+      layerEls.chip.textContent = info.kind;
+      layerEls.chip.className = info.chipClass;
+      layerEls.description.textContent = info.description;
+      layerEls.mask.textContent = info.mask;
+      layerEls.headDim.textContent = info.headDim;
+      layerEls.kvHeads.textContent = info.kvHeads;
+      layerEls.group.textContent = info.group;
+      layerEls.q.textContent = info.q;
+      layerEls.k.textContent = info.k;
+      layerEls.v.textContent = info.v;
+      layerEls.o.textContent = info.o;
+      layerEls.rope.textContent = info.rope;
+
+      layerDots.querySelectorAll(".layer-dot").forEach((dot) => {
+        const active = Number(dot.dataset.layer) === value;
+        dot.classList.toggle("active", active);
+        if (active) {
+          dot.setAttribute("aria-current", "true");
+        } else {
+          dot.removeAttribute("aria-current");
+        }
+      });
+    }
+
+    function buildLayerDots() {
+      const fragment = document.createDocumentFragment();
+      for (let layer = 1; layer <= 60; layer += 1) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = layer % 6 === 0 ? "layer-dot full" : "layer-dot";
+        button.dataset.layer = String(layer);
+        button.setAttribute("aria-label", `Show layer ${layer}`);
+        button.addEventListener("click", () => setLayer(layer));
+        fragment.appendChild(button);
+      }
+      layerDots.appendChild(fragment);
+    }
+
+    function readNumber(id, fallback, min = 0) {
+      const element = document.getElementById(id);
+      const value = Number(element?.value);
+      if (!Number.isFinite(value)) return fallback;
+      return Math.max(min, value);
+    }
+
+    function formatGiB(bytes) {
+      return `${(bytes / 1024 ** 3).toFixed(bytes >= 100 * 1024 ** 3 ? 1 : 2)} GiB`;
+    }
+
+    function formatLarge(value) {
+      const abs = Math.abs(value);
+      const units = [
+        ["P", 1e15],
+        ["T", 1e12],
+        ["B", 1e9],
+        ["M", 1e6],
+        ["K", 1e3]
+      ];
+      for (const [suffix, divisor] of units) {
+        if (abs >= divisor) {
+          const digits = abs >= divisor * 100 ? 1 : 2;
+          return `${(value / divisor).toFixed(digits)}${suffix}`;
+        }
+      }
+      return String(Math.round(value));
+    }
+
+    function setBar(id, value, total) {
+      const element = document.getElementById(id);
+      if (!element) return;
+      const percent = total > 0 ? Math.max(0, Math.min(100, (value / total) * 100)) : 0;
+      element.style.width = `${percent}%`;
+    }
+
+    function setText(id, value) {
+      const element = document.getElementById(id);
+      if (element) element.textContent = value;
+    }
+
+    function updateMemoryTool() {
+      const context = Math.round(readNumber("memContext", 8192, 1));
+      const batch = Math.round(readNumber("memBatch", 1, 1));
+      const weightBits = readNumber("weightBits", 4, 0);
+      const overhead = readNumber("quantOverhead", 0, 0) / 100;
+      const kvBytes = readNumber("kvBytes", 2, 0);
+      const kvMode = document.getElementById("kvMode")?.value || "capped";
+      const slidingTokens = kvMode === "capped" ? Math.min(context, model.slidingWindow) : context;
+
+      const weightBytes = model.textWeights * (weightBits / 8) * (1 + overhead);
+      const slidingKvElements = batch * model.slidingLayers * slidingTokens * 2 * model.slidingKvHeads * model.slidingHeadDim;
+      const fullKvElements = batch * model.fullLayers * context * 2 * model.fullKvHeads * model.fullHeadDim;
+      const slidingKvBytes = slidingKvElements * kvBytes;
+      const fullKvBytes = fullKvElements * kvBytes;
+      const kvCacheBytes = slidingKvBytes + fullKvBytes;
+      const totalBytes = weightBytes + kvCacheBytes;
+
+      setText("weightsOut", formatGiB(weightBytes));
+      setText("kvOut", formatGiB(kvCacheBytes));
+      setText("totalMemOut", formatGiB(totalBytes));
+      setText("kvElementsOut", formatLarge(slidingKvElements + fullKvElements));
+      setBar("weightsBar", weightBytes, totalBytes);
+      setBar("slidingKvBar", slidingKvBytes, totalBytes);
+      setBar("fullKvBar", fullKvBytes, totalBytes);
+      setText("weightsShare", `${Math.round((weightBytes / totalBytes) * 100)}%`);
+      setText("slidingKvShare", `${Math.round((slidingKvBytes / totalBytes) * 100)}%`);
+      setText("fullKvShare", `${Math.round((fullKvBytes / totalBytes) * 100)}%`);
+      setText(
+        "memoryFormula",
+        `Weights: ${formatLarge(model.textWeights)} params * ${weightBits} bits with ${(overhead * 100).toFixed(0)}% overhead. KV: batch ${batch} * (50 sliding layers * ${slidingTokens} tokens * 8192 elems + 10 full layers * ${context} tokens * 4096 elems) * ${kvBytes} bytes.`
+      );
+    }
+
+    function slidingPairCount(tokens, windowSize) {
+      if (tokens <= windowSize) {
+        return tokens * (tokens + 1) / 2;
+      }
+      return windowSize * tokens - (windowSize * (windowSize - 1)) / 2;
+    }
+
+    function updateComputeTool() {
+      const mode = document.getElementById("computeMode")?.value || "decode";
+      const context = Math.round(readNumber("computeContext", 8192, 1));
+      const batch = Math.round(readNumber("computeBatch", 1, 1));
+      const windowSize = Math.round(readNumber("computeWindow", model.slidingWindow, 1));
+      const evaluatedTokens = mode === "prefill" ? context : 1;
+      const slidingPairs = mode === "prefill" ? slidingPairCount(context, windowSize) : Math.min(context, windowSize);
+      const fullPairs = mode === "prefill" ? context * (context + 1) / 2 : context;
+      const linearMacs = batch * evaluatedTokens * (model.layerLinearMacPerToken + model.lmHeadMacPerToken);
+      const slidingAttentionMacs = batch * model.slidingLayers * 2 * model.qHeads * model.slidingHeadDim * slidingPairs;
+      const fullAttentionMacs = batch * model.fullLayers * 2 * model.qHeads * model.fullHeadDim * fullPairs;
+      const attentionMacs = slidingAttentionMacs + fullAttentionMacs;
+      const totalMacs = linearMacs + attentionMacs;
+
+      setText("linearMacOut", formatLarge(linearMacs));
+      setText("attentionMacOut", formatLarge(attentionMacs));
+      setText("totalMacOut", formatLarge(totalMacs));
+      setText("flopOut", formatLarge(totalMacs * 2));
+      setBar("linearBar", linearMacs, totalMacs);
+      setBar("attentionBar", attentionMacs, totalMacs);
+      setText("linearShare", `${Math.round((linearMacs / totalMacs) * 100)}%`);
+      setText("attentionShare", `${Math.round((attentionMacs / totalMacs) * 100)}%`);
+      setText(
+        "computeFormula",
+        mode === "prefill"
+          ? `Prefill: ${context} evaluated tokens. Linear MACs include 60 decoder layers plus tied LM head. Attention pairs: sliding ${formatLarge(slidingPairs)} per sliding layer, full ${formatLarge(fullPairs)} per full layer.`
+          : `Decode: 1 evaluated token at context ${context}. Linear MACs include 60 decoder layers plus tied LM head. Attention reads ${Math.min(context, windowSize)} sliding keys and ${context} full keys.`
+      );
+    }
+
+    function updateSoftcap() {
+      if (!softcapInput || !softcapOut) return;
+      const raw = Number(softcapInput.value) || 0;
+      softcapOut.textContent = (30 * Math.tanh(raw / 30)).toFixed(2);
+    }
+
+    function updateProgress() {
+      if (!progressBar) return;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = maxScroll > 0 ? Math.min(100, Math.max(0, (scrollTop / maxScroll) * 100)) : 0;
+      progressBar.style.width = `${progress}%`;
+    }
+
+    function updateActiveToc() {
+      const links = Array.from(document.querySelectorAll(".toc a"));
+      const sections = links
+        .map((link) => document.querySelector(link.getAttribute("href")))
+        .filter(Boolean);
+      let current = sections[0]?.id || "";
+      const offset = 120;
+      sections.forEach((section) => {
+        if (section.getBoundingClientRect().top <= offset) {
+          current = section.id;
+        }
+      });
+      links.forEach((link) => {
+        link.classList.toggle("active", link.getAttribute("href") === `#${current}`);
+      });
+    }
+
+    if (layerRange && layerDots) {
+      buildLayerDots();
+      layerRange.addEventListener("input", () => setLayer(layerRange.value));
+      prevLayer.addEventListener("click", () => setLayer(Number(layerRange.value) - 1));
+      nextLayer.addEventListener("click", () => setLayer(Number(layerRange.value) + 1));
+      setLayer(layerRange.value);
+    }
+
+    function bindCalculator(ids, handler) {
+      ids.forEach((id) => {
+        const element = document.getElementById(id);
+        element?.addEventListener("input", handler);
+        element?.addEventListener("change", handler);
+      });
+    }
+
+    bindCalculator([
+      "memContext",
+      "memBatch",
+      "weightBits",
+      "quantOverhead",
+      "kvBytes",
+      "kvMode"
+    ], updateMemoryTool);
+
+    bindCalculator([
+      "computeMode",
+      "computeContext",
+      "computeBatch",
+      "computeWindow"
+    ], updateComputeTool);
+
+    softcapInput?.addEventListener("input", updateSoftcap);
+
+    window.addEventListener("scroll", () => {
+      updateProgress();
+      updateActiveToc();
+    }, { passive: true });
+    window.addEventListener("resize", updateActiveToc);
+    updateMemoryTool();
+    updateComputeTool();
+    updateSoftcap();
+    updateProgress();
+    updateActiveToc();
+  </script>
 </body>
 </html>
