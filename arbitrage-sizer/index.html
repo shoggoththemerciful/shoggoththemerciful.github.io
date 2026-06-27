@@ -808,6 +808,7 @@
       ["rowsPill", document.getElementById("rowsPill")],
       ["opportunityRows", document.getElementById("opportunityRows")]
     ]);
+    let saveTimer = 0;
 
     const sampleValues = {
       budget: "1000",
@@ -1053,7 +1054,7 @@
 
       renderBest(best, viable.length);
       renderRows(candidates);
-      saveState();
+      scheduleSaveState();
     }
 
     function renderBest(best, positiveCount) {
@@ -1158,9 +1159,16 @@
     }
 
     function saveState() {
+      clearTimeout(saveTimer);
+      saveTimer = 0;
       const data = Object.fromEntries(fields.map((id) => [id, els[id].value]));
       data.wholeContracts = els.wholeContracts.checked;
       localStorage.setItem("arbitrage-sizer", JSON.stringify(data));
+    }
+
+    function scheduleSaveState() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveState, 160);
     }
 
     function loadState() {
@@ -1198,6 +1206,7 @@
     els.wholeContracts.addEventListener("change", render);
     els.sampleBtn.addEventListener("click", applySample);
     els.clearBtn.addEventListener("click", clearInputs);
+    window.addEventListener("pagehide", saveState);
 
     loadState();
     render();

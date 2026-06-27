@@ -458,6 +458,8 @@
     .section {
       padding: clamp(16px, 3vw, 24px);
       min-width: 0;
+      content-visibility: auto;
+      contain-intrinsic-size: auto 720px;
     }
 
     .section > p + p {
@@ -2790,6 +2792,15 @@ next_token_probs = softmax(logits[:, -1, :])</code></pre>
     const progressBar = document.getElementById("progressBar");
     const softcapInput = document.getElementById("softcapInput");
     const softcapOut = document.getElementById("softcapOut");
+    const tocLinks = Array.from(document.querySelectorAll(".toc a"));
+    const tocSections = tocLinks
+      .map((link) => document.querySelector(link.getAttribute("href")))
+      .filter(Boolean);
+    const layerDotButtons = [];
+    let activeLayerDot = null;
+    let activeTocId = "";
+    let scrollFrame = 0;
+    let resizeFrame = 0;
 
     const model = {
       hidden: 5376,
@@ -2894,15 +2905,15 @@ next_token_probs = softmax(logits[:, -1, :])</code></pre>
       layerEls.o.textContent = info.o;
       layerEls.rope.textContent = info.rope;
 
-      layerDots.querySelectorAll(".layer-dot").forEach((dot) => {
-        const active = Number(dot.dataset.layer) === value;
-        dot.classList.toggle("active", active);
-        if (active) {
-          dot.setAttribute("aria-current", "true");
-        } else {
-          dot.removeAttribute("aria-current");
-        }
-      });
+      if (activeLayerDot) {
+        activeLayerDot.classList.remove("active");
+        activeLayerDot.removeAttribute("aria-current");
+      }
+      activeLayerDot = layerDotButtons[value - 1] || null;
+      if (activeLayerDot) {
+        activeLayerDot.classList.add("active");
+        activeLayerDot.setAttribute("aria-current", "true");
+      }
     }
 
     function buildLayerDots() {
@@ -2914,6 +2925,7 @@ next_token_probs = softmax(logits[:, -1, :])</code></pre>
         button.dataset.layer = String(layer);
         button.setAttribute("aria-label", `Show layer ${layer}`);
         button.addEventListener("click", () => setLayer(layer));
+        layerDotButtons.push(button);
         fragment.appendChild(button);
       }
       layerDots.appendChild(fragment);
@@ -3045,18 +3057,16 @@ next_token_probs = softmax(logits[:, -1, :])</code></pre>
     }
 
     function updateActiveToc() {
-      const links = Array.from(document.querySelectorAll(".toc a"));
-      const sections = links
-        .map((link) => document.querySelector(link.getAttribute("href")))
-        .filter(Boolean);
-      let current = sections[0]?.id || "";
+      let current = tocSections[0]?.id || "";
       const offset = 120;
-      sections.forEach((section) => {
+      tocSections.forEach((section) => {
         if (section.getBoundingClientRect().top <= offset) {
           current = section.id;
         }
       });
-      links.forEach((link) => {
+      if (current === activeTocId) return;
+      activeTocId = current;
+      tocLinks.forEach((link) => {
         link.classList.toggle("active", link.getAttribute("href") === `#${current}`);
       });
     }
@@ -3070,11 +3080,23 @@ next_token_probs = softmax(logits[:, -1, :])</code></pre>
     }
 
     function bindCalculator(ids, handler) {
+      const scheduledHandler = scheduleFrame(handler);
       ids.forEach((id) => {
         const element = document.getElementById(id);
-        element?.addEventListener("input", handler);
-        element?.addEventListener("change", handler);
+        element?.addEventListener("input", scheduledHandler);
+        element?.addEventListener("change", scheduledHandler);
       });
+    }
+
+    function scheduleFrame(handler) {
+      let frame = 0;
+      return () => {
+        if (frame) cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          handler();
+        });
+      };
     }
 
     bindCalculator([
@@ -3096,10 +3118,20 @@ next_token_probs = softmax(logits[:, -1, :])</code></pre>
     softcapInput?.addEventListener("input", updateSoftcap);
 
     window.addEventListener("scroll", () => {
-      updateProgress();
-      updateActiveToc();
+      if (scrollFrame) return;
+      scrollFrame = requestAnimationFrame(() => {
+        scrollFrame = 0;
+        updateProgress();
+        updateActiveToc();
+      });
     }, { passive: true });
-    window.addEventListener("resize", updateActiveToc);
+    window.addEventListener("resize", () => {
+      if (resizeFrame) cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = 0;
+        updateActiveToc();
+      });
+    });
     updateMemoryTool();
     updateComputeTool();
     updateSoftcap();

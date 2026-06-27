@@ -1014,7 +1014,9 @@
       inputs: { ...defaultInputs },
       store: loadStore(),
       searchResults: [],
-      lastCalc: null
+      lastCalc: null,
+      savedVersion: 0,
+      renderedSavedVersion: -1
     };
 
     const els = {
@@ -1628,6 +1630,7 @@
       const snapshot = makeSnapshot(calc, "watch");
       state.store.watchlist.unshift(snapshot);
       state.store.watchlist = dedupeByTitle(state.store.watchlist).slice(0, 40);
+      state.savedVersion += 1;
       saveStore();
       render();
       setStatus("Added to watchlist.", "good");
@@ -1639,6 +1642,7 @@
       const snapshot = makeSnapshot(calc, "journal");
       state.store.journal.unshift(snapshot);
       state.store.journal = state.store.journal.slice(0, 80);
+      state.savedVersion += 1;
       saveStore();
       render();
       setStatus("Saved journal entry.", "good");
@@ -1671,6 +1675,8 @@
     }
 
     function renderSaved() {
+      if (state.renderedSavedVersion === state.savedVersion) return;
+      state.renderedSavedVersion = state.savedVersion;
       els.watchCount.textContent = String(state.store.watchlist.length);
       els.journalCount.textContent = String(state.store.journal.length);
       renderList(els.watchList, state.store.watchlist, "watch");
@@ -1712,6 +1718,7 @@
     function removeSaved(kind, id) {
       const key = kind === "watch" ? "watchlist" : "journal";
       state.store[key] = state.store[key].filter((entry) => entry.id !== id);
+      state.savedVersion += 1;
       saveStore();
       render();
     }
@@ -1769,6 +1776,7 @@
           const parsed = JSON.parse(String(reader.result));
           const incoming = parsed.store || parsed;
           state.store = normalizeStore(incoming);
+          state.savedVersion += 1;
           saveStore();
           render();
           setStatus("Imported saved data.", "good");
@@ -1784,6 +1792,7 @@
     function clearSaved() {
       if (!confirm("Clear watchlist and journal from this browser?")) return;
       state.store = normalizeStore({});
+      state.savedVersion += 1;
       saveStore();
       render();
       setStatus("Saved data cleared.", "good");

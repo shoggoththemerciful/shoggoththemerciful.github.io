@@ -6,7 +6,8 @@ const state = {
   selectedRange: "7d",
   history: [],
   stream: null,
-  apiAvailable: true
+  apiAvailable: true,
+  resizeFrame: 0
 };
 
 const els = {
@@ -46,7 +47,13 @@ els.rangeGroup.addEventListener("click", (event) => {
   setActive(els.rangeGroup, button);
   loadHistory();
 });
-window.addEventListener("resize", () => drawChart());
+window.addEventListener("resize", () => {
+  if (state.resizeFrame) cancelAnimationFrame(state.resizeFrame);
+  state.resizeFrame = requestAnimationFrame(() => {
+    state.resizeFrame = 0;
+    drawChart();
+  });
+});
 
 boot();
 

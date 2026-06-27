@@ -644,6 +644,7 @@
       current: null,
       timer: null,
       history: [],
+      historyKey: "",
       store: loadStore()
     };
 
@@ -715,6 +716,7 @@
       state.streak = 0;
       state.bestStreak = 0;
       state.history = [];
+      state.historyKey = "";
       els.startBtn.textContent = "Running";
       els.startBtn.disabled = true;
       els.feedback.textContent = "Go";
@@ -739,6 +741,7 @@
       state.streak = 0;
       state.bestStreak = 0;
       state.history = [];
+      state.historyKey = "";
       state.current = makeProblem();
       els.answerInput.value = "";
       els.startBtn.textContent = "Start";
@@ -886,13 +889,15 @@
 
     function updateTimer(seconds) {
       if (state.duration === 0) {
-        els.timeLeft.textContent = "∞";
-        els.meterFill.style.transform = "scaleX(1)";
+        if (els.timeLeft.textContent !== "∞") els.timeLeft.textContent = "∞";
+        if (els.meterFill.style.transform !== "scaleX(1)") els.meterFill.style.transform = "scaleX(1)";
         return;
       }
-      els.timeLeft.textContent = seconds + "s";
+      const label = seconds + "s";
+      if (els.timeLeft.textContent !== label) els.timeLeft.textContent = label;
       const ratio = Math.max(0, Math.min(1, seconds / state.duration));
-      els.meterFill.style.transform = "scaleX(" + ratio + ")";
+      const transform = "scaleX(" + ratio + ")";
+      if (els.meterFill.style.transform !== transform) els.meterFill.style.transform = transform;
     }
 
     function nextProblem() {
@@ -962,6 +967,9 @@
     }
 
     function renderHistory() {
+      const key = state.history.map((item) => item.label + ":" + item.value + ":" + item.correct).join("|") || "empty";
+      if (key === state.historyKey) return;
+      state.historyKey = key;
       if (state.history.length === 0) {
         els.history.innerHTML = '<div class="empty">No answers yet</div>';
         return;
