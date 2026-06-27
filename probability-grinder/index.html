@@ -775,6 +775,10 @@
               <span>History</span>
               <strong id="historyStat">0</strong>
             </div>
+            <div class="memory-pill">
+              <span>Focus</span>
+              <strong id="focusStat">Mixed</strong>
+            </div>
           </div>
         </div>
         <div>
@@ -888,13 +892,46 @@
       return "counting";
     };
 
-    const make = (id, title, topic, difficulty, generate, pattern = null) => ({
+    const normalizeTemplateMeta = (title, topic, patternOrMeta) => {
+      const meta = typeof patternOrMeta === "string"
+        ? { pattern: patternOrMeta }
+        : (patternOrMeta || {});
+      const pattern = meta.pattern || inferPattern("", title, topic);
+      return {
+        pattern,
+        skill: meta.skill || title,
+        estimatedSeconds: meta.estimatedSeconds || (pattern === "bayes" || pattern === "linearity" ? 35 : 25),
+        trapType: meta.trapType || "",
+        prerequisite: meta.prerequisite || ""
+      };
+    };
+
+    const make = (id, title, topic, difficulty, generate, patternOrMeta = null) => ({
       id,
       title,
       topic,
       difficulty,
-      pattern: pattern || inferPattern(id, title, topic),
+      ...normalizeTemplateMeta(title, topic, patternOrMeta || { pattern: inferPattern(id, title, topic) }),
       generate
+    });
+
+    const problemFamily = ({ familyId, defaults = {}, variants }) => variants.map((variant) => {
+      const topic = variant.topic || defaults.topic;
+      const title = variant.title || defaults.title;
+      return make(
+        `${familyId}-${variant.id}`,
+        title,
+        topic,
+        variant.difficulty || defaults.difficulty,
+        variant.generate,
+        {
+          pattern: variant.pattern || defaults.pattern,
+          skill: variant.skill || defaults.skill || title,
+          estimatedSeconds: variant.estimatedSeconds || defaults.estimatedSeconds,
+          trapType: variant.trapType || defaults.trapType || "",
+          prerequisite: variant.prerequisite || defaults.prerequisite || ""
+        }
+      );
     });
 
     const templates = [
@@ -3685,6 +3722,424 @@
       }, "linearity")
     );
 
+    templates.push(
+      ...problemFamily({
+        familyId: "nf-bayes",
+        defaults: {
+          topic: "conditional",
+          difficulty: 3,
+          pattern: "bayes",
+          skill: "natural-frequency Bayes",
+          estimatedSeconds: 40,
+          trapType: "base-rate neglect"
+        },
+        variants: [
+          {
+            id: "test-positive",
+            title: "Natural Frequency Test",
+            generate: () => {
+              const [total, affected, truePos, falsePos] = pick([
+                [1000, 100, 80, 90],
+                [1000, 50, 45, 95],
+                [1000, 200, 180, 80],
+                [1000, 100, 90, 180]
+              ]);
+              const answer = frac(truePos, truePos + falsePos);
+              return {
+                prompt: `Out of ${total} people, ${affected} have a condition. A test is positive for ${truePos} affected people and ${falsePos} unaffected people. Given a positive test, what is the probability the person has the condition?`,
+                answer,
+                hint: "Among positive tests, compare true positives to all positives.",
+                solution: `Positive tests consist of ${truePos} true positives and ${falsePos} false positives. The affected fraction is ${truePos}/(${truePos}+${falsePos}) = ${fmt(answer)}.`,
+                mental: "Bayes is just a fraction of the positive pile."
+              };
+            }
+          },
+          {
+            id: "two-box-prior",
+            title: "Weighted Box Bayes",
+            generate: () => {
+              const [priorA, aR, aB, bR, bB] = pick([
+                [frac(1, 3), 3, 1, 1, 3],
+                [frac(2, 3), 1, 2, 2, 1],
+                [frac(1, 4), 4, 0, 1, 3],
+                [frac(3, 4), 1, 3, 3, 1]
+              ]);
+              const priorB = oneMinus(priorA);
+              const likeA = frac(aR, aR + aB);
+              const likeB = frac(bR, bR + bB);
+              const weightA = mul(priorA, likeA);
+              const weightB = mul(priorB, likeB);
+              const answer = div(weightA, add(weightA, weightB));
+              return {
+                prompt: `Choose Box A with probability ${fmt(priorA)} and Box B otherwise. Box A has ${aR} red and ${aB} blue balls; Box B has ${bR} red and ${bB} blue balls. You draw red. What is the probability you chose Box A?`,
+                answer,
+                hint: "Posterior weight equals prior times likelihood.",
+                solution: `A's red weight is ${fmt(priorA)}*${fmt(likeA)} = ${fmt(weightA)}. B's red weight is ${fmt(priorB)}*${fmt(likeB)} = ${fmt(weightB)}. So P(A | red) = ${fmt(answer)}.`,
+                mental: "Bayes weight = prior times evidence."
+              };
+            }
+          },
+          {
+            id: "coin-source",
+            title: "Coin Source Bayes",
+            generate: () => {
+              const [biasedH, fairPrior] = pick([[frac(3, 4), frac(1, 2)], [frac(2, 3), frac(1, 2)], [frac(3, 4), frac(2, 3)]]);
+              const biasedPrior = oneMinus(fairPrior);
+              const fairWeight = mul(fairPrior, frac(1, 2));
+              const biasedWeight = mul(biasedPrior, biasedH);
+              const answer = div(biasedWeight, add(fairWeight, biasedWeight));
+              return {
+                prompt: `You choose a fair coin with probability ${fmt(fairPrior)} or a biased coin with heads probability ${fmt(biasedH)} otherwise. You flip heads. What is the probability you chose the biased coin?`,
+                answer,
+                hint: "Compare each coin's prior times chance of heads.",
+                solution: `Fair-head weight is ${fmt(fairPrior)}*1/2 = ${fmt(fairWeight)}. Biased-head weight is ${fmt(biasedPrior)}*${fmt(biasedH)} = ${fmt(biasedWeight)}. Posterior: ${fmt(answer)}.`,
+                mental: "Observed heads favors the coin that makes heads more likely."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "conditional-traps",
+        defaults: {
+          topic: "conditional",
+          difficulty: 2,
+          pattern: "conditioning",
+          skill: "restrict the sample space",
+          estimatedSeconds: 30,
+          trapType: "wrong denominator"
+        },
+        variants: [
+          {
+            id: "at-least-one-six-both",
+            title: "Both Given One Six",
+            generate: () => ({
+              prompt: "Roll two fair dice. Given that at least one die is a 6, what is the probability both dice are 6?",
+              answer: frac(1, 11),
+              hint: "Count outcomes with at least one 6.",
+              solution: "There are 11 ordered outcomes with at least one 6. Only (6,6) has both dice 6, so the probability is 1/11.",
+              mental: "At least one 6 gives 11 cases, not 6."
+            })
+          },
+          {
+            id: "first-six-both",
+            title: "Both Given First Six",
+            difficulty: 1,
+            generate: () => ({
+              prompt: "Roll two fair dice. Given that the first die is a 6, what is the probability both dice are 6?",
+              answer: frac(1, 6),
+              hint: "Only the second die is still random.",
+              solution: "Given the first die is 6, the second die has 6 equally likely values. Only one gives (6,6), so the probability is 1/6.",
+              mental: "First die fixed is different from at least one die fixed."
+            })
+          },
+          {
+            id: "sum-seven-has-three",
+            title: "Three Given Sum Seven",
+            generate: () => ({
+              prompt: "Roll two fair dice. Given that their sum is 7, what is the probability at least one die is a 3?",
+              answer: frac(1, 3),
+              hint: "List the six ordered ways to make 7.",
+              solution: "The sum-7 outcomes are (1,6),(2,5),(3,4),(4,3),(5,2),(6,1). Two contain a 3, so the probability is 2/6 = 1/3.",
+              mental: "Condition first, then count inside the condition."
+            })
+          },
+          {
+            id: "both-aces-given-ace",
+            title: "Both Given At Least One Ace",
+            difficulty: 3,
+            generate: () => {
+              const both = C(4, 2);
+              const atLeastOne = C(52, 2) - C(48, 2);
+              const answer = frac(both, atLeastOne);
+              return {
+                prompt: "Draw 2 cards from a standard deck. Given that at least one card is an ace, what is the probability both cards are aces?",
+                answer,
+                hint: "Use hands with at least one ace as the denominator.",
+                solution: `Both aces: C(4,2) = ${both}. At least one ace: C(52,2)-C(48,2) = ${atLeastOne}. Probability: ${fmt(answer)}.`,
+                mental: "Given at least one ace does not name which card."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "relative-order",
+        defaults: {
+          topic: "counting",
+          difficulty: 1,
+          pattern: "order",
+          skill: "ignore irrelevant positions",
+          estimatedSeconds: 20
+        },
+        variants: [
+          {
+            id: "a-before-two",
+            title: "A Before Two People",
+            generate: () => ({
+              prompt: "In a random ordering of Alice, Bob, and Cara among other people, what is the probability Alice is before both Bob and Cara?",
+              answer: frac(1, 3),
+              hint: "Among the three named people, each is equally likely to be earliest.",
+              solution: "Only the relative order of Alice, Bob, and Cara matters. Alice is earliest among the three with probability 1/3.",
+              mental: "Earliest among three named people."
+            })
+          },
+          {
+            id: "a-between-b-c",
+            title: "A Between Two People",
+            generate: () => ({
+              prompt: "In a random ordering of Alice, Bob, and Cara, what is the probability Alice is between Bob and Cara?",
+              answer: frac(1, 3),
+              hint: "Alice is middle in 2 of the 6 relative orders.",
+              solution: "There are 6 relative orders of the three people. Alice is in the middle in B-A-C and C-A-B, so the probability is 2/6 = 1/3.",
+              mental: "Middle among three is also 1/3."
+            })
+          },
+          {
+            id: "four-specific-order",
+            title: "Four In Exact Order",
+            difficulty: 2,
+            generate: () => ({
+              prompt: "In a random ordering of Alice, Bob, Cara, and Dan among other people, what is the probability they appear in the order Alice before Bob before Cara before Dan?",
+              answer: frac(1, 24),
+              hint: "Only the relative order of the four named people matters.",
+              solution: "The four named people have 4! = 24 equally likely relative orders. Only one order works, so the probability is 1/24.",
+              mental: "One exact relative order out of k!."
+            })
+          },
+          {
+            id: "two-pair-orders",
+            title: "Two Pair Order Constraints",
+            difficulty: 2,
+            generate: () => ({
+              prompt: "In a random ordering of Alice, Bob, Cara, and Dan, what is the probability Alice is before Bob and Cara is before Dan?",
+              answer: frac(1, 4),
+              hint: "Each pair has a 1/2 order condition.",
+              solution: "For each pair, either order is equally likely. The two pair-order constraints both hold with probability (1/2)(1/2) = 1/4.",
+              mental: "Independent relative order bits."
+            })
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "occupancy-core",
+        defaults: {
+          topic: "counting",
+          difficulty: 2,
+          pattern: "occupancy",
+          skill: "balls into boxes",
+          estimatedSeconds: 35
+        },
+        variants: [
+          {
+            id: "exactly-one-collision",
+            title: "Exactly One Collision",
+            generate: () => {
+              const k = randInt(3, 6);
+              const answer = frac(3 * k * (k - 1), k ** 3);
+              return {
+                prompt: `Place 3 labeled balls independently into ${k} labeled boxes. What is the probability exactly two balls share a box and the third ball is elsewhere?`,
+                answer,
+                hint: "Choose the colliding pair, their box, and the third ball's different box.",
+                solution: `Choose the colliding pair in C(3,2)=3 ways, their box in ${k} ways, and the third ball's different box in ${k - 1} ways. Total placements: ${k}^3. Probability: ${fmt(answer)}.`,
+                mental: "Exactly one collision means a 2-1 box pattern."
+              };
+            }
+          },
+          {
+            id: "all-hit-same-count",
+            title: "All Boxes Hit Equally",
+            difficulty: 3,
+            generate: () => {
+              const k = pick([2, 3]);
+              const n = 2 * k;
+              const ways = fact(n) / (2 ** k);
+              const answer = frac(ways, k ** n);
+              return {
+                prompt: `Place ${n} labeled balls independently into ${k} labeled boxes. What is the probability every box gets exactly 2 balls?`,
+                answer,
+                hint: "Partition the labeled balls into equal box groups.",
+                solution: `Favorable placements: ${n}!/(2!)^${k} = ${ways}. Total placements: ${k}^${n}. Probability: ${fmt(answer)}.`,
+                mental: "Equal occupancy is multinomial counting."
+              };
+            }
+          },
+          {
+            id: "at-least-one-empty-square",
+            title: "At Least One Empty Box",
+            generate: () => {
+              const k = pick([3, 4]);
+              const allHit = frac(fact(k), k ** k);
+              const answer = oneMinus(allHit);
+              return {
+                prompt: `Place ${k} labeled balls independently into ${k} labeled boxes. What is the probability at least one box is empty?`,
+                answer,
+                hint: "Use the complement: every box gets exactly one ball.",
+                solution: `P(all boxes hit) = ${k}!/${k}^${k} = ${fmt(allHit)}. So P(at least one empty) = ${fmt(answer)}.`,
+                mental: "For n balls into n boxes, all hit means a permutation."
+              };
+            }
+          },
+          {
+            id: "occupied-boxes-ev",
+            title: "Expected Occupied Boxes",
+            topic: "expected",
+            pattern: "linearity",
+            difficulty: 3,
+            skill: "indicator for each box",
+            generate: () => {
+              const [n, k] = pick([[3, 4], [4, 4], [4, 5], [5, 5]]);
+              const emptyOne = powFrac(frac(k - 1, k), n);
+              const answer = mul(frac(k, 1), oneMinus(emptyOne));
+              return {
+                prompt: `${n} labeled balls are independently placed into ${k} labeled boxes. What is the expected number of occupied boxes?`,
+                answer,
+                hint: "A fixed box is occupied unless every ball misses it.",
+                solution: `For one box, P(occupied) = 1 - (${k - 1}/${k})^${n} = ${fmt(oneMinus(emptyOne))}. Across ${k} boxes, expectation is ${fmt(answer)}.`,
+                mental: "Linearity over boxes, not cases."
+              };
+            }
+          },
+          {
+            id: "singleton-boxes-ev",
+            title: "Expected Singleton Boxes",
+            topic: "expected",
+            pattern: "linearity",
+            difficulty: 4,
+            skill: "indicator for exactly one item",
+            generate: () => {
+              const [n, k] = pick([[3, 4], [4, 4], [5, 5]]);
+              const oneBoxSingleton = mul(frac(n, 1), mul(frac(1, k), powFrac(frac(k - 1, k), n - 1)));
+              const answer = mul(frac(k, 1), oneBoxSingleton);
+              return {
+                prompt: `${n} labeled balls are independently placed into ${k} labeled boxes. What is the expected number of boxes with exactly one ball?`,
+                answer,
+                hint: "For a fixed box, choose which ball lands there and make all other balls miss it.",
+                solution: `For one box: ${n}*(1/${k})*((${k - 1})/${k})^${n - 1} = ${fmt(oneBoxSingleton)}. Multiply by ${k} boxes to get ${fmt(answer)}.`,
+                mental: "Singleton boxes are indicators too."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "dice-grid",
+        defaults: {
+          topic: "dice-coins",
+          difficulty: 2,
+          pattern: "dice-table",
+          skill: "6 by 6 grid counting",
+          estimatedSeconds: 25
+        },
+        variants: [
+          {
+            id: "sum-divisible-by-three",
+            title: "Sum Divisible By 3",
+            generate: () => ({
+              prompt: "Roll two fair dice. What is the probability their sum is divisible by 3?",
+              answer: frac(1, 3),
+              hint: "Each residue mod 3 appears twice on a die.",
+              solution: "The residues 0,1,2 each appear twice. Sum divisible by 3 happens for residue pairs (0,0),(1,2),(2,1), totaling 12 of 36 outcomes, so the probability is 1/3.",
+              mental: "Use residues instead of listing sums."
+            })
+          },
+          {
+            id: "at-least-one-six-or-sum-seven",
+            title: "Six Or Sum Seven",
+            difficulty: 3,
+            pattern: "complement",
+            skill: "small inclusion-exclusion",
+            generate: () => ({
+              prompt: "Roll two fair dice. What is the probability at least one die is 6 or the sum is 7?",
+              answer: frac(5, 12),
+              hint: "Use inclusion-exclusion: one six, sum seven, and overlap.",
+              solution: "At least one 6 has 11 outcomes. Sum 7 has 6 outcomes. The overlap is (6,1) and (1,6), so favorable outcomes = 11 + 6 - 2 = 15. Probability: 15/36 = 5/12.",
+              mental: "Union means add then subtract overlap."
+            })
+          },
+          {
+            id: "product-even-n",
+            title: "Even Product",
+            difficulty: 1,
+            pattern: "complement",
+            skill: "complement all odd",
+            generate: () => {
+              const n = randInt(2, 5);
+              const allOdd = powFrac(frac(1, 2), n);
+              const answer = oneMinus(allOdd);
+              return {
+                prompt: `Roll ${n} fair dice. What is the probability the product of the rolls is even?`,
+                answer,
+                hint: "Use the complement: every die is odd.",
+                solution: `The product is odd only if all ${n} dice are odd, with probability (1/2)^${n} = ${fmt(allOdd)}. So even product has probability ${fmt(answer)}.`,
+                mental: "Even product means at least one even factor."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "market-probability",
+        defaults: {
+          topic: "expected",
+          difficulty: 2,
+          pattern: "ev",
+          skill: "binary contract EV",
+          estimatedSeconds: 25
+        },
+        variants: [
+          {
+            id: "yes-contract-ev-cents",
+            title: "YES Contract EV",
+            generate: () => {
+              const fair = pick([35, 40, 55, 60, 65, 70]);
+              const price = fair + pick([-12, -8, -5, 5, 8, 12]);
+              const answer = frac(fair - price, 1);
+              return {
+                prompt: `A YES contract costs ${price} cents and you think YES has probability ${fair}%. What is the expected profit in cents per contract?`,
+                answer,
+                hint: "For a $1 binary contract, fair value in cents equals probability percent.",
+                solution: `Fair value is ${fair} cents. EV per contract = ${fair} - ${price} = ${fmt(answer)} cents.`,
+                mental: "Binary EV in cents is fair probability minus price."
+              };
+            }
+          },
+          {
+            id: "fair-odds-from-probability",
+            title: "Fair Odds From Probability",
+            difficulty: 2,
+            generate: () => {
+              const p = pick([frac(1, 2), frac(1, 3), frac(2, 3), frac(1, 4), frac(3, 4)]);
+              const answer = div(oneMinus(p), p);
+              return {
+                prompt: `An event has probability ${fmt(p)}. What are the fair net odds, profit per $1 risked?`,
+                answer,
+                hint: "Fair net odds are (1-p)/p.",
+                solution: `Fair net odds = (1 - ${fmt(p)})/${fmt(p)} = ${fmt(answer)}. This is the profit per $1 risked at fair odds.`,
+                mental: "Odds compare losing probability to winning probability."
+              };
+            }
+          },
+          {
+            id: "breakeven-from-payout",
+            title: "Break-Even From Payout",
+            difficulty: 1,
+            generate: () => {
+              const win = pick([1, 2, 3, 4, 5, 9]);
+              const answer = frac(1, win + 1);
+              return {
+                prompt: `A bet risks $1 to win $${win}. What success probability breaks even?`,
+                answer,
+                hint: "Break-even probability is risk divided by total swing.",
+                solution: `Break-even p = risk / (risk + profit) = 1/(1+${win}) = ${fmt(answer)}.`,
+                mental: "Risk over total return."
+              };
+            }
+          }
+        ]
+      })
+    );
+
     const els = {
       topicButtons: document.getElementById("topicButtons"),
       difficultySelect: document.getElementById("difficultySelect"),
@@ -3708,6 +4163,7 @@
       bestStat: document.getElementById("bestStat"),
       seenStat: document.getElementById("seenStat"),
       historyStat: document.getElementById("historyStat"),
+      focusStat: document.getElementById("focusStat"),
       resetStats: document.getElementById("resetStats"),
       bankList: document.getElementById("bankList")
     };
@@ -3751,6 +4207,7 @@
       seenTopics: raw?.seenTopics && typeof raw.seenTopics === "object" ? raw.seenTopics : {},
       seenDifficulties: raw?.seenDifficulties && typeof raw.seenDifficulties === "object" ? raw.seenDifficulties : {},
       seenPatterns: raw?.seenPatterns && typeof raw.seenPatterns === "object" ? raw.seenPatterns : {},
+      patternStats: raw?.patternStats && typeof raw.patternStats === "object" ? raw.patternStats : {},
       history: Array.isArray(raw?.history) ? raw.history.slice(-500) : []
     });
 
@@ -3816,6 +4273,45 @@
       saveScheduler();
     };
 
+    const recordPatternOutcome = (template, ok, seconds) => {
+      const key = template.pattern;
+      const stats = state.scheduler.patternStats[key] || {
+        attempts: 0,
+        correct: 0,
+        totalSeconds: 0,
+        lastWrongSeq: 0,
+        lastSlowSeq: 0
+      };
+      stats.attempts += 1;
+      stats.correct += ok ? 1 : 0;
+      stats.totalSeconds += seconds;
+      if (!ok) stats.lastWrongSeq = state.scheduler.seq;
+      if (seconds > template.estimatedSeconds * 1.35) stats.lastSlowSeq = state.scheduler.seq;
+      state.scheduler.patternStats[key] = stats;
+      saveScheduler();
+    };
+
+    const patternNeed = (pattern, expectedSeconds = 30) => {
+      const stats = state.scheduler.patternStats[pattern];
+      if (!stats || stats.attempts < 3) return 0;
+      const accuracy = stats.correct / stats.attempts;
+      const avgSeconds = stats.totalSeconds / stats.attempts;
+      const weakness = Math.max(0, 0.84 - accuracy);
+      const slowness = Math.max(0, Math.min(1, (avgSeconds - expectedSeconds) / Math.max(10, expectedSeconds)));
+      const wrongRecency = stats.lastWrongSeq ? Math.max(0, 45 - (state.scheduler.seq - stats.lastWrongSeq)) / 45 : 0;
+      const slowRecency = stats.lastSlowSeq ? Math.max(0, 35 - (state.scheduler.seq - stats.lastSlowSeq)) / 35 : 0;
+      return weakness * 2600 + slowness * 900 + wrongRecency * 1600 + slowRecency * 700;
+    };
+
+    const focusPattern = () => Object.entries(state.scheduler.patternStats)
+      .filter(([, stats]) => stats.attempts >= 3)
+      .map(([pattern, stats]) => ({
+        pattern,
+        need: patternNeed(pattern, 30),
+        accuracy: stats.correct / stats.attempts
+      }))
+      .sort((a, b) => b.need - a.need || a.accuracy - b.accuracy)[0]?.pattern || "";
+
     const chooseScheduledProblem = () => {
       const pool = filteredTemplates();
       const usablePool = pool.length ? pool : templates;
@@ -3836,7 +4332,8 @@
 
         baseScore +=
           sinceSeen(state.scheduler.seenPatterns, template.pattern) * (allMode ? 55 : 24) -
-          (recentPatterns[template.pattern] || 0) * (allMode ? 1100 : 520);
+          (recentPatterns[template.pattern] || 0) * (allMode ? 1100 : 520) +
+          patternNeed(template.pattern, template.estimatedSeconds);
 
         if (state.topic === "all") {
           baseScore +=
@@ -3886,8 +4383,10 @@
       const pool = filteredTemplates();
       const activePool = pool.length ? pool : templates;
       const seenInPool = activePool.filter((template) => state.scheduler.seenTemplates[template.id]).length;
+      const focus = focusPattern();
       els.seenStat.textContent = `${seenInPool}/${activePool.length}`;
       els.historyStat.textContent = `${state.scheduler.history.length}/500`;
+      els.focusStat.textContent = focus ? (patternNames[focus] || focus) : "Mixed";
     };
 
     const renderBank = () => {
@@ -3935,14 +4434,16 @@
 
     const showSolution = () => {
       if (!state.current) return;
+      const skill = state.current.template.skill ? `<br><br><strong>Skill</strong>${escapeHtml(state.current.template.skill)}` : "";
+      const trap = state.current.template.trapType ? `<br><br><strong>Trap to watch</strong>${escapeHtml(state.current.template.trapType)}` : "";
       els.solution.classList.add("visible");
-      els.solution.innerHTML = `<strong>Solution</strong>${state.current.solution}<br><br><strong>Mental hook</strong>${state.current.mental}<br><br><strong>Exact answer</strong>${fmt(state.current.answer)}${answerDetail()}`;
+      els.solution.innerHTML = `<strong>Solution</strong>${state.current.solution}<br><br><strong>Mental hook</strong>${state.current.mental}${skill}${trap}<br><br><strong>Exact answer</strong>${fmt(state.current.answer)}${answerDetail()}`;
     };
 
     const nextProblem = () => {
       const { template, generated } = chooseScheduledProblem();
       recordScheduledProblem(template, generated);
-      state.current = { ...generated, template };
+      state.current = { ...generated, template, startedAt: performance.now() };
       state.answered = false;
       els.prompt.innerHTML = renderPromptText(generated.prompt);
       els.prompt.setAttribute("aria-label", generated.prompt);
@@ -3969,6 +4470,7 @@
       }
       const ok = equivalent(parsed, state.current.answer);
       if (!state.answered) {
+        const elapsedSeconds = Math.max(1, (performance.now() - state.current.startedAt) / 1000);
         state.stats.attempts += 1;
         if (ok) {
           state.stats.correct += 1;
@@ -3977,7 +4479,9 @@
         } else {
           state.stats.streak = 0;
         }
+        recordPatternOutcome(state.current.template, ok, elapsedSeconds);
         updateStats();
+        updateMemory();
       }
       state.answered = true;
       if (ok) {
@@ -4010,7 +4514,10 @@
     els.showSolution.addEventListener("click", showSolution);
     els.resetStats.addEventListener("click", () => {
       state.stats = { attempts: 0, correct: 0, streak: 0, best: 0 };
+      state.scheduler.patternStats = {};
+      saveScheduler();
       updateStats();
+      updateMemory();
     });
     els.answerInput.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
