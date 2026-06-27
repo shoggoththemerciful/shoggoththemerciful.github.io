@@ -649,7 +649,7 @@
           <div class="bank-list" id="bankList"></div>
         </div>
         <p class="note">
-          Problems are generated from templates, so the bank has thousands of variants while keeping arithmetic mental-friendly.
+          Problems are generated from templates and spaced from your local history to keep topics, levels, and repeats spread out.
         </p>
       </aside>
     </div>
@@ -3229,14 +3229,6 @@
       })
     );
 
-    const state = {
-      topic: "all",
-      difficulty: "all",
-      current: null,
-      answered: false,
-      stats: JSON.parse(localStorage.getItem("probabilityGrinderStats") || "{\"attempts\":0,\"correct\":0,\"streak\":0,\"best\":0}")
-    };
-
     const els = {
       topicButtons: document.getElementById("topicButtons"),
       difficultySelect: document.getElementById("difficultySelect"),
@@ -3269,11 +3261,134 @@
       "expected": "EV Games"
     };
 
+    const loadJson = (key, fallback) => {
+      try {
+        return JSON.parse(localStorage.getItem(key) || "") || fallback;
+      } catch {
+        return fallback;
+      }
+    };
+
+    const normalizeScheduler = (raw) => ({
+      seq: Number.isFinite(raw?.seq) ? raw.seq : 0,
+      seenTemplates: raw?.seenTemplates && typeof raw.seenTemplates === "object" ? raw.seenTemplates : {},
+      seenPrompts: raw?.seenPrompts && typeof raw.seenPrompts === "object" ? raw.seenPrompts : {},
+      seenTopics: raw?.seenTopics && typeof raw.seenTopics === "object" ? raw.seenTopics : {},
+      seenDifficulties: raw?.seenDifficulties && typeof raw.seenDifficulties === "object" ? raw.seenDifficulties : {},
+      history: Array.isArray(raw?.history) ? raw.history.slice(-500) : []
+    });
+
+    const state = {
+      topic: "all",
+      difficulty: "all",
+      current: null,
+      answered: false,
+      stats: loadJson("probabilityGrinderStats", { attempts: 0, correct: 0, streak: 0, best: 0 }),
+      scheduler: normalizeScheduler(loadJson("probabilityGrinderScheduler", {}))
+    };
+
     const filteredTemplates = () => templates.filter((t) => {
       const topicOk = state.topic === "all" || t.topic === state.topic;
       const diffOk = state.difficulty === "all" || t.difficulty === Number(state.difficulty);
       return topicOk && diffOk;
     });
+
+    const promptKey = (template, generated) => `${template.id}::${generated.prompt}`;
+    const sinceSeen = (bucket, key) => {
+      const lastSeen = Number(bucket?.[key]);
+      return Number.isFinite(lastSeen) ? state.scheduler.seq - lastSeen : 100000;
+    };
+
+    const countRecent = (recent, keyFn) => recent.reduce((acc, item) => {
+      const key = keyFn(item);
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const pruneSeenPrompts = () => {
+      const entries = Object.entries(state.scheduler.seenPrompts);
+      if (entries.length <= 1600) return;
+      state.scheduler.seenPrompts = Object.fromEntries(
+        entries
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 1200)
+      );
+    };
+
+    const saveScheduler = () => {
+      pruneSeenPrompts();
+      localStorage.setItem("probabilityGrinderScheduler", JSON.stringify(state.scheduler));
+    };
+
+    const recordScheduledProblem = (template, generated) => {
+      state.scheduler.seq += 1;
+      const key = promptKey(template, generated);
+      state.scheduler.seenTemplates[template.id] = state.scheduler.seq;
+      state.scheduler.seenPrompts[key] = state.scheduler.seq;
+      state.scheduler.seenTopics[template.topic] = state.scheduler.seq;
+      state.scheduler.seenDifficulties[template.difficulty] = state.scheduler.seq;
+      state.scheduler.history.push({
+        id: template.id,
+        topic: template.topic,
+        difficulty: template.difficulty,
+        promptKey: key,
+        seq: state.scheduler.seq
+      });
+      state.scheduler.history = state.scheduler.history.slice(-500);
+      saveScheduler();
+    };
+
+    const chooseScheduledProblem = () => {
+      const pool = filteredTemplates();
+      const usablePool = pool.length ? pool : templates;
+      const recentSize = Math.min(state.scheduler.history.length, Math.max(18, Math.ceil(usablePool.length / 2)));
+      const recent = state.scheduler.history.slice(-recentSize);
+      const recentTemplates = countRecent(recent, (item) => item.id);
+      const recentPrompts = countRecent(recent, (item) => item.promptKey);
+      const recentTopics = countRecent(recent, (item) => item.topic);
+      const recentDifficulties = countRecent(recent, (item) => item.difficulty);
+
+      const scoredTemplates = usablePool.map((template) => {
+        const templateGap = sinceSeen(state.scheduler.seenTemplates, template.id);
+        let baseScore =
+          templateGap * 1000 -
+          (recentTemplates[template.id] || 0) * 9000;
+
+        if (state.topic === "all") {
+          baseScore +=
+            sinceSeen(state.scheduler.seenTopics, template.topic) * 30 -
+            (recentTopics[template.topic] || 0) * 650;
+        }
+
+        if (state.difficulty === "all") {
+          baseScore +=
+            sinceSeen(state.scheduler.seenDifficulties, template.difficulty) * 20 -
+            (recentDifficulties[template.difficulty] || 0) * 520;
+        }
+
+        return { template, baseScore: baseScore + Math.random() };
+      }).sort((a, b) => b.baseScore - a.baseScore);
+
+      let best = null;
+      for (const { template, baseScore } of scoredTemplates.slice(0, Math.min(12, scoredTemplates.length))) {
+        const candidates = Array.from({ length: 4 }, () => template.generate());
+        for (const generated of candidates) {
+          const key = promptKey(template, generated);
+          const promptGap = sinceSeen(state.scheduler.seenPrompts, key);
+          const score =
+            baseScore +
+            Math.min(promptGap, 5000) * 3 -
+            (recentPrompts[key] || 0) * 12000 +
+            Math.random();
+
+          if (!best || score > best.score) best = { template, generated, score };
+        }
+      }
+
+      if (best) return best;
+      const template = pick(usablePool);
+      return { template, generated: template.generate(), score: 0 };
+    };
 
     const updateStats = () => {
       localStorage.setItem("probabilityGrinderStats", JSON.stringify(state.stats));
@@ -3333,9 +3448,8 @@
     };
 
     const nextProblem = () => {
-      const pool = filteredTemplates();
-      const template = pick(pool.length ? pool : templates);
-      const generated = template.generate();
+      const { template, generated } = chooseScheduledProblem();
+      recordScheduledProblem(template, generated);
       state.current = { ...generated, template };
       state.answered = false;
       els.prompt.innerHTML = renderPromptText(generated.prompt);
