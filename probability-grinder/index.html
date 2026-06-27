@@ -315,6 +315,45 @@
       font-size: clamp(1.4rem, 4vw, 2.35rem);
       font-weight: 880;
       line-height: 1.12;
+      text-wrap: balance;
+      overflow-wrap: anywhere;
+    }
+
+    .prompt .q-math,
+    .prompt .q-logic,
+    .prompt .q-object {
+      border-radius: 6px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+      padding: 0 0.13em;
+      white-space: normal;
+    }
+
+    .prompt .q-math {
+      border: 1px solid #c9ddd6;
+      background: var(--green-soft);
+      color: var(--teal-dark);
+      font-family: var(--mono);
+      font-size: 0.9em;
+      font-weight: 920;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .prompt .q-logic {
+      padding: 0 0.04em;
+      background: transparent;
+      color: #865a06;
+      font-weight: 930;
+      text-decoration: underline;
+      text-decoration-color: #e6c75c;
+      text-decoration-thickness: 0.12em;
+      text-underline-offset: 0.13em;
+    }
+
+    .prompt .q-object {
+      background: #eef5ff;
+      color: #245c9e;
+      font-weight: 920;
     }
 
     .answer-row {
@@ -565,7 +604,7 @@
           <div class="problem-card">
             <p class="prompt" id="prompt">Loading...</p>
             <div class="answer-row">
-              <input class="answer" id="answerInput" autocomplete="off" inputmode="text" placeholder="Fraction, decimal, or percent">
+              <input class="answer" id="answerInput" autocomplete="off" inputmode="text" placeholder="Answer: 5/12 or 41.7%">
               <button class="button" id="submitAnswer" type="button">Submit</button>
               <button class="button secondary" id="showHint" type="button">Hint</button>
             </div>
@@ -2483,6 +2522,31 @@
       `).join("");
     };
 
+    const escapeHtml = (text) => text.replace(/[&<>"']/g, (ch) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;"
+    }[ch]));
+
+    const renderPromptText = (text) => {
+      const tokenPattern = /(\$\d+|\d+\/\d+|\d+(?:\.\d+)?%?|\b(?:at least|at most|without replacement|with replacement|expected|probability|exactly|given|until|before|after|independently|uniformly|random|heads?|tails?|red|blue|green|hearts?|aces?|six(?:es)?|dice|die|cards?|balls?|boxes?|success|failure|wins?|loss(?:es)?)\b|[+*/=])/gi;
+      return text.split(tokenPattern).map((part) => {
+        if (!part) return "";
+        const clean = escapeHtml(part);
+        const lower = part.toLowerCase();
+        if (/^\$?\d/.test(part) || /^[+*/=]$/.test(part)) return `<span class="q-math">${clean}</span>`;
+        if (/^(at least|at most|without replacement|with replacement|expected|probability|exactly|given|until|before|after|independently|uniformly|random)$/i.test(part)) {
+          return `<span class="q-logic">${clean}</span>`;
+        }
+        if (/^(heads?|tails?|red|blue|green|hearts?|aces?|six(?:es)?|dice|die|cards?|balls?|boxes?|success|failure|wins?|loss(?:es)?)$/i.test(lower)) {
+          return `<span class="q-object">${clean}</span>`;
+        }
+        return clean;
+      }).join("");
+    };
+
     const setFeedback = (kind, text, sub = "") => {
       els.feedback.className = `feedback ${kind}`;
       els.feedback.innerHTML = `${text}${sub ? `<span>${sub}</span>` : ""}`;
@@ -2502,7 +2566,8 @@
       const generated = template.generate();
       state.current = { ...generated, template };
       state.answered = false;
-      els.prompt.textContent = generated.prompt;
+      els.prompt.innerHTML = renderPromptText(generated.prompt);
+      els.prompt.setAttribute("aria-label", generated.prompt);
       els.answerInput.value = "";
       els.solution.classList.remove("visible");
       els.solution.innerHTML = "";
