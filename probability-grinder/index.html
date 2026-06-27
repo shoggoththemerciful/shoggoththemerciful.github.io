@@ -653,6 +653,18 @@
       return a;
     };
 
+    const fact = (n) => {
+      let out = 1;
+      for (let i = 2; i <= n; i++) out *= i;
+      return out;
+    };
+
+    const perm = (n, k) => {
+      let out = 1;
+      for (let i = 0; i < k; i++) out *= n - i;
+      return out;
+    };
+
     const randInt = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
     const pick = (xs) => xs[randInt(0, xs.length - 1)];
     const fmt = (f) => f.d === 1 ? String(f.n) : `${f.n}/${f.d}`;
@@ -793,7 +805,7 @@
         };
       }),
       make("die-first-six", "First Six", "dice-coins", 2, () => {
-        const k = randInt(1, 4);
+        const k = randInt(1, 3);
         const answer = mul(powFrac(frac(5, 6), k - 1), frac(1, 6));
         return {
           prompt: `Roll a die until the first 6 appears. What is the probability it happens on roll ${k}?`,
@@ -845,7 +857,7 @@
         mental: "Condition on the first die."
       })),
       make("dice-no-doubles-n", "No Doubles Repeated", "dice-coins", 2, () => {
-        const n = randInt(2, 4);
+        const n = randInt(2, 3);
         const answer = powFrac(frac(5, 6), n);
         return {
           prompt: `Roll a pair of dice ${n} times. What is the probability you never roll doubles?`,
@@ -856,7 +868,7 @@
         };
       }),
       make("dice-max-exact", "Maximum Exactly m", "dice-coins", 2, () => {
-        const n = randInt(2, 4), m = randInt(2, 6);
+        const n = randInt(2, 3), m = randInt(2, 6);
         const answer = sub(powFrac(frac(m, 6), n), powFrac(frac(m - 1, 6), n));
         return {
           prompt: `Roll ${n} fair dice. What is the probability the maximum roll is exactly ${m}?`,
@@ -867,7 +879,7 @@
         };
       }),
       make("dice-min-exact", "Minimum Exactly m", "dice-coins", 2, () => {
-        const n = randInt(2, 4), m = randInt(1, 5);
+        const n = randInt(2, 3), m = randInt(1, 5);
         const answer = sub(powFrac(frac(7 - m, 6), n), powFrac(frac(6 - m, 6), n));
         return {
           prompt: `Roll ${n} fair dice. What is the probability the minimum roll is exactly ${m}?`,
@@ -878,7 +890,7 @@
         };
       }),
       make("dice-all-different", "All Dice Different", "dice-coins", 2, () => {
-        const n = randInt(3, 6);
+        const n = randInt(3, 5);
         let good = 1;
         for (let i = 0; i < n; i++) good *= 6 - i;
         const answer = frac(good, 6 ** n);
@@ -1087,9 +1099,14 @@
       }),
 
       make("bayes-medical", "Base Rate Test", "conditional", 3, () => {
-        const prevalence = pick([1, 2, 5, 10]);
-        const sensitivity = pick([80, 90, 95]);
-        const falsePositive = pick([5, 10, 20]);
+        const [prevalence, sensitivity, falsePositive] = pick([
+          [10, 90, 10],
+          [10, 80, 20],
+          [5, 90, 5],
+          [10, 95, 5],
+          [5, 80, 20],
+          [1, 90, 10]
+        ]);
         const tp = prevalence * sensitivity;
         const fp = (100 - prevalence) * falsePositive;
         const answer = frac(tp, tp + fp);
@@ -1253,7 +1270,7 @@
           [frac(3, 5), frac(2, 5)],
           [frac(4, 5), frac(1, 5)]
         ]);
-        const n = randInt(2, 4);
+        const n = randInt(2, 3);
         const lp = powFrac(p, n), lq = powFrac(q, n);
         const answer = div(lp, add(lp, lq));
         return {
@@ -1601,6 +1618,805 @@
         };
       })
     ];
+
+    templates.push(
+      make("coin-at-most-heads", "At Most k Heads", "dice-coins", 2, () => {
+        const n = randInt(4, 8), k = randInt(0, Math.floor(n / 2));
+        let ways = 0;
+        for (let i = 0; i <= k; i++) ways += C(n, i);
+        const answer = frac(ways, 2 ** n);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability of getting at most ${k} heads?`,
+          answer,
+          hint: "Add the lower tail of the binomial row.",
+          solution: `Favorable strings: ${Array.from({ length: k + 1 }, (_, i) => `C(${n}, ${i})`).join(" + ")} = ${ways}. Total strings: 2^${n} = ${2 ** n}. Probability: ${fmt(answer)}.`,
+          mental: "Lower Pascal row tail."
+        };
+      }),
+      make("coin-exact-tails", "Exactly k Tails", "dice-coins", 1, () => {
+        const n = randInt(3, 8), k = randInt(0, n);
+        const answer = frac(C(n, k), 2 ** n);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability of getting exactly ${k} tails?`,
+          answer,
+          hint: "Choose which flips are tails.",
+          solution: `There are C(${n}, ${k}) = ${C(n, k)} strings with exactly ${k} tails out of 2^${n} = ${2 ** n}. Probability: ${fmt(answer)}.`,
+          mental: "Heads and tails are symmetric."
+        };
+      }),
+      make("coin-even-head-count", "Even Number of Heads", "dice-coins", 1, () => {
+        const n = randInt(2, 10);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability the number of heads is even?`,
+          answer: frac(1, 2),
+          hint: "Pair every string with the string formed by flipping the first coin.",
+          solution: `Exactly half of the 2^${n} strings have an even number of heads and half have an odd number, so the probability is 1/2.`,
+          mental: "Parity symmetry."
+        };
+      }),
+      make("coin-alternating", "Alternating Flips", "dice-coins", 2, () => {
+        const n = randInt(3, 8);
+        const answer = frac(2, 2 ** n);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability the flips strictly alternate H/T/H/T or T/H/T/H?`,
+          answer,
+          hint: "There are only two alternating strings.",
+          solution: `The only favorable strings are HTH... and THT.... There are 2 favorable strings out of 2^${n} = ${2 ** n}, so the probability is ${fmt(answer)}.`,
+          mental: "Two strings total."
+        };
+      }),
+      make("coin-first-tail", "First Tail", "dice-coins", 1, () => {
+        const k = randInt(1, 8);
+        const answer = frac(1, 2 ** k);
+        return {
+          prompt: `Flip a fair coin until the first tail appears. What is the probability it happens on flip ${k}?`,
+          answer,
+          hint: "You need heads before it, then one tail.",
+          solution: `The required sequence is ${"H".repeat(k - 1)}T, so the probability is (1/2)^${k} = ${fmt(answer)}.`,
+          mental: "Same as first head."
+        };
+      }),
+      make("coin-exactly-one-head", "Exactly One Head", "dice-coins", 1, () => {
+        const n = randInt(3, 8);
+        const answer = frac(n, 2 ** n);
+        return {
+          prompt: `Flip ${n} fair coins. What is the probability of getting exactly one head?`,
+          answer,
+          hint: "Choose the one flip that is heads.",
+          solution: `There are ${n} choices for the lone head and 2^${n} total strings. Probability: ${fmt(answer)}.`,
+          mental: "One marked position."
+        };
+      }),
+      make("dice-at-least-one-six", "At Least One Six", "dice-coins", 1, () => {
+        const n = randInt(2, 3);
+        const noSix = powFrac(frac(5, 6), n);
+        const answer = oneMinus(noSix);
+        return {
+          prompt: `Roll ${n} fair dice. What is the probability at least one die shows 6?`,
+          answer,
+          hint: "Use the complement: no die shows 6.",
+          solution: `P(no 6) = (5/6)^${n} = ${fmt(noSix)}. So P(at least one 6) = ${fmt(answer)}.`,
+          mental: "Complement of no success."
+        };
+      }),
+      make("dice-no-six", "No Sixes", "dice-coins", 1, () => {
+        const n = randInt(2, 3);
+        const answer = powFrac(frac(5, 6), n);
+        return {
+          prompt: `Roll ${n} fair dice. What is the probability no die shows 6?`,
+          answer,
+          hint: "Each die has 5 non-six faces.",
+          solution: `Each die avoids 6 with probability 5/6. Across ${n} dice: (5/6)^${n} = ${fmt(answer)}.`,
+          mental: "All trials avoid one face."
+        };
+      }),
+      make("dice-exactly-one-six", "Exactly One Six", "dice-coins", 2, () => {
+        const n = randInt(2, 3);
+        const answer = mul(frac(n, 1), mul(frac(1, 6), powFrac(frac(5, 6), n - 1)));
+        return {
+          prompt: `Roll ${n} fair dice. What is the probability exactly one die shows 6?`,
+          answer,
+          hint: "Choose which die is the 6; all others avoid 6.",
+          solution: `Choose the 6 in ${n} ways: ${n}(1/6)(5/6)^${n - 1} = ${fmt(answer)}.`,
+          mental: "One success in n trials."
+        };
+      }),
+      make("dice-sum-at-most", "Two Dice At Most", "dice-coins", 2, () => {
+        const s = randInt(3, 9);
+        const ways = sumRangeWays(2, s);
+        const answer = frac(ways, 36);
+        return {
+          prompt: `Roll two fair dice. What is the probability their sum is at most ${s}?`,
+          answer,
+          hint: "Add the lower tail of the two-dice sum table.",
+          solution: `Sums 2 through ${s} have ${ways} ordered outcomes out of 36. Probability: ${fmt(answer)}.`,
+          mental: "Lower triangle count."
+        };
+      }),
+      make("dice-sum-between", "Two Dice Sum Range", "dice-coins", 2, () => {
+        const ranges = [[4, 8], [5, 9], [6, 10], [7, 9], [8, 11]];
+        const [lo, hi] = pick(ranges);
+        const ways = sumRangeWays(lo, hi);
+        const answer = frac(ways, 36);
+        return {
+          prompt: `Roll two fair dice. What is the probability their sum is between ${lo} and ${hi}, inclusive?`,
+          answer,
+          hint: "Use the 2,3,4,5,6,5,4,3,2,1 sum counts around 7.",
+          solution: `The sums ${lo} through ${hi} have ${ways} ordered outcomes out of 36. Probability: ${fmt(answer)}.`,
+          mental: "Add a short run of the dice-sum table."
+        };
+      }),
+      make("dice-first-greater", "First Die Greater", "dice-coins", 1, () => ({
+        prompt: "Roll two fair dice. What is the probability the first die is greater than the second?",
+        answer: frac(5, 12),
+        hint: "By symmetry, first greater and second greater are equal; remove doubles.",
+        solution: "Doubles have probability 1/6. The remaining 5/6 splits equally between first-greater and second-greater, so the answer is 5/12.",
+        mental: "Symmetry after excluding ties."
+      })),
+      make("dice-all-even", "All Dice Even", "dice-coins", 1, () => {
+        const n = randInt(2, 5);
+        const answer = frac(1, 2 ** n);
+        return {
+          prompt: `Roll ${n} fair dice. What is the probability every roll is even?`,
+          answer,
+          hint: "Each die has three even faces.",
+          solution: `Each die is even with probability 1/2. All ${n} must be even: (1/2)^${n} = ${fmt(answer)}.`,
+          mental: "All even means all successes."
+        };
+      }),
+      make("dice-at-least-one-even", "At Least One Even", "dice-coins", 1, () => {
+        const n = randInt(2, 5);
+        const answer = oneMinus(frac(1, 2 ** n));
+        return {
+          prompt: `Roll ${n} fair dice. What is the probability at least one roll is even?`,
+          answer,
+          hint: "Use the complement: all rolls are odd.",
+          solution: `P(all odd) = (1/2)^${n}. So the probability of at least one even is ${fmt(answer)}.`,
+          mental: "Complement of all odd."
+        };
+      }),
+      make("dice-max-at-most", "Maximum At Most", "dice-coins", 1, () => {
+        const n = randInt(2, 3), m = randInt(2, 5);
+        const answer = powFrac(frac(m, 6), n);
+        return {
+          prompt: `Roll ${n} fair dice. What is the probability the maximum roll is at most ${m}?`,
+          answer,
+          hint: "Every die must be at most m.",
+          solution: `Each die must land in {1,...,${m}}, probability ${m}/6. Across ${n} dice: (${m}/6)^${n} = ${fmt(answer)}.`,
+          mental: "Maximum bound means every die qualifies."
+        };
+      }),
+      make("dice-min-at-least", "Minimum At Least", "dice-coins", 1, () => {
+        const n = randInt(2, 3), m = randInt(2, 5);
+        const answer = powFrac(frac(7 - m, 6), n);
+        return {
+          prompt: `Roll ${n} fair dice. What is the probability the minimum roll is at least ${m}?`,
+          answer,
+          hint: "Every die must be at least m.",
+          solution: `Allowed faces are ${m} through 6, so each die has probability ${7 - m}/6. Across ${n} dice: ${fmt(answer)}.`,
+          mental: "Minimum bound means every die qualifies."
+        };
+      }),
+
+      make("card-red-face", "Red Face Card", "cards-bags", 1, () => ({
+        prompt: "Draw one card from a standard deck. What is the probability it is a red face card?",
+        answer: frac(3, 26),
+        hint: "There are 3 face cards in each red suit.",
+        solution: "Red face cards are J, Q, K in hearts and diamonds: 6 cards out of 52, so the probability is 6/52 = 3/26.",
+        mental: "Two red suits times three face ranks."
+      })),
+      make("card-heart-or-queen", "Heart Or Queen", "cards-bags", 1, () => ({
+        prompt: "Draw one card from a standard deck. What is the probability it is a heart or a queen?",
+        answer: frac(4, 13),
+        hint: "Use inclusion-exclusion; the queen of hearts is counted twice.",
+        solution: "There are 13 hearts and 4 queens, with 1 overlap. Favorable cards: 13 + 4 - 1 = 16. Probability: 16/52 = 4/13.",
+        mental: "Add, subtract overlap."
+      })),
+      make("card-not-face", "Not A Face Card", "cards-bags", 1, () => ({
+        prompt: "Draw one card from a standard deck. What is the probability it is not a face card?",
+        answer: frac(10, 13),
+        hint: "There are 12 face cards.",
+        solution: "There are 12 face cards, so 40 cards are not face cards. Probability: 40/52 = 10/13.",
+        mental: "Complement of J/Q/K."
+      })),
+      make("cards-both-red", "Both Red", "cards-bags", 1, () => ({
+        prompt: "Draw 2 cards from a standard deck without replacement. What is the probability both cards are red?",
+        answer: frac(25, 102),
+        hint: "After one red card, 25 red cards remain among 51.",
+        solution: "P(two red) = (26/52)(25/51) = 25/102.",
+        mental: "One half, then 25/51."
+      })),
+      make("cards-both-hearts", "Both Hearts", "cards-bags", 1, () => ({
+        prompt: "Draw 2 cards from a standard deck without replacement. What is the probability both cards are hearts?",
+        answer: frac(1, 17),
+        hint: "After one heart, 12 hearts remain among 51.",
+        solution: "P(two hearts) = (13/52)(12/51) = 1/17.",
+        mental: "A suited pair is 1/17."
+      })),
+      make("cards-different-suits", "Different Suits", "cards-bags", 1, () => ({
+        prompt: "Draw 2 cards from a standard deck without replacement. What is the probability the cards have different suits?",
+        answer: frac(13, 17),
+        hint: "Use the complement of same suit.",
+        solution: "P(same suit) = 4/17. Therefore P(different suits) = 1 - 4/17 = 13/17.",
+        mental: "Complement of same suit."
+      })),
+      make("cards-replacement-same-suit", "Same Suit With Replacement", "cards-bags", 1, () => ({
+        prompt: "Draw a card, replace it, reshuffle, then draw again. What is the probability the two cards have the same suit?",
+        answer: frac(1, 4),
+        hint: "After replacement, each suit is equally likely again.",
+        solution: "The first suit is arbitrary. With replacement, the second card matches that suit with probability 13/52 = 1/4.",
+        mental: "Replacement makes it exactly 1/4."
+      })),
+      make("cards-replacement-at-least-one-ace", "Ace With Replacement", "cards-bags", 2, () => {
+        const answer = oneMinus(powFrac(frac(12, 13), 2));
+        return {
+          prompt: "Draw a card, replace it, reshuffle, then draw again. What is the probability at least one card is an ace?",
+          answer,
+          hint: "Use the complement: no aces on either draw.",
+          solution: `P(no ace twice) = (48/52)^2 = (12/13)^2. So the answer is ${fmt(answer)}.`,
+          mental: "Complement with replacement."
+        };
+      }),
+      make("bag-all-red-no-replace", "All Red", "cards-bags", 1, () => {
+        const [R, B] = pick([[3, 3], [3, 5], [4, 4], [4, 6], [5, 5]]);
+        const n = 2;
+        const answer = frac(C(R, n), C(R + B, n));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Draw ${n} without replacement. What is the probability all drawn balls are red?`,
+          answer,
+          hint: "Choose all drawn balls from the red balls.",
+          solution: `Favorable draws: C(${R},${n}). Total draws: C(${R + B},${n}). Probability: ${fmt(answer)}.`,
+          mental: "All target color."
+        };
+      }),
+      make("bag-same-color-two", "Same Color Pair", "cards-bags", 1, () => {
+        const [R, B] = pick([[3, 3], [3, 5], [4, 4], [4, 6], [5, 5], [6, 4]]);
+        const answer = frac(C(R, 2) + C(B, 2), C(R + B, 2));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Draw 2 without replacement. What is the probability the colors are the same?`,
+          answer,
+          hint: "Same color means both red or both blue.",
+          solution: `Favorable pairs: C(${R},2) + C(${B},2). Total pairs: C(${R + B},2). Probability: ${fmt(answer)}.`,
+          mental: "Both red or both blue."
+        };
+      }),
+      make("bag-red-then-blue", "Red Then Blue", "cards-bags", 1, () => {
+        const [R, B] = pick([[2, 4], [3, 3], [3, 5], [4, 4], [4, 6], [5, 5]]);
+        const answer = mul(frac(R, R + B), frac(B, R + B - 1));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Draw 2 without replacement. What is the probability the first is red and the second is blue?`,
+          answer,
+          hint: "This is an ordered draw.",
+          solution: `P(red then blue) = (${R}/${R + B})(${B}/${R + B - 1}) = ${fmt(answer)}.`,
+          mental: "Order matters here."
+        };
+      }),
+      make("bag-with-replace-at-least-one-red", "Replacement At Least One", "cards-bags", 1, () => {
+        const [R, B] = pick([[1, 1], [1, 2], [2, 1], [1, 3], [3, 1]]);
+        const n = randInt(2, 4);
+        const answer = oneMinus(powFrac(frac(B, R + B), n));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Draw ${n} times with replacement. What is the probability of at least one red draw?`,
+          answer,
+          hint: "Use the complement: all draws are blue.",
+          solution: `P(no red) = (${B}/${R + B})^${n}. So the answer is ${fmt(answer)}.`,
+          mental: "Replacement complement."
+        };
+      }),
+      make("bag-with-replace-exactly-one-red", "Replacement One Red", "cards-bags", 1, () => {
+        const [R, B] = pick([[1, 1], [1, 2], [2, 1], [1, 3], [3, 1]]);
+        const n = randInt(2, 4);
+        const p = frac(R, R + B), q = frac(B, R + B);
+        const answer = mul(frac(n, 1), mul(p, powFrac(q, n - 1)));
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Draw ${n} times with replacement. What is the probability of exactly one red draw?`,
+          answer,
+          hint: "Choose which draw is red.",
+          solution: `Exactly one red: ${n}(${R}/${R + B})(${B}/${R + B})^${n - 1} = ${fmt(answer)}.`,
+          mental: "One success in n replacement draws."
+        };
+      }),
+      make("bag-three-colors-one-each", "One Of Each Color", "cards-bags", 2, () => {
+        const [a, b, c] = pick([[2, 2, 2], [2, 3, 3], [3, 3, 4], [2, 4, 4]]);
+        const total = a + b + c;
+        const answer = frac(a * b * c, C(total, 3));
+        return {
+          prompt: `A bag has ${a} red, ${b} blue, and ${c} green balls. Draw 3 without replacement. What is the probability of getting one of each color?`,
+          answer,
+          hint: "Choose one ball from each color.",
+          solution: `Favorable draws: ${a} * ${b} * ${c} = ${a * b * c}. Total draws: C(${total},3). Probability: ${fmt(answer)}.`,
+          mental: "One from each bucket."
+        };
+      }),
+      make("bag-three-colors-same-pair", "Same Color From Three", "cards-bags", 2, () => {
+        const [a, b, c] = pick([[2, 2, 2], [2, 3, 3], [3, 3, 4], [2, 4, 4]]);
+        const total = a + b + c;
+        const answer = frac(C(a, 2) + C(b, 2) + C(c, 2), C(total, 2));
+        return {
+          prompt: `A bag has ${a} red, ${b} blue, and ${c} green balls. Draw 2 without replacement. What is the probability the colors match?`,
+          answer,
+          hint: "Add same-color pairs by color.",
+          solution: `Favorable pairs: C(${a},2)+C(${b},2)+C(${c},2). Total pairs: C(${total},2). Probability: ${fmt(answer)}.`,
+          mental: "Same color means pair within one group."
+        };
+      }),
+
+      make("conditional-die-even-given-high", "Even Given High", "conditional", 1, () => ({
+        prompt: "Roll one fair die. Given the result is greater than 3, what is the probability it is even?",
+        answer: frac(2, 3),
+        hint: "Restrict to {4,5,6}.",
+        solution: "Given the roll is greater than 3, the possible outcomes are 4, 5, 6. Two of these are even, so the probability is 2/3.",
+        mental: "Shrink the sample space."
+      })),
+      make("conditional-die-high-given-even", "High Given Even", "conditional", 1, () => ({
+        prompt: "Roll one fair die. Given the result is even, what is the probability it is greater than 3?",
+        answer: frac(2, 3),
+        hint: "Restrict to {2,4,6}.",
+        solution: "Given the roll is even, the possible outcomes are 2, 4, 6. The outcomes greater than 3 are 4 and 6, so the probability is 2/3.",
+        mental: "Condition first."
+      })),
+      make("conditional-dice-doubles-given-even-sum", "Doubles Given Even Sum", "conditional", 2, () => ({
+        prompt: "Roll two fair dice. Given the sum is even, what is the probability of doubles?",
+        answer: frac(1, 3),
+        hint: "There are 18 even-sum outcomes.",
+        solution: "Even sum occurs in 18 ordered outcomes. There are 6 doubles, all with even sum. Probability: 6/18 = 1/3.",
+        mental: "All doubles have even sum."
+      })),
+      make("conditional-dice-both-even-given-even-sum", "Both Even Given Even Sum", "conditional", 2, () => ({
+        prompt: "Roll two fair dice. Given the sum is even, what is the probability both dice are even?",
+        answer: frac(1, 2),
+        hint: "Even sum means both dice have the same parity.",
+        solution: "Even sum means both even or both odd. These cases are equally likely: 9 outcomes each. Probability both even is 9/18 = 1/2.",
+        mental: "Same parity splits evenly."
+      })),
+      make("conditional-dice-sum-seven-given-no-doubles", "Seven Given No Doubles", "conditional", 2, () => ({
+        prompt: "Roll two fair dice. Given that the roll is not doubles, what is the probability the sum is 7?",
+        answer: frac(1, 5),
+        hint: "No sum-7 outcome is doubles.",
+        solution: "There are 30 non-double ordered outcomes. Sum 7 has 6 ordered outcomes and none are doubles. Probability: 6/30 = 1/5.",
+        mental: "Condition removes only doubles."
+      })),
+      make("conditional-coins-both-heads-given-same", "Both Heads Given Same", "conditional", 1, () => ({
+        prompt: "Flip two fair coins. Given the two flips are the same, what is the probability both are heads?",
+        answer: frac(1, 2),
+        hint: "The same outcomes are HH and TT.",
+        solution: "Given the flips are the same, the possible outcomes are HH and TT. One of the two is HH, so the probability is 1/2.",
+        mental: "Two conditioned outcomes."
+      })),
+      make("conditional-coin-first-head-given-count", "First Head Given Count", "conditional", 2, () => {
+        const n = randInt(4, 8), k = randInt(1, n - 1);
+        const answer = frac(k, n);
+        return {
+          prompt: `Flip ${n} fair coins. Given exactly ${k} are heads, what is the probability the first flip is heads?`,
+          answer,
+          hint: "Among the n positions, k are heads.",
+          solution: `Given exactly ${k} heads, every set of ${k} head positions is equally likely. The first position is included with probability ${k}/${n} = ${fmt(answer)}.`,
+          mental: "Position symmetry."
+        };
+      }),
+      make("conditional-family-girls-at-least-one", "Girls Given At Least One", "conditional", 2, () => {
+        const n = randInt(2, 5), k = randInt(1, n);
+        const answer = frac(C(n, k), 2 ** n - 1);
+        return {
+          prompt: `A family has ${n} children. Given at least one child is a girl, what is the probability exactly ${k} ${k === 1 ? "child is a girl" : "children are girls"}?`,
+          answer,
+          hint: "Remove the all-boy outcome from the sample space.",
+          solution: `There are 2^${n} - 1 = ${2 ** n - 1} outcomes with at least one girl. Exactly ${k} girls occurs in C(${n},${k}) = ${C(n, k)} outcomes. Probability: ${fmt(answer)}.`,
+          mental: "Coin flips with one excluded outcome."
+        };
+      }),
+      make("conditional-card-queen-given-face", "Queen Given Face", "conditional", 1, () => ({
+        prompt: "Draw one card. Given it is a face card, what is the probability it is a queen?",
+        answer: frac(1, 3),
+        hint: "Face cards are J, Q, K in each suit.",
+        solution: "There are 12 face cards and 4 queens among them. Probability: 4/12 = 1/3.",
+        mental: "Three face ranks."
+      })),
+      make("conditional-card-face-given-red", "Face Given Red", "conditional", 1, () => ({
+        prompt: "Draw one card. Given it is red, what is the probability it is a face card?",
+        answer: frac(3, 13),
+        hint: "Restrict to the 26 red cards.",
+        solution: "There are 6 red face cards among 26 red cards. Probability: 6/26 = 3/13.",
+        mental: "Two suits, three face cards each."
+      })),
+      make("conditional-card-ace-given-black", "Ace Given Black", "conditional", 1, () => ({
+        prompt: "Draw one card. Given it is black, what is the probability it is an ace?",
+        answer: frac(1, 13),
+        hint: "There are two black aces.",
+        solution: "Among 26 black cards, 2 are aces. Probability: 2/26 = 1/13.",
+        mental: "One ace per black suit."
+      })),
+      make("conditional-bag-second-red-given-first-red", "Second Red Given First Red", "conditional", 1, () => {
+        const [R, B] = pick([[3, 3], [3, 5], [4, 4], [4, 6], [5, 5]]);
+        const answer = frac(R - 1, R + B - 1);
+        return {
+          prompt: `A bag has ${R} red and ${B} blue balls. Two are drawn without replacement. Given the first is red, what is the probability the second is red?`,
+          answer,
+          hint: "Remove the first red ball from the bag.",
+          solution: `After the first red, the bag has ${R - 1} red among ${R + B - 1} total balls. Probability: ${fmt(answer)}.`,
+          mental: "Update the bag."
+        };
+      }),
+      make("bayes-factory-defect", "Factory Defect", "conditional", 3, () => {
+        const cases = [
+          [frac(1, 2), frac(1, 10), frac(1, 20)],
+          [frac(1, 3), frac(1, 5), frac(1, 10)],
+          [frac(2, 3), frac(1, 10), frac(1, 5)],
+          [frac(3, 4), frac(1, 20), frac(1, 10)]
+        ];
+        const [prior, aRate, bRate] = pick(cases);
+        const aPath = mul(prior, aRate);
+        const bPath = mul(oneMinus(prior), bRate);
+        const answer = div(aPath, add(aPath, bPath));
+        return {
+          prompt: `Factory A makes ${fmt(prior)} of the items and has defect rate ${fmt(aRate)}. Factory B makes the rest and has defect rate ${fmt(bRate)}. Given an item is defective, what is the probability it came from A?`,
+          answer,
+          hint: "Compare each factory's contribution to defective items.",
+          solution: `A contributes ${fmt(prior)} * ${fmt(aRate)} = ${fmt(aPath)} defective items. B contributes ${fmt(oneMinus(prior))} * ${fmt(bRate)} = ${fmt(bPath)}. Posterior for A: ${fmt(answer)}.`,
+          mental: "Posterior proportional to prior times likelihood."
+        };
+      }),
+      make("bayes-witness-color", "Witness Reliability", "conditional", 3, () => {
+        const [prior, reliable] = pick([[frac(1, 2), frac(3, 4)], [frac(1, 3), frac(4, 5)], [frac(2, 3), frac(3, 4)], [frac(1, 4), frac(4, 5)]]);
+        const bluePath = mul(prior, reliable);
+        const greenPath = mul(oneMinus(prior), oneMinus(reliable));
+        const answer = div(bluePath, add(bluePath, greenPath));
+        return {
+          prompt: `A taxi is blue with probability ${fmt(prior)} and green otherwise. A witness reports the color correctly with probability ${fmt(reliable)}. If the witness says blue, what is the probability the taxi is actually blue?`,
+          answer,
+          hint: "Saying blue can happen because the taxi is blue and the witness is right, or green and the witness is wrong.",
+          solution: `Blue-and-right contributes ${fmt(bluePath)}. Green-and-wrong contributes ${fmt(greenPath)}. Posterior: ${fmt(answer)}.`,
+          mental: "Base rate times reliability."
+        };
+      }),
+      make("bayes-spam-word", "Spam Word", "conditional", 3, () => {
+        const [prior, spamWord, hamWord] = pick([[frac(1, 4), frac(2, 3), frac(1, 6)], [frac(1, 3), frac(3, 4), frac(1, 4)], [frac(1, 5), frac(1, 2), frac(1, 10)]]);
+        const spamPath = mul(prior, spamWord);
+        const hamPath = mul(oneMinus(prior), hamWord);
+        const answer = div(spamPath, add(spamPath, hamPath));
+        return {
+          prompt: `${fmt(prior)} of emails are spam. A certain word appears in ${fmt(spamWord)} of spam emails and ${fmt(hamWord)} of non-spam emails. Given an email contains the word, what is the probability it is spam?`,
+          answer,
+          hint: "Normalize the spam and non-spam ways to see the word.",
+          solution: `Spam contribution: ${fmt(prior)} * ${fmt(spamWord)} = ${fmt(spamPath)}. Non-spam contribution: ${fmt(oneMinus(prior))} * ${fmt(hamWord)} = ${fmt(hamPath)}. Posterior: ${fmt(answer)}.`,
+          mental: "Same Bayes skeleton."
+        };
+      }),
+
+      make("three-digit-divisible", "Three-Digit Divisibility", "counting", 1, () => {
+        const d = pick([2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 25]);
+        const count = Math.floor(999 / d) - Math.floor(99 / d);
+        const answer = frac(count, 900);
+        return {
+          prompt: `Choose a random three-digit positive integer. What is the probability it is divisible by ${d}?`,
+          answer,
+          hint: "Count multiples from 100 through 999.",
+          solution: `Multiples: floor(999/${d}) - floor(99/${d}) = ${count}. There are 900 three-digit integers. Probability: ${fmt(answer)}.`,
+          mental: "Endpoint multiple count."
+        };
+      }),
+      make("random-number-even-last-digit", "Even Last Digit", "counting", 1, () => {
+        const k = randInt(2, 6);
+        return {
+          prompt: `Choose a random ${k}-digit positive integer. What is the probability it is even?`,
+          answer: frac(1, 2),
+          hint: "Only the last digit matters.",
+          solution: "The last digit must be 0, 2, 4, 6, or 8: five choices out of ten. Probability: 1/2.",
+          mental: "Last digit only."
+        };
+      }),
+      make("random-number-divisible-by-five", "Last Digit 0 Or 5", "counting", 1, () => {
+        const k = randInt(2, 6);
+        return {
+          prompt: `Choose a random ${k}-digit positive integer. What is the probability it is divisible by 5?`,
+          answer: frac(1, 5),
+          hint: "A number is divisible by 5 exactly when it ends in 0 or 5.",
+          solution: "The last digit has 10 possibilities and 2 of them work: 0 or 5. Probability: 2/10 = 1/5.",
+          mental: "Last digit test."
+        };
+      }),
+      make("subset-contains-alice", "Subset Contains Alice", "counting", 1, () => {
+        const n = randInt(5, 12), k = randInt(2, Math.min(6, n - 1));
+        const answer = frac(k, n);
+        return {
+          prompt: `Choose ${k} people uniformly from a group of ${n}. What is the probability Alice is chosen?`,
+          answer,
+          hint: "Each person is equally likely to occupy any selected slot.",
+          solution: `By symmetry, Alice is in the chosen group with probability ${k}/${n} = ${fmt(answer)}.`,
+          mental: "Chosen fraction."
+        };
+      }),
+      make("subset-contains-alice-bob", "Subset Contains Two People", "counting", 2, () => {
+        const n = randInt(6, 12), k = randInt(2, Math.min(5, n));
+        const answer = frac(C(n - 2, k - 2), C(n, k));
+        return {
+          prompt: `Choose ${k} people uniformly from a group of ${n}. What is the probability Alice and Bob are both chosen?`,
+          answer,
+          hint: "After forcing Alice and Bob, choose the remaining people.",
+          solution: `Favorable groups: C(${n - 2},${k - 2}). Total groups: C(${n},${k}). Probability: ${fmt(answer)}.`,
+          mental: "Force the two specified people."
+        };
+      }),
+      make("committee-at-least-one-group-a", "Committee At Least One A", "counting", 2, () => {
+        const [a, b] = pick([[3, 5], [4, 4], [4, 6], [5, 5], [6, 4]]);
+        const k = randInt(2, 3);
+        const answer = oneMinus(frac(C(b, k), C(a + b, k)));
+        return {
+          prompt: `From ${a} students in group A and ${b} in group B, choose ${k}. What is the probability at least one chosen student is from group A?`,
+          answer,
+          hint: "Use the complement: everyone chosen is from group B.",
+          solution: `P(no group A) = C(${b},${k})/C(${a + b},${k}). So the answer is ${fmt(answer)}.`,
+          mental: "Complement of all B."
+        };
+      }),
+      make("seating-not-adjacent-line", "Not Adjacent In A Line", "counting", 1, () => {
+        const n = randInt(5, 10);
+        const answer = oneMinus(frac(2, n));
+        return {
+          prompt: `${n} people stand randomly in a row. What is the probability Alice and Bob are not next to each other?`,
+          answer,
+          hint: "Use the complement of adjacent.",
+          solution: `P(adjacent) = 2/${n}. Therefore P(not adjacent) = 1 - 2/${n} = ${fmt(answer)}.`,
+          mental: "Complement of block method."
+        };
+      }),
+      make("seating-circular-opposite", "Opposite Around Circle", "counting", 1, () => {
+        const n = pick([6, 8, 10, 12]);
+        const answer = frac(1, n - 1);
+        return {
+          prompt: `${n} people sit randomly around a circular table. What is the probability Alice and Bob sit opposite each other?`,
+          answer,
+          hint: "Fix Alice; Bob has one opposite seat.",
+          solution: `After Alice is fixed, Bob has ${n - 1} possible seats and exactly 1 is opposite. Probability: ${fmt(answer)}.`,
+          mental: "One opposite seat."
+        };
+      }),
+      make("permutation-end-position", "At Either End", "counting", 1, () => {
+        const n = randInt(5, 12);
+        const answer = frac(2, n);
+        return {
+          prompt: `${n} distinct books are randomly arranged on a shelf. What is the probability a particular book is at either end?`,
+          answer,
+          hint: "The book is equally likely to occupy any position.",
+          solution: `There are 2 end positions among ${n} positions. Probability: 2/${n} = ${fmt(answer)}.`,
+          mental: "Position symmetry."
+        };
+      }),
+      make("balls-boxes-no-empty-equal", "No Empty Boxes", "counting", 3, () => {
+        const n = randInt(2, 4);
+        const answer = frac(fact(n), n ** n);
+        return {
+          prompt: `${n} labeled balls are independently placed into ${n} labeled boxes. What is the probability no box is empty?`,
+          answer,
+          hint: "With n balls and n boxes, no empty means exactly one ball per box.",
+          solution: `Favorable placements are bijections: ${n}! = ${fact(n)}. Total placements: ${n}^${n} = ${n ** n}. Probability: ${fmt(answer)}.`,
+          mental: "Bijections over all functions."
+        };
+      }),
+      make("balls-boxes-specific-empty", "Specific Box Empty", "counting", 1, () => {
+        const boxes = randInt(3, 5), balls = randInt(2, 3);
+        const answer = powFrac(frac(boxes - 1, boxes), balls);
+        return {
+          prompt: `${balls} labeled balls are independently placed into ${boxes} labeled boxes. What is the probability box 1 is empty?`,
+          answer,
+          hint: "Each ball must avoid box 1.",
+          solution: `Each ball avoids box 1 with probability ${boxes - 1}/${boxes}. Across ${balls} balls: (${boxes - 1}/${boxes})^${balls} = ${fmt(answer)}.`,
+          mental: "A specific box is missed by every ball."
+        };
+      }),
+      make("word-arrangements-repeat", "Repeated-Letter Arrangements", "counting", 2, () => {
+        const words = [
+          ["LEVEL", 5, [2, 2]],
+          ["BANANA", 6, [3, 2]],
+          ["MOMENT", 6, [2]],
+          ["ASSESS", 6, [4, 2]],
+          ["COCOA", 5, [2, 2]]
+        ];
+        const [word, n, reps] = pick(words);
+        const denom = reps.reduce((acc, r) => acc * fact(r), 1);
+        const answer = frac(fact(n), denom);
+        return {
+          prompt: `How many distinct arrangements are there of the letters in ${word}?`,
+          answer,
+          hint: "Divide by the factorial of each repeated-letter count.",
+          solution: `There are ${n}! arrangements before accounting for repeats. Divide by ${reps.map((r) => `${r}!`).join(" * ")}. Answer: ${fmt(answer)}.`,
+          mental: "Permutations with repeated letters."
+        };
+      }),
+      make("stars-bars-nonempty", "Nonempty Boxes Count", "counting", 2, () => {
+        const k = randInt(2, 5), n = randInt(k + 1, k + 7);
+        const answer = frac(C(n - 1, k - 1), 1);
+        return {
+          prompt: `How many ways are there to distribute ${n} identical balls into ${k} labeled boxes if every box must be nonempty?`,
+          answer,
+          hint: "Give each box one ball first, then use stars and bars.",
+          solution: `After placing one ball in each box, distribute ${n - k} remaining balls freely. Count: C(${n - 1},${k - 1}) = ${fmt(answer)}.`,
+          mental: "Positive stars and bars."
+        };
+      }),
+      make("alternating-genders-row", "Alternating Genders", "counting", 3, () => {
+        const m = randInt(2, 4);
+        const answer = frac(2 * fact(m) * fact(m), fact(2 * m));
+        return {
+          prompt: `${m} men and ${m} women are randomly arranged in a row. What is the probability genders strictly alternate?`,
+          answer,
+          hint: "There are two possible gender patterns.",
+          solution: `Favorable arrangements: 2 * ${m}! * ${m}!. Total arrangements: ${(2 * m)}!. Probability: ${fmt(answer)}.`,
+          mental: "Two patterns, then arrange within genders."
+        };
+      }),
+
+      make("ev-failures-before-success", "Failures Before Success", "expected", 2, () => {
+        const p = pick([frac(1, 2), frac(1, 3), frac(1, 4), frac(2, 3), frac(3, 4), frac(2, 5)]);
+        const answer = div(oneMinus(p), p);
+        return {
+          prompt: `An event succeeds with probability ${fmt(p)} each try. What is the expected number of failures before the first success?`,
+          answer,
+          hint: "Expected tries is 1/p; failures exclude the successful try.",
+          solution: `Expected failures before first success = (1 - p)/p = ${fmt(oneMinus(p))}/${fmt(p)} = ${fmt(answer)}.`,
+          mental: "Failures before success, not tries."
+        };
+      }),
+      make("ev-cost-until-win", "Cost Until Win", "expected", 2, () => {
+        const cost = pick([1, 2, 3, 5, 10]);
+        const p = pick([frac(1, 2), frac(1, 3), frac(1, 4), frac(2, 5)]);
+        const answer = mul(frac(cost, 1), div(frac(1, 1), p));
+        return {
+          prompt: `A game costs $${cost} to play and you win each play with probability ${fmt(p)}. If you play until your first win, what is the expected total cost?`,
+          answer,
+          hint: "Expected plays is 1/p.",
+          solution: `Expected plays = 1/${fmt(p)}. Multiply by $${cost}: expected cost = ${fmt(answer)} dollars.`,
+          mental: "Cost per try times expected tries."
+        };
+      }),
+      make("ev-net-prize-until-win", "Prize After Waiting", "expected", 3, () => {
+        const [prize, cost, p] = pick([[20, 2, frac(1, 4)], [30, 3, frac(1, 3)], [50, 5, frac(1, 5)], [24, 2, frac(1, 3)]]);
+        const expectedCost = mul(frac(cost, 1), div(frac(1, 1), p));
+        const answer = sub(frac(prize, 1), expectedCost);
+        return {
+          prompt: `A game costs $${cost} per play. You win with probability ${fmt(p)} each play and stop at your first win, receiving $${prize}. What is your expected net profit?`,
+          answer,
+          hint: "The prize is eventually received; subtract expected total entry costs.",
+          solution: `Expected cost until first win is ${cost} * 1/${fmt(p)} = ${fmt(expectedCost)}. Net EV = ${prize} - ${fmt(expectedCost)} = ${fmt(answer)}.`,
+          mental: "Eventually win minus expected fees."
+        };
+      }),
+      make("ev-number-of-sixes", "Expected Sixes", "expected", 1, () => {
+        const n = pick([6, 12, 18, 24, 30, 36]);
+        const answer = frac(n, 6);
+        return {
+          prompt: `Roll ${n} fair dice. What is the expected number of sixes?`,
+          answer,
+          hint: "Each die contributes 1/6 of a six in expectation.",
+          solution: `Expected sixes = ${n} * 1/6 = ${fmt(answer)}.`,
+          mental: "Expected count = trials times probability."
+        };
+      }),
+      make("ev-red-cards-in-hand", "Expected Red Cards", "expected", 1, () => {
+        const k = randInt(2, 7);
+        const answer = frac(k, 2);
+        return {
+          prompt: `Draw ${k} cards from a standard deck. What is the expected number of red cards?`,
+          answer,
+          hint: "Each card position has probability 1/2 of being red.",
+          solution: `By linearity, expected red cards = ${k} * 1/2 = ${fmt(answer)}.`,
+          mental: "Linearity works without replacement."
+        };
+      }),
+      make("ev-aces-in-hand", "Expected Aces", "expected", 1, () => {
+        const k = randInt(2, 8);
+        const answer = frac(k, 13);
+        return {
+          prompt: `Draw ${k} cards from a standard deck. What is the expected number of aces?`,
+          answer,
+          hint: "Each card position has probability 4/52 = 1/13 of being an ace.",
+          solution: `Expected aces = ${k} * 1/13 = ${fmt(answer)}.`,
+          mental: "Aces are one rank out of 13."
+        };
+      }),
+      make("ev-empty-boxes", "Expected Empty Boxes", "expected", 3, () => {
+        const boxes = randInt(3, 4), balls = randInt(2, 4);
+        const answer = mul(frac(boxes, 1), powFrac(frac(boxes - 1, boxes), balls));
+        return {
+          prompt: `${balls} balls are independently placed into ${boxes} boxes. What is the expected number of empty boxes?`,
+          answer,
+          hint: "For each box, find the probability every ball misses it.",
+          solution: `A fixed box is empty with probability ((${boxes - 1})/${boxes})^${balls}. Across ${boxes} boxes, expected empty boxes = ${boxes} * that = ${fmt(answer)}.`,
+          mental: "Indicator per box."
+        };
+      }),
+      make("ev-occupied-boxes", "Expected Occupied Boxes", "expected", 3, () => {
+        const boxes = randInt(3, 4), balls = randInt(2, 4);
+        const emptyOne = powFrac(frac(boxes - 1, boxes), balls);
+        const answer = mul(frac(boxes, 1), oneMinus(emptyOne));
+        return {
+          prompt: `${balls} balls are independently placed into ${boxes} boxes. What is the expected number of nonempty boxes?`,
+          answer,
+          hint: "A box is occupied unless every ball misses it.",
+          solution: `A fixed box is occupied with probability 1 - ((${boxes - 1})/${boxes})^${balls} = ${fmt(oneMinus(emptyOne))}. Multiply by ${boxes}: ${fmt(answer)}.`,
+          mental: "Expected occupied = boxes times occupied chance."
+        };
+      }),
+      make("ev-fair-walk-start", "Fair Walk With Start", "expected", 1, () => {
+        const start = randInt(-5, 5), n = randInt(3, 12);
+        return {
+          prompt: `A fair random walker starts at ${start}. After ${n} steps of +1 or -1, what is the expected position?`,
+          answer: frac(start, 1),
+          hint: "Each fair step has expected change 0.",
+          solution: `The expected change per step is 0, so after any number of steps the expected position remains ${start}.`,
+          mental: "Fair steps do not move the mean."
+        };
+      }),
+      make("ev-biased-step-size", "Biased Step Size", "expected", 2, () => {
+        const [up, down, p, n] = pick([[2, 1, frac(1, 2), 6], [3, 1, frac(1, 3), 6], [2, 3, frac(3, 4), 8], [5, 2, frac(1, 4), 8]]);
+        const step = sub(mul(p, frac(up, 1)), mul(oneMinus(p), frac(down, 1)));
+        const answer = mul(frac(n, 1), step);
+        return {
+          prompt: `A walker starts at 0. Each move is +${up} with probability ${fmt(p)} and -${down} otherwise. What is the expected position after ${n} moves?`,
+          answer,
+          hint: "Find expected change per move, then multiply by the number of moves.",
+          solution: `Expected move = ${fmt(p)}*${up} - ${fmt(oneMinus(p))}*${down} = ${fmt(step)}. After ${n} moves: ${fmt(answer)}.`,
+          mental: "Expected step times moves."
+        };
+      }),
+      make("ev-ruin-duration", "Fair Ruin Duration", "expected", 3, () => {
+        const N = pick([4, 5, 6, 8, 10]);
+        const i = randInt(1, N - 1);
+        const answer = frac(i * (N - i), 1);
+        return {
+          prompt: `A fair random walk starts at ${i} and stops when it hits 0 or ${N}. What is the expected number of steps until it stops?`,
+          answer,
+          hint: "For fair gambler's ruin, expected duration is i(N-i).",
+          solution: `Expected stopping time = ${i}(${N}-${i}) = ${fmt(answer)} steps.`,
+          mental: "Fair ruin duration: i(N-i)."
+        };
+      }),
+      make("ev-hit-plus-minus", "Hit Either Boundary", "expected", 3, () => {
+        const a = randInt(2, 6);
+        const answer = frac(a * a, 1);
+        return {
+          prompt: `A fair random walk starts at 0 and stops when it first hits +${a} or -${a}. What is the expected number of steps?`,
+          answer,
+          hint: "This is gambler's ruin from the midpoint of an interval of length 2a.",
+          solution: `For symmetric boundaries +/-${a}, the expected hitting time is ${a}^2 = ${fmt(answer)}.`,
+          mental: "Distance squared."
+        };
+      }),
+      make("ev-die-net-cost", "Die Game Net", "expected", 1, () => {
+        const cost = randInt(1, 6);
+        const answer = sub(frac(7, 2), frac(cost, 1));
+        return {
+          prompt: `You pay $${cost} to roll a fair die and receive the number shown in dollars. What is your expected net gain?`,
+          answer,
+          hint: "Expected die payout is 7/2.",
+          solution: `Expected payout is 7/2. Net gain = 7/2 - ${cost} = ${fmt(answer)} dollars.`,
+          mental: "Average die roll minus cost."
+        };
+      }),
+      make("ev-even-rolls", "Expected Even Rolls", "expected", 1, () => {
+        const n = pick([4, 6, 8, 10, 12, 20]);
+        const answer = frac(n, 2);
+        return {
+          prompt: `Roll a fair die ${n} times. What is the expected number of even rolls?`,
+          answer,
+          hint: "Each roll is even with probability 1/2.",
+          solution: `Expected even rolls = ${n} * 1/2 = ${fmt(answer)}.`,
+          mental: "Half the rolls in expectation."
+        };
+      }),
+      make("ev-same-rank-card-pairs", "Expected Same-Rank Pairs", "expected", 4, () => {
+        const k = randInt(2, 5);
+        const pairs = C(k, 2);
+        const answer = frac(pairs, 17);
+        return {
+          prompt: `Draw ${k} cards from a standard deck. What is the expected number of unordered pairs of cards with the same rank?`,
+          answer,
+          hint: "Any two card positions match rank with probability 1/17.",
+          solution: `There are C(${k},2) = ${pairs} card pairs. Each pair has the same rank with probability 1/17. Expected matching-rank pairs: ${fmt(answer)}.`,
+          mental: "Indicator per card pair."
+        };
+      })
+    );
 
     const state = {
       topic: "all",
