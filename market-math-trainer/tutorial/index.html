@@ -261,6 +261,18 @@
 
       .nav {
         position: static;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        padding: 10px;
+      }
+
+      .nav a {
+        min-height: 32px;
+        padding: 6px 8px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.58);
+        display: inline-flex;
+        align-items: center;
       }
     }
   </style>
