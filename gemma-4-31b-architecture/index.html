@@ -26,7 +26,7 @@
       --red-soft: #fff0ec;
       --blue-soft: #eef5ff;
       --gold-soft: #fff5d8;
-      --shadow: 0 18px 55px rgba(23, 32, 38, 0.11);
+      --shadow: 0 16px 42px rgba(23, 32, 38, 0.08);
       --radius: 8px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
@@ -47,8 +47,7 @@
       color: var(--ink);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        linear-gradient(135deg, rgba(23, 124, 118, 0.08) 0 30%, transparent 31%),
-        linear-gradient(315deg, rgba(47, 111, 187, 0.08) 0 24%, transparent 25%),
+        linear-gradient(180deg, rgba(255, 253, 247, 0.78), rgba(238, 243, 237, 0.92) 360px),
         var(--paper);
     }
 
@@ -1426,6 +1425,214 @@
       line-height: 1.52;
     }
 
+    /* Declutter pass: keep the instructional diagrams, but reduce repeated chrome. */
+    .page {
+      gap: 22px;
+    }
+
+    .topbar {
+      padding-block: 2px;
+    }
+
+    .mark,
+    .button,
+    .layer-rail .full,
+    .calc-card,
+    .diagram-card,
+    .figure,
+    .shape-card,
+    .pseudo {
+      box-shadow: none;
+    }
+
+    .button {
+      border-width: 1px;
+      min-height: 40px;
+    }
+
+    .button.secondary {
+      border-color: var(--line);
+    }
+
+    .hero {
+      border-color: var(--line-dark);
+      box-shadow: 0 16px 48px rgba(23, 32, 38, 0.09);
+      align-items: start;
+    }
+
+    .model-card {
+      min-height: 0;
+      align-content: start;
+      border-color: var(--line-dark);
+    }
+
+    h2 {
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+    }
+
+    .main-grid {
+      gap: 28px;
+    }
+
+    article {
+      gap: 0;
+    }
+
+    .section {
+      border: 0;
+      border-top: 1px solid rgba(174, 185, 176, 0.82);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      padding: clamp(28px, 5vw, 48px) 0;
+    }
+
+    article > .section:first-child {
+      border-top: 0;
+      padding-top: 4px;
+    }
+
+    .toc {
+      border: 1px solid rgba(174, 185, 176, 0.9);
+      border-radius: 12px;
+      background: rgba(255, 253, 247, 0.9);
+      box-shadow: 0 10px 30px rgba(23, 32, 38, 0.08);
+      padding: 6px;
+      gap: 2px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      scroll-padding-inline: 6px;
+    }
+
+    .toc::-webkit-scrollbar {
+      display: none;
+    }
+
+    .toc a {
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #41504c;
+      min-height: 32px;
+      padding: 5px 6px;
+      font-size: 0.76rem;
+      font-weight: 820;
+      flex: 0 0 auto;
+    }
+
+    .toc a.active {
+      background: var(--ink);
+      color: #fffaf0;
+    }
+
+    .fact,
+    .card,
+    .takeaway,
+    .table-wrap,
+    .figure,
+    .pipe-box,
+    .mask,
+    .calc-card,
+    .output-tile,
+    .stack-meter,
+    .diagram-card,
+    .token-step,
+    .residual-river,
+    .shape-card,
+    .side-card,
+    .source-list a,
+    .model-card,
+    .mini-node {
+      border-width: 1px;
+    }
+
+    .fact,
+    .card,
+    .takeaway,
+    .table-wrap,
+    .figure,
+    .mask,
+    .calc-card,
+    .diagram-card,
+    .shape-card,
+    .source-list a,
+    .mini-node {
+      border-color: var(--line);
+    }
+
+    .card,
+    .takeaway,
+    .figure,
+    .calc-card,
+    .diagram-card,
+    .source-list a {
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .fact {
+      min-height: 86px;
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .chip {
+      border-width: 1px;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .mini-node {
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .mini-node .num,
+    .swatch,
+    .progress-shell {
+      border-width: 1px;
+    }
+
+    .callout {
+      border: 1px solid rgba(47, 111, 187, 0.22);
+      box-shadow: none;
+    }
+
+    .formula {
+      border-left-width: 3px;
+      background: rgba(232, 245, 239, 0.72);
+    }
+
+    .side-card {
+      background: rgba(255, 253, 247, 0.62);
+      border-color: var(--line);
+      box-shadow: none;
+      padding: 12px;
+    }
+
+    .side-card h2 {
+      font-size: 1rem;
+    }
+
+    .side-list {
+      gap: 0;
+    }
+
+    .side-list a,
+    .side-list span {
+      border: 0;
+      border-top: 1px solid rgba(207, 216, 209, 0.86);
+      border-radius: 0;
+      background: transparent;
+      padding: 9px 0;
+      font-size: 0.85rem;
+    }
+
+    .side-list a:first-child,
+    .side-list span:first-child {
+      border-top: 0;
+      padding-top: 2px;
+    }
+
     @media (max-width: 1100px) {
       .hero,
       .main-grid,
@@ -1490,6 +1697,14 @@
 
       .toc a {
         flex: 0 0 auto;
+      }
+
+      .fact-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .fact {
+        min-height: 82px;
       }
 
       .layer-rail {
