@@ -162,6 +162,37 @@
       color: var(--ink);
     }
 
+    .statement {
+      margin: 18px 0;
+      padding: 12px 14px;
+      border-left: 4px solid var(--accent);
+      background: var(--note);
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+
+    .statement strong {
+      font-weight: 700;
+    }
+
+    .proof {
+      margin-top: -6px;
+      color: var(--muted);
+      font-size: 0.96rem;
+      line-height: 1.55;
+    }
+
+    .compact-list {
+      margin: 0 0 14px 22px;
+      padding: 0;
+      font-size: 1.02rem;
+      line-height: 1.55;
+    }
+
+    .compact-list li {
+      margin-bottom: 5px;
+    }
+
     h2 {
       margin: 28px 0 10px;
       font-size: 1.32rem;
@@ -321,13 +352,13 @@
       <section class="abstract" aria-labelledby="abstract-title">
         <h2 id="abstract-title">Abstract</h2>
         <p>
-          We present a speculative but internally consistent physical model for the annual Christmas Eve distribution problem. The model combines east-to-west route optimization, relativistic time dilation, plasma-mediated hypersonic flight, acoustic cancellation, macroscopic tunneling, higher-dimensional cargo storage, geomagnetic reindeer lift, and Rudolph-frequency active sensing. While not a claim of conventional laboratory physics, the framework provides a formal taxonomy for treating apparently magical observations as coupled field, topology, and logistics phenomena.
+          We present a speculative but internally consistent physical model for the annual Christmas Eve distribution problem. The model combines east-to-west route optimization, relativistic time dilation, plasma-mediated hypersonic flight, acoustic cancellation, macroscopic tunneling, higher-dimensional cargo storage, geomagnetic reindeer lift, and Rudolph-frequency active sensing. The distribution task is represented as a constrained optimization problem over route time, thermal load, acoustic signature, optical detectability, cargo entropy, and household-access topology. While not a claim of conventional laboratory physics, the framework provides a formal taxonomy for treating apparently magical observations as coupled field, topology, and logistics phenomena.
         </p>
       </section>
 
       <section class="metadata" aria-label="Paper metadata">
         <p><strong>Keywords:</strong> Santa Claus; relativistic logistics; quantum tunneling; tesseract storage; reindeer propulsion; festive field theory.</p>
-        <p><strong>Comments:</strong> 12 pages in holiday normalization; 2 figures; all approximations are cheerful.</p>
+        <p><strong>Comments:</strong> 24 pages in holiday normalization; 2 figures; all approximations are cheerful.</p>
       </section>
 
       <section>
@@ -344,10 +375,88 @@
         <p class="equation-note">
           where \(H\), \(N\), \(V\), \(D\), and \(L\) are heat, noise, visibility, navigational drift, and lateness penalties.
         </p>
+        <p>
+          The contributions of this note are threefold. First, we state the delivery problem in terms of measurable bottleneck variables rather than folklore. Second, we define a modular physics stack in which each subsystem reduces one dominant penalty. Third, we provide a set of observational predictions that explain why the mission remains empirically elusive despite planetary coverage.
+        </p>
+        <div class="statement">
+          <strong>Principle 1 (distributed impossibility).</strong>
+          No single North Pole subsystem is required to violate all ordinary constraints simultaneously. The mission is feasible in the model because each subsystem absorbs one constraint before it propagates into the next layer of the stack.
+        </div>
       </section>
 
       <section>
-        <h2>2. Relativistic Mission Window</h2>
+        <h2>2. Preliminaries, Notation, and Assumptions</h2>
+        <p>
+          Let \(\mathcal{H}\) denote the set of target households and let \(N=|\mathcal{H}|\). A route is a time-ordered sequence \(\pi=(h_1,\ldots,h_N)\) with household coordinates \(x_h\), local time \(\ell_h(t)\), and gift demand vector \(w_h\). The mission is successful when every \(h\in\mathcal{H}\) is visited during its admissible sleep interval and the correct gift \(g_h\) is delivered with no macroscopic signature exceeding a detection threshold.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Interpretation</th>
+                <th>Primary subsystem</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>\(t_{\mathrm{window}}\)</td>
+                <td>Earth-frame global delivery window</td>
+                <td>Routing</td>
+              </tr>
+              <tr>
+                <td>\(\Delta\tau\)</td>
+                <td>Santa-frame operational time</td>
+                <td>Relativistic bubble</td>
+              </tr>
+              <tr>
+                <td>\(\dot q\)</td>
+                <td>Aerothermal heat flux</td>
+                <td>Plasma sheath</td>
+              </tr>
+              <tr>
+                <td>\(p_{\mathrm{total}}\)</td>
+                <td>Residual acoustic pressure at ground level</td>
+                <td>Interference field</td>
+              </tr>
+              <tr>
+                <td>\(P_{\mathrm{tunnel}}\)</td>
+                <td>Entry probability through an effective barrier</td>
+                <td>Phase-coherent tunneling</td>
+              </tr>
+              <tr>
+                <td>\(H_{4D}\)</td>
+                <td>Higher-dimensional storage capacity</td>
+                <td>Tesseract sack</td>
+              </tr>
+              <tr>
+                <td>\(F_{\mathrm{lift}}\)</td>
+                <td>Reindeer magnetic lift force</td>
+                <td>Antler-field coupling</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          We assume four idealizations. These are not introduced to eliminate the problem, but to isolate the role of each subsystem.
+        </p>
+        <ol class="compact-list">
+          <li><strong>Sleep interval regularity.</strong> Each target household has a nonempty delivery interval \(I_h=[a_h,b_h]\) in local time.</li>
+          <li><strong>Field locality.</strong> The sleigh bubble affects only a bounded neighborhood of the craft and does not globally alter terrestrial timekeeping.</li>
+          <li><strong>Signature minimization.</strong> Heat, sound, optical scatter, and radar cross section must remain below household and aviation detection thresholds.</li>
+          <li><strong>Gift determinacy.</strong> For every household there exists a unique maximum-posterior gift state \(g_h^\star\).</li>
+        </ol>
+        <div class="statement">
+          <strong>Definition 1 (successful Christmas Eve trajectory).</strong>
+          A trajectory \((\pi,\Phi,B)\), consisting of route \(\pi\), field schedule \(\Phi\), and bag retrieval policy \(B\), is successful if
+          \[
+            \forall h\in\mathcal{H}:\quad t_h\in I_h,\quad B(h)=g_h^\star,\quad R_h(\Phi,t_h)<R_{\max}.
+          \]
+        </div>
+      </section>
+
+      <section>
+        <h2>3. Relativistic Mission Window</h2>
         <p>
           The first-order solution is geographic. A delivery route progressing east to west follows the moving night side of Earth. Since each \(15^\circ\) of longitude corresponds to approximately one hour of local solar time, Santa converts a single local evening into a global corridor.
         </p>
@@ -384,7 +493,7 @@
       </section>
 
       <section>
-        <h2>3. Hypersonic Sleigh Flight</h2>
+        <h2>4. Hypersonic Sleigh Flight</h2>
         <p>
           A passive wooden sled cannot survive high-speed atmospheric flight. The sleigh is therefore treated as a field-stabilized vehicle inside an ionized plasma sheath. The thermal and drag constraints are approximated by
         </p>
@@ -402,10 +511,31 @@
           \qquad
           p_{\mathrm{cancel}}(t) \simeq -p_{\mathrm{boom}}(t).
         \]
+        <p>
+          In addition to suppressing heat and sound, the field must bound passenger acceleration in the sleigh frame. If \(a_E\) is Earth-frame acceleration and \(S_\Phi\) is the inertial smoothing factor induced by the bubble field, then
+        </p>
+        \[
+          a_{\mathrm{Santa}} = \frac{a_E}{S_\Phi},
+          \qquad
+          S_\Phi \gg 1.
+        \]
+        <p>
+          The same parameter prevents gift shear, harness failure, and hat-loss events. Thus \(S_\Phi\) is not cosmetic; it is a structural stability term.
+        </p>
+        <div class="statement">
+          <strong>Proposition 1 (thermal stealth tradeoff).</strong>
+          If the plasma sheath reduces the effective drag area by a factor \(\eta_A\) and redirects a fraction \(\eta_q\) of heat flux away from the craft, then the delivered payload remains thermally stable whenever
+          \[
+            (1-\eta_q)\eta_A \rho v^3 < \dot q_{\max}.
+          \]
+        </div>
+        <p class="proof">
+          Proof sketch. The untreated heating term scales as \(\rho v^3\). Multiplying by the residual heat fraction and residual drag area gives the net payload exposure. Stability follows by requiring it to remain below the material limit \(\dot q_{\max}\).
+        </p>
       </section>
 
       <section>
-        <h2>4. Entry Through Chimneys and Walls</h2>
+        <h2>5. Entry Through Chimneys and Walls</h2>
         <p>
           The chimney constraint is not solved by compression of a macroscopic body. Santa, the sack, and associated payload are assumed to enter a coherent low-scatter state, reducing the effective interaction cross section with brick, mortar, soot, and household structures.
         </p>
@@ -422,10 +552,20 @@
           \qquad
           \Delta P_{\mathrm{air}} \simeq 0.
         \]
+        <p>
+          A purely geometric squeeze model predicts soot transfer, masonry abrasion, and high variance in delivery success for narrow flues. Observed folklore instead describes clean entry across a broad class of building geometries. The tunneling/fold model predicts this invariance because the effective route depends on field coherence rather than chimney radius.
+        </p>
+        <div class="statement">
+          <strong>Lemma 1 (chimney-radius invariance).</strong>
+          For a phase-coherent entry field with effective barrier width \(L_{\mathrm{eff}}\), household access probability is approximately independent of physical chimney radius \(r_c\) whenever \(L_{\mathrm{eff}}\ll r_c\) or a fold channel is opened.
+        </div>
+        <p class="proof">
+          Proof sketch. In the tunneling channel, the dominant suppression is exponential in \(L_{\mathrm{eff}}\), not in \(r_c\). In the fold channel, the roof and room coordinates become adjacent in the induced topology, so chimney geometry drops out of the access term.
+        </p>
       </section>
 
       <section>
-        <h2>5. Tesseract Cargo Storage</h2>
+        <h2>6. Tesseract Cargo Storage</h2>
         <p>
           The sack is modeled as a three-dimensional aperture into a four-dimensional storage manifold. Its external mouth remains portable, while the additional coordinate \(Q\) multiplies accessible volume:
         </p>
@@ -442,6 +582,25 @@
           \operatorname*{arg\,max}_{g \in \mathcal{G}}
           P(g \mid \mathrm{home},\mathrm{wish\ list},\mathrm{year}).
         \]
+        <p>
+          The probability term is not merely a search heuristic. It is the operational interface between the storage manifold and the household state. A compact factorization is
+        </p>
+        \[
+          P(g \mid h,w_h,y)
+          \propto
+          P(w_h\mid g,h)\,P(g\mid h,y)\,P_{\mathrm{nice}}(h,y),
+        \]
+        <p>
+          where \(P_{\mathrm{nice}}\) is the behavioral eligibility factor traditionally associated with the naughty-or-nice ledger. The retrieval policy is therefore Bayesian, but implemented physically through measurement of the bag state by Santa's hand.
+        </p>
+        <div class="statement">
+          <strong>Proposition 2 (external mass decoupling).</strong>
+          If the sack aperture couples local mass to the storage manifold with leakage coefficient \(\epsilon_m\), then Santa carries apparent mass
+          \[
+            M_{\mathrm{app}} = M_{\mathrm{sack}} + \epsilon_m \sum_{g\in\mathcal{G}} m_g.
+          \]
+          Shoulder portability requires \(\epsilon_m\ll M_{\mathrm{sack}}/\sum_g m_g\).
+        </div>
 
         <figure class="figure">
           <svg viewBox="0 0 900 280" role="img">
@@ -461,7 +620,7 @@
       </section>
 
       <section>
-        <h2>6. Reindeer Propulsion and Rudolph-Frequency Sensing</h2>
+        <h2>7. Reindeer Propulsion and Rudolph-Frequency Sensing</h2>
         <p>
           The North Pole subspecies <em>Rangifer tarandus magicus</em> is modeled as a biological flight platform. Antlers serve as electrostatic collectors and geomagnetic coupling structures. The lift term is approximated by
         </p>
@@ -485,10 +644,59 @@
         <p>
           where \(s\) is an effective snow-depth optical path and \(\alpha\) is the storm attenuation coefficient.
         </p>
+        <p>
+          The propulsion model separates lift, thrust, and guidance. Antler-field coupling reduces the effective weight; trace antimatter reactions supply peak power; Rudolph-frequency sensing constrains the path through low-visibility environments. The control vector can be written
+        </p>
+        \[
+          \mathbf{u}(t)=
+          \left[
+            F_{\mathrm{lift}}(t),
+            T_{\mathrm{anti}}(t),
+            I_{\mathrm{return}}(t),
+            \theta_{\mathrm{nose}}(t)
+          \right],
+        \]
+        <p>
+          with \(\theta_{\mathrm{nose}}\) denoting the scan angle of the thermal guidance beam. Stable flight requires \(\mathbf{u}(t)\) to minimize route drift while keeping waste heat below the auroral visibility threshold.
+        </p>
       </section>
 
       <section>
-        <h2>7. System Summary</h2>
+        <h2>8. System Optimization and Coupled Constraints</h2>
+        <p>
+          We can now state the integrated route problem. Santa chooses a path \(\pi\), field schedule \(\Phi(t)\), and gift retrieval policy \(B\) minimizing a weighted risk functional:
+        </p>
+        \[
+          \min_{\pi,\Phi,B}
+          \sum_{h\in\mathcal{H}}
+          \left[
+            w_t T_h + w_q Q_h + w_p P_h + w_o O_h + w_g G_h
+          \right],
+        \]
+        <p>
+          subject to the delivery constraints
+        </p>
+        \[
+          t_h\in I_h,\qquad
+          B(h)=g_h^\star,\qquad
+          \dot q_h<\dot q_{\max},\qquad
+          |p_{\mathrm{total},h}|<p_{\max},\qquad
+          \sigma_{\mathrm{radar},h}<\sigma_{\max}.
+        \]
+        <p>
+          Here \(T_h\) is lateness cost, \(Q_h\) thermal exposure, \(P_h\) acoustic signature, \(O_h\) optical/radar observability, and \(G_h\) gift mismatch loss. This form makes the essential point explicit: the mission is a constrained optimization problem, not a speed contest.
+        </p>
+        <div class="statement">
+          <strong>Theorem 1 (modular feasibility condition).</strong>
+          If every penalty term admits an independent suppressor with residual factor \(\epsilon_i\), and if \(\sum_i w_i\epsilon_i C_i < R_{\max}\), then the coupled mission trajectory is feasible under Definition 1.
+        </div>
+        <p class="proof">
+          Proof sketch. Substitute each suppressed residual \(R_i=\epsilon_i C_i\) into the risk decomposition. Feasibility follows immediately when the weighted residual remains below the mission threshold. The theorem is deliberately modular: no single term must vanish, but each must be bounded.
+        </p>
+      </section>
+
+      <section>
+        <h2>9. System Summary</h2>
         <div class="table-wrap">
           <table>
             <thead>
@@ -535,9 +743,88 @@
       </section>
 
       <section>
-        <h2>8. Conclusion</h2>
+        <h2>10. Observational Predictions</h2>
+        <p>
+          Although the model is festive, it makes definite qualitative predictions. Because the sleigh suppresses direct observables rather than eliminating all energy exchange, weak residual signatures should remain. They are expected to be short-lived, spatially sparse, and correlated with winter weather.
+        </p>
+        <ol class="compact-list">
+          <li><strong>Auroral residuals.</strong> Plasma shielding and antimatter waste heat should occasionally appear as faint, low-altitude red-green glows along high-latitude routes.</li>
+          <li><strong>Acoustic nulls.</strong> Microphones should record brief pressure discontinuities followed by destructive cancellation, not ordinary sonic booms.</li>
+          <li><strong>Chimney invariance.</strong> Delivery success should be statistically independent of chimney radius, fireplace use, or the existence of a chimney.</li>
+          <li><strong>Cargo mass anomaly.</strong> The sack should preserve nearly constant exterior deformation across the route despite a decreasing inventory count.</li>
+          <li><strong>Rudolph-frequency scattering.</strong> Snowfall near the lead reindeer should show a narrow-band thermal backscatter signature distinct from ordinary lantern light.</li>
+        </ol>
+        \[
+          \Pr(\mathrm{detection})
+          =
+          1-
+          \prod_i
+          \left(1-\epsilon_i S_i\right),
+        \]
+        <p>
+          where \(S_i\) is the sensitivity of instrument class \(i\) and \(\epsilon_i\) is the residual leakage of the corresponding suppression subsystem. The holiday hypothesis predicts small but nonzero leakage, which explains why anecdotal sightings cluster around ambiguous atmospheric conditions.
+        </p>
+      </section>
+
+      <section>
+        <h2>11. Limitations and Failure Modes</h2>
+        <p>
+          The model intentionally treats several quantities as effective parameters. The tachyon term \(T_{\mathrm{tachyon}}\), the tesseract coordinate \(Q\), and the antler charge \(q_{\mathrm{eff}}\) are not derived from first principles. They are phenomenological variables introduced to make the system identifiable at the level of constraints.
+        </p>
+        <p>
+          The most important failure modes are coupled rather than isolated. For example, a reduced plasma shield increases thermal load, which may require stronger time dilation to permit slower travel, which in turn alters route scheduling. Likewise, loss of Rudolph-frequency contrast increases navigational drift and may force a larger optical signature.
+        </p>
+        \[
+          \frac{\partial R}{\partial \Phi_j}
+          =
+          \sum_i
+          w_i
+          \frac{\partial C_i}{\partial \Phi_j},
+        \]
+        <p>
+          where \(\Phi_j\) is a controllable field parameter. Robust operation requires that no single \(\Phi_j\) have a large positive derivative across multiple penalties simultaneously.
+        </p>
+      </section>
+
+      <section>
+        <h2>12. Appendix A: Scaling Estimates</h2>
+        <p>
+          Let \(\bar{s}\) be the average stop time in Santa-frame seconds and \(N\) the number of households. The required proper-time budget is
+        </p>
+        \[
+          \Delta\tau_{\mathrm{req}} = N\bar{s}.
+        \]
+        <p>
+          If \(\Delta t_{\mathrm{Earth}}\) is the Earth-frame mission window, the aggregate dilation factor required by the model is
+        </p>
+        \[
+          \Gamma_{\mathrm{eff}}
+          =
+          \frac{\Delta\tau_{\mathrm{req}}}{\Delta t_{\mathrm{Earth}}}
+          =
+          \frac{N\bar{s}}{t_{\mathrm{window}}}.
+        \]
+        <p>
+          This expression clarifies why route extension alone is insufficient: even a 34-hour window must be multiplied by the local bubble if stop times are human-scale. The Christmas Continuum is therefore not decorative; it is the central scaling term in the model.
+        </p>
+        <p>
+          Similarly, if the total gift mass is \(M_G=\sum_g m_g\), the sack must satisfy
+        </p>
+        \[
+          \epsilon_m M_G \leq M_{\mathrm{carry}},
+        \]
+        <p>
+          where \(M_{\mathrm{carry}}\) is the maximum shoulder-portable apparent mass. For planetary-scale \(M_G\), the leakage coefficient \(\epsilon_m\) must be extremely small, implying that the storage manifold is gravitationally decoupled from the local frame.
+        </p>
+      </section>
+
+      <section>
+        <h2>13. Conclusion</h2>
         <p>
           Santa Claus does not merely move faster than ordinary logistics permits. The Christmas Eve mission is modeled here as applied cosmic engineering: relativistic scheduling, field-stabilized flight, quantum entry, four-dimensional storage, biological propulsion, and active sensing operating as one coupled system. To a household observer it appears magical; under this model it is a festive, speculative physics stack.
+        </p>
+        <p>
+          The expanded formulation also shows why the myth is resilient as an engineering model. Removing any one subsystem immediately reintroduces a hard bottleneck: without dilation the route is too short, without plasma shielding the sleigh overheats, without interference the sonic signature is global, without tunneling household access fails, without tesseract storage the cargo mass is prohibitive, and without Rudolph-frequency sensing the flight path loses robustness in winter weather.
         </p>
       </section>
 
