@@ -304,6 +304,40 @@
       width: 100%;
     }
 
+    .sleigh-float {
+      animation: sleighFloat 5.6s ease-in-out infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .field-flow {
+      animation: fieldFlow 9s linear infinite;
+    }
+
+    @keyframes sleighFloat {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    @keyframes fieldFlow {
+      to {
+        stroke-dashoffset: -76;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sleigh-float,
+      .field-flow {
+        animation: none;
+      }
+    }
+
     .section {
       display: grid;
       gap: 16px;
@@ -708,26 +742,28 @@
           <rect width="760" height="520" fill="url(#sky)"></rect>
           <path d="M0 392C122 344 249 344 381 393s260 50 379 4v123H0Z" fill="#cfe5d9"></path>
           <path d="M0 423c109-34 218-31 327 9s214 40 433-8v96H0Z" fill="#fffdf7" stroke="#172026" stroke-width="3"></path>
-          <path d="M86 95c105 47 193 55 266 22s151-29 234 14 130 49 174 19" fill="none" stroke="#2f6fbb" stroke-width="3" stroke-dasharray="10 9"></path>
-          <ellipse cx="393" cy="203" rx="215" ry="118" fill="rgba(47,111,187,0.08)" stroke="#2f6fbb" stroke-width="3" stroke-dasharray="8 7"></ellipse>
-          <path d="M215 215c41-34 89-51 144-51h133c25 0 47 16 55 40l10 31H242Z" fill="#df5f4e" stroke="#172026" stroke-width="4" filter="url(#softShadow)"></path>
-          <path d="M248 235h342c-8 34-35 54-83 60H301c-33 0-54-20-53-60Z" fill="#fffdf7" stroke="#172026" stroke-width="4"></path>
-          <path d="M285 295c-26 32-53 48-82 48" fill="none" stroke="#172026" stroke-width="7" stroke-linecap="round"></path>
-          <path d="M522 295c30 28 62 42 96 42" fill="none" stroke="#172026" stroke-width="7" stroke-linecap="round"></path>
-          <circle cx="322" cy="213" r="17" fill="#e0a82e" stroke="#172026" stroke-width="4"></circle>
-          <path d="M357 196h104" stroke="#172026" stroke-width="4" stroke-linecap="round"></path>
-          <path d="M196 202c-43-25-82-27-117-6" fill="none" stroke="#172026" stroke-width="4" stroke-linecap="round"></path>
-          <path d="M188 216c-42 21-78 20-108-4" fill="none" stroke="#172026" stroke-width="4" stroke-linecap="round"></path>
-          <g fill="#177c76" stroke="#172026" stroke-width="3">
-            <path d="M113 183c17-19 42-15 49 6 5 15-7 29-26 30-20 2-37-17-23-36Z"></path>
-            <path d="M84 202c12-13 31-10 36 5 4 11-5 21-19 22-15 1-27-13-17-27Z"></path>
+          <path class="field-flow" d="M86 95c105 47 193 55 266 22s151-29 234 14 130 49 174 19" fill="none" stroke="#2f6fbb" stroke-width="3" stroke-dasharray="10 9"></path>
+          <ellipse class="field-flow" cx="393" cy="203" rx="215" ry="118" fill="rgba(47,111,187,0.08)" stroke="#2f6fbb" stroke-width="3" stroke-dasharray="8 7"></ellipse>
+          <g class="sleigh-float">
+            <path d="M215 215c41-34 89-51 144-51h133c25 0 47 16 55 40l10 31H242Z" fill="#df5f4e" stroke="#172026" stroke-width="4" filter="url(#softShadow)"></path>
+            <path d="M248 235h342c-8 34-35 54-83 60H301c-33 0-54-20-53-60Z" fill="#fffdf7" stroke="#172026" stroke-width="4"></path>
+            <path d="M285 295c-26 32-53 48-82 48" fill="none" stroke="#172026" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M522 295c30 28 62 42 96 42" fill="none" stroke="#172026" stroke-width="7" stroke-linecap="round"></path>
+            <circle cx="322" cy="213" r="17" fill="#e0a82e" stroke="#172026" stroke-width="4"></circle>
+            <path d="M357 196h104" stroke="#172026" stroke-width="4" stroke-linecap="round"></path>
+            <path d="M196 202c-43-25-82-27-117-6" fill="none" stroke="#172026" stroke-width="4" stroke-linecap="round"></path>
+            <path d="M188 216c-42 21-78 20-108-4" fill="none" stroke="#172026" stroke-width="4" stroke-linecap="round"></path>
+            <g fill="#177c76" stroke="#172026" stroke-width="3">
+              <path d="M113 183c17-19 42-15 49 6 5 15-7 29-26 30-20 2-37-17-23-36Z"></path>
+              <path d="M84 202c12-13 31-10 36 5 4 11-5 21-19 22-15 1-27-13-17-27Z"></path>
+            </g>
+            <path d="M128 178l-8-27m14 27 10-29m-17 18-20-17m28 16 26-15" stroke="#172026" stroke-width="3" stroke-linecap="round"></path>
+            <circle cx="73" cy="204" r="8" fill="#df5f4e" stroke="#172026" stroke-width="3"></circle>
+            <path d="M73 204c-32 3-52 16-60 40" stroke="#df5f4e" stroke-width="4" stroke-linecap="round"></path>
+            <path d="M546 178l55-36 61 35-59 38Z" fill="#e8f5ef" stroke="#172026" stroke-width="4"></path>
+            <path d="M546 178v70l58 39 58-38v-72" fill="none" stroke="#172026" stroke-width="4"></path>
+            <path d="M604 215v72M546 248l58-33 58 34" stroke="#172026" stroke-width="4"></path>
           </g>
-          <path d="M128 178l-8-27m14 27 10-29m-17 18-20-17m28 16 26-15" stroke="#172026" stroke-width="3" stroke-linecap="round"></path>
-          <circle cx="73" cy="204" r="8" fill="#df5f4e" stroke="#172026" stroke-width="3"></circle>
-          <path d="M73 204c-32 3-52 16-60 40" stroke="#df5f4e" stroke-width="4" stroke-linecap="round"></path>
-          <path d="M546 178l55-36 61 35-59 38Z" fill="#e8f5ef" stroke="#172026" stroke-width="4"></path>
-          <path d="M546 178v70l58 39 58-38v-72" fill="none" stroke="#172026" stroke-width="4"></path>
-          <path d="M604 215v72M546 248l58-33 58 34" stroke="#172026" stroke-width="4"></path>
           <g>
             <rect x="268" y="35" width="222" height="30" rx="7" fill="#fffdf7" stroke="#172026" stroke-width="2.6"></rect>
             <text x="379" y="56" text-anchor="middle" font-family="Inter, sans-serif" font-size="20" font-weight="900" fill="#095a55">time-dilation bubble</text>
