@@ -12,5 +12,4 @@ Static tools hosted at `shoggoththemerciful.github.io`.
 - `/gemma-4-31b-architecture/` is a visual guide to the Gemma 4 31B-it text model architecture.
 - `/santa-claus-physics/` is a festive North Pole research report on Santa's speculative physics stack.
 - `/santa-claus-physics/paper/` is the arXiv-style MathJax web paper version of the Santa physics report.
-- `/santa-claus-physics/santa-claus-physics-paper.pdf` is the arXiv-style paper version of the Santa physics report.
 - `/time-zone-trainer/` is a fast time zone conversion trainer for Bergen, UTC, New York, PT, and trading schedule times.
