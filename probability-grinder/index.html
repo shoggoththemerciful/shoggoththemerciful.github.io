@@ -171,6 +171,12 @@
       color: var(--ink);
     }
 
+    .focus-toggle[aria-pressed="true"] {
+      background: var(--teal);
+      color: white;
+      border-color: var(--teal-dark);
+    }
+
     .layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 310px;
@@ -202,6 +208,71 @@
       grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 0.7fr) auto;
       gap: 12px;
       align-items: end;
+    }
+
+    body.focus-mode {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(237, 245, 244, 0.98) 380px),
+        var(--paper);
+    }
+
+    body.focus-mode .app {
+      width: min(900px, calc(100vw - 24px));
+      padding-top: 16px;
+      gap: 14px;
+    }
+
+    body.focus-mode .topbar {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    body.focus-mode .mark {
+      width: 38px;
+      height: 38px;
+      box-shadow: 2px 2px 0 rgba(18, 28, 36, 0.8);
+    }
+
+    body.focus-mode .mark svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    body.focus-mode h1 {
+      font-size: clamp(1.35rem, 2.2vw, 1.9rem);
+    }
+
+    body.focus-mode .record,
+    body.focus-mode .focus-hide,
+    body.focus-mode .controls,
+    body.focus-mode .sidebar,
+    body.focus-mode .status-row {
+      display: none !important;
+    }
+
+    body.focus-mode .layout {
+      grid-template-columns: 1fr;
+    }
+
+    body.focus-mode .workspace {
+      gap: 0;
+    }
+
+    body.focus-mode .panel {
+      border-color: var(--line);
+      box-shadow: none;
+      background: rgba(255, 255, 255, 0.66);
+      padding: clamp(12px, 2.4vw, 22px);
+    }
+
+    body.focus-mode .problem-card {
+      gap: 14px;
+    }
+
+    body.focus-mode .prompt {
+      background: white;
+      padding: clamp(20px, 4vw, 34px);
+      font-size: clamp(1.55rem, 4vw, 2.36rem);
+      line-height: 1.14;
     }
 
     .label {
@@ -719,6 +790,10 @@
         justify-content: stretch;
       }
 
+      body.focus-mode .topbar .actions {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
       .button {
         width: 100%;
         padding-inline: 12px;
@@ -785,8 +860,9 @@
         </div>
       </div>
       <div class="actions">
-        <a class="button secondary" href="../">All Tools</a>
-        <button class="button" id="resetStats" type="button">Reset Stats</button>
+        <button class="button secondary focus-toggle" id="focusToggle" type="button" aria-pressed="false">Focus</button>
+        <a class="button secondary focus-hide" href="../">All Tools</a>
+        <button class="button focus-hide" id="resetStats" type="button">Reset Stats</button>
       </div>
     </header>
 
@@ -5002,6 +5078,7 @@
       difficultySelect: document.getElementById("difficultySelect"),
       paceSelect: document.getElementById("paceSelect"),
       timerSelect: document.getElementById("timerSelect"),
+      focusToggle: document.getElementById("focusToggle"),
       newProblem: document.getElementById("newProblem"),
       prompt: document.getElementById("prompt"),
       answerInput: document.getElementById("answerInput"),
@@ -5084,6 +5161,7 @@
 
     const currentProblemStorageKey = "probabilityGrinderCurrentProblem";
     const timerPreferenceKey = "probabilityGrinderTimerEnabled";
+    const focusPreferenceKey = "probabilityGrinderFocusMode";
     const templateById = new Map(templates.map((template) => [template.id, template]));
 
     const loadJson = (key, fallback) => {
@@ -5121,6 +5199,7 @@
       difficulty: "all",
       pace: "sprint",
       timerEnabled: loadJson(timerPreferenceKey, false) === true,
+      focusMode: loadJson(focusPreferenceKey, false) === true,
       tempoTimer: null,
       current: null,
       answered: false,
@@ -5376,6 +5455,16 @@
       document.querySelectorAll(".timer-ui").forEach((element) => {
         element.classList.toggle("timer-hidden", !state.timerEnabled);
       });
+    };
+
+    const saveFocusPreference = () => {
+      localStorage.setItem(focusPreferenceKey, JSON.stringify(Boolean(state.focusMode)));
+    };
+
+    const updateFocusMode = () => {
+      document.body.classList.toggle("focus-mode", state.focusMode);
+      els.focusToggle.setAttribute("aria-pressed", String(Boolean(state.focusMode)));
+      els.focusToggle.textContent = state.focusMode ? "Exit Focus" : "Focus";
     };
 
     const updateMemory = () => {
@@ -5721,6 +5810,14 @@
       }
       saveCurrentProblem();
     });
+    els.focusToggle.addEventListener("click", () => {
+      state.focusMode = !state.focusMode;
+      saveFocusPreference();
+      updateFocusMode();
+      if (window.matchMedia("(min-width: 721px) and (pointer: fine)").matches) {
+        requestAnimationFrame(() => els.answerInput.focus({ preventScroll: true }));
+      }
+    });
 
     els.newProblem.addEventListener("click", nextProblem);
     els.nextProblem.addEventListener("click", () => {
@@ -5757,6 +5854,7 @@
 
     syncControls();
     updateTimerVisibility();
+    updateFocusMode();
     updateStats();
     if (!restoreCurrentProblem()) nextProblem();
     syncTempoTimer();
