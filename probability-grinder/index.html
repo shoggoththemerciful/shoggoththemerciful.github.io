@@ -158,6 +158,14 @@
       white-space: nowrap;
     }
 
+    button.button:disabled {
+      border-color: var(--line);
+      background: #e8efed;
+      color: #778682;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
     .button.secondary {
       background: var(--panel);
       color: var(--ink);
@@ -660,6 +668,10 @@
       transform: translateY(1px);
     }
 
+    button.button:disabled:active {
+      transform: none;
+    }
+
     .button:focus-visible,
     .segmented button:focus-visible,
     .answer:focus-visible,
@@ -859,13 +871,13 @@
             <div class="feedback neutral" id="feedback">
               Type a fraction, decimal, percentage, or integer. Press <span class="kbd">Enter</span> to submit.
             </div>
-            <div class="solution" id="solution"></div>
           </div>
 
           <div class="actions">
             <button class="button secondary" id="showSolution" type="button">Show Solution</button>
             <button class="button" id="nextProblem" type="button">Next</button>
           </div>
+          <div class="solution" id="solution"></div>
         </section>
       </section>
 
@@ -876,7 +888,7 @@
         </div>
         <div class="stat-grid">
           <div class="stat">
-            <span>Solved</span>
+            <span>Done</span>
             <strong id="solvedStat">0</strong>
           </div>
           <div class="stat">
@@ -5446,7 +5458,7 @@
       };
       state.feedback = feedback;
       els.feedback.className = `feedback ${feedback.kind}`;
-      els.feedback.innerHTML = `<strong>${escapeHtml(feedback.text)}</strong>${feedback.sub ? `<span>${escapeHtml(feedback.sub)}</span>` : ""}`;
+      els.feedback.innerHTML = `<strong>${escapeHtml(feedback.text)}</strong>${feedback.sub ? `<span> ${escapeHtml(feedback.sub)}</span>` : ""}`;
       if (persist) saveCurrentProblem();
     };
 
@@ -5486,6 +5498,17 @@
       state.answered = true;
       updateStats();
       updateMemory();
+    };
+
+    const updateActionState = () => {
+      const hasProblem = Boolean(state.current);
+      const closed = Boolean(state.answered);
+      const solutionVisible = els.solution.classList.contains("visible");
+      els.submitAnswer.disabled = !hasProblem || closed;
+      els.showHint.disabled = !hasProblem || closed;
+      els.showSolution.disabled = !hasProblem || solutionVisible;
+      els.nextProblem.disabled = !closed;
+      els.nextProblem.title = closed ? "Go to the next problem" : "Solve this problem or show the solution first";
     };
 
     const currentSnapshot = () => {
@@ -5582,6 +5605,7 @@
       if (restoring) saveCurrentProblem();
       updateMemory();
       updateTempo();
+      updateActionState();
       if (window.matchMedia("(min-width: 721px) and (pointer: fine)").matches) {
         requestAnimationFrame(() => els.answerInput.focus({ preventScroll: true }));
       }
@@ -5599,7 +5623,7 @@
       state.current = { ...generated, template, startedAt: performance.now() };
       state.current.wrongTries = Number.isFinite(saved?.wrongTries) ? Math.max(0, saved.wrongTries) : 0;
       state.current.elapsedOffset = Number.isFinite(saved?.elapsedSeconds) ? Math.max(0, saved.elapsedSeconds) : 0;
-      state.answered = Boolean(saved?.answered);
+      state.answered = Boolean(saved?.answered || saved?.solutionVisible);
       syncControls();
       renderCurrentProblem(saved);
       return true;
@@ -5620,6 +5644,7 @@
       els.solution.classList.add("visible");
       els.solution.innerHTML = `<strong>Solution</strong>${escapeHtml(state.current.solution)}<br><br><strong>Mental hook</strong>${escapeHtml(state.current.mental)}${skill}${trap}<br><br><strong>Exact answer</strong>${escapeHtml(fmt(state.current.answer) + answerDetail())}`;
       if (persist) saveCurrentProblem();
+      updateActionState();
     };
 
     const nextProblem = () => {
@@ -5631,7 +5656,7 @@
     };
 
     const submit = () => {
-      if (!state.current) return;
+      if (!state.current || state.answered) return;
       const parsed = parseAnswer(els.answerInput.value);
       if (!parsed) {
         setFeedback("bad", "I could not parse that answer.", "Use a fraction like 7/12, a decimal like 0.583, or a percent like 58.3%.");
@@ -5684,7 +5709,9 @@
     });
 
     els.newProblem.addEventListener("click", nextProblem);
-    els.nextProblem.addEventListener("click", nextProblem);
+    els.nextProblem.addEventListener("click", () => {
+      if (state.answered) nextProblem();
+    });
     els.submitAnswer.addEventListener("click", submit);
     els.showHint.addEventListener("click", () => {
       if (state.current) setFeedback("neutral", "Hint", state.current.hint);
