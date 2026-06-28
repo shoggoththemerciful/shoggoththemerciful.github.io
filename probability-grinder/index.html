@@ -411,6 +411,40 @@
       color: var(--teal-dark);
     }
 
+    .tempo-pill.live.over-time {
+      border-color: #e7b8ad;
+      background: var(--red-soft);
+    }
+
+    .tempo-pill.live.over-time strong {
+      color: #9a3d31;
+    }
+
+    .tempo-meter {
+      height: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #eef5f2;
+      overflow: hidden;
+    }
+
+    .tempo-meter span {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--teal);
+      transition: width 180ms ease, background-color 180ms ease;
+    }
+
+    .tempo-meter span.near {
+      background: var(--gold);
+    }
+
+    .tempo-meter span.over {
+      background: var(--coral);
+    }
+
     .answer-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(96px, auto) minmax(76px, auto);
@@ -432,6 +466,16 @@
 
     .answer::placeholder {
       color: #9aa39d;
+    }
+
+    .answer.correct {
+      border-color: var(--teal);
+      background: var(--green-soft);
+    }
+
+    .answer.incorrect {
+      border-color: var(--coral);
+      background: var(--red-soft);
     }
 
     .feedback {
@@ -792,6 +836,9 @@
                 <span>Last</span>
                 <strong id="lastTimeInline">--</strong>
               </div>
+            </div>
+            <div class="tempo-meter" aria-hidden="true">
+              <span id="tempoMeterFill"></span>
             </div>
             <div class="answer-row">
               <input class="answer" id="answerInput" autocomplete="off" inputmode="text" placeholder="Answer: 5/12 or 41.7%">
@@ -4943,6 +4990,7 @@
       targetTime: document.getElementById("targetTime"),
       elapsedTime: document.getElementById("elapsedTime"),
       lastTimeInline: document.getElementById("lastTimeInline"),
+      tempoMeterFill: document.getElementById("tempoMeterFill"),
       topicChip: document.getElementById("topicChip"),
       difficultyChip: document.getElementById("difficultyChip"),
       paceChip: document.getElementById("paceChip"),
@@ -5237,11 +5285,20 @@
         els.targetTime.textContent = "--";
         els.elapsedTime.textContent = "0s";
         els.lastTimeInline.textContent = formatSeconds(state.stats.lastSeconds);
+        els.tempoMeterFill.style.width = "0%";
+        els.tempoMeterFill.className = "";
+        els.elapsedTime.closest(".tempo-pill")?.classList.remove("over-time");
         return;
       }
+      const elapsed = currentElapsedSeconds();
+      const target = targetSeconds();
+      const ratio = target > 0 ? elapsed / target : 0;
       els.targetTime.textContent = formatSeconds(targetSeconds());
-      els.elapsedTime.textContent = formatSeconds(Math.max(1, currentElapsedSeconds()));
+      els.elapsedTime.textContent = formatSeconds(Math.max(1, elapsed));
       els.lastTimeInline.textContent = formatSeconds(state.stats.lastSeconds);
+      els.tempoMeterFill.style.width = `${Math.min(100, Math.max(0, ratio * 100))}%`;
+      els.tempoMeterFill.className = ratio >= 1 ? "over" : ratio >= 0.75 ? "near" : "";
+      els.elapsedTime.closest(".tempo-pill")?.classList.toggle("over-time", ratio >= 1 && !state.answered);
     };
 
     const updateStats = () => {
@@ -5371,6 +5428,7 @@
         },
         answered: state.answered,
         answerValue: els.answerInput.value,
+        answerStatus: els.answerInput.classList.contains("correct") ? "correct" : els.answerInput.classList.contains("incorrect") ? "incorrect" : "",
         elapsedSeconds: currentElapsedSeconds(),
         feedback: state.feedback,
         solutionVisible: els.solution.classList.contains("visible")
@@ -5420,6 +5478,7 @@
       els.prompt.innerHTML = renderPromptText(state.current.prompt);
       els.prompt.setAttribute("aria-label", state.current.prompt);
       els.answerInput.value = typeof saved?.answerValue === "string" ? saved.answerValue : "";
+      els.answerInput.classList.remove("correct", "incorrect");
       els.solution.classList.remove("visible");
       els.solution.innerHTML = "";
       els.topicChip.textContent = topicNames[template.topic];
@@ -5434,6 +5493,8 @@
       } else {
         setFeedback("neutral", "Ready.", "Enter an exact fraction like 5/12, a decimal, a percent, or an integer.", !restoring);
       }
+      const answerStatus = saved?.answerStatus || (state.answered && savedFeedback?.kind === "good" ? "correct" : state.answered && savedFeedback?.kind === "bad" ? "incorrect" : "");
+      if (answerStatus === "correct" || answerStatus === "incorrect") els.answerInput.classList.add(answerStatus);
 
       if (saved?.solutionVisible) showSolution(false);
       if (restoring) saveCurrentProblem();
@@ -5509,8 +5570,12 @@
       const timeDetail = `${formatSeconds(state.current.elapsedOffset || currentElapsedSeconds())} vs ${formatSeconds(targetSeconds())} target`;
       if (ok) {
         setFeedback("good", `Correct: ${fmt(state.current.answer)}`, `${state.current.template.topic === "expected" ? timeDetail : `${pct(state.current.answer)}. ${timeDetail}`}. Press Enter for the next problem.`);
+        els.answerInput.classList.add("correct");
+        els.answerInput.classList.remove("incorrect");
       } else {
         setFeedback("bad", `Not quite. Correct answer: ${fmt(state.current.answer)}`, `${state.current.template.topic === "expected" ? timeDetail : `${pct(state.current.answer)}. ${timeDetail}`}. Review the solution, then go next.`);
+        els.answerInput.classList.add("incorrect");
+        els.answerInput.classList.remove("correct");
       }
       showSolution();
     };
@@ -5553,7 +5618,10 @@
       if (state.answered) nextProblem();
       else submit();
     });
-    els.answerInput.addEventListener("input", saveCurrentProblem);
+    els.answerInput.addEventListener("input", () => {
+      if (!state.answered) els.answerInput.classList.remove("correct", "incorrect");
+      saveCurrentProblem();
+    });
     window.addEventListener("beforeunload", saveCurrentProblem);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") saveCurrentProblem();
