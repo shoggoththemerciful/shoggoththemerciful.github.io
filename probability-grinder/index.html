@@ -423,6 +423,12 @@
       line-height: 1.35;
     }
 
+    .feedback strong {
+      color: var(--ink);
+      font-weight: 860;
+      line-height: 1.25;
+    }
+
     .solution {
       display: none;
       border: 1px solid var(--line);
@@ -4969,6 +4975,7 @@
       pace: "sprint",
       current: null,
       answered: false,
+      feedback: { kind: "neutral", text: "Ready.", sub: "" },
       stats: loadJson("probabilityGrinderStats", { attempts: 0, correct: 0, streak: 0, best: 0 }),
       scheduler: normalizeScheduler(loadJson("probabilityGrinderScheduler", {}))
     };
@@ -5201,10 +5208,42 @@
       }).join("");
     };
 
-    const setFeedback = (kind, text, sub = "") => {
-      els.feedback.className = `feedback ${kind}`;
-      els.feedback.innerHTML = `${text}${sub ? `<span>${sub}</span>` : ""}`;
-      saveCurrentProblem();
+    const validFeedbackKind = (kind) => ["good", "bad", "neutral"].includes(kind) ? kind : "neutral";
+
+    const stripHtml = (html) => String(html || "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const normalizeSavedFeedback = (saved) => {
+      const feedback = saved?.feedback;
+      if (feedback && typeof feedback.text === "string") {
+        return {
+          kind: validFeedbackKind(feedback.kind),
+          text: feedback.text,
+          sub: typeof feedback.sub === "string" ? feedback.sub : ""
+        };
+      }
+      if (typeof saved?.feedbackHtml === "string") {
+        return {
+          kind: validFeedbackKind(String(saved.feedbackClass || "").split(/\s+/).find((part) => ["good", "bad", "neutral"].includes(part))),
+          text: stripHtml(saved.feedbackHtml) || "Ready.",
+          sub: ""
+        };
+      }
+      return null;
+    };
+
+    const setFeedback = (kind, text, sub = "", persist = true) => {
+      const feedback = {
+        kind: validFeedbackKind(kind),
+        text: String(text || ""),
+        sub: String(sub || "")
+      };
+      state.feedback = feedback;
+      els.feedback.className = `feedback ${feedback.kind}`;
+      els.feedback.innerHTML = `<strong>${escapeHtml(feedback.text)}</strong>${feedback.sub ? `<span>${escapeHtml(feedback.sub)}</span>` : ""}`;
+      if (persist) saveCurrentProblem();
     };
 
     const currentSnapshot = () => {
@@ -5227,8 +5266,7 @@
         },
         answered: state.answered,
         answerValue: els.answerInput.value,
-        feedbackClass: els.feedback.className,
-        feedbackHtml: els.feedback.innerHTML,
+        feedback: state.feedback,
         solutionVisible: els.solution.classList.contains("visible")
       };
     };
@@ -5271,6 +5309,7 @@
 
     const renderCurrentProblem = (saved = null) => {
       if (!state.current) return;
+      const restoring = saved !== null;
       const template = state.current.template;
       els.prompt.innerHTML = renderPromptText(state.current.prompt);
       els.prompt.setAttribute("aria-label", state.current.prompt);
@@ -5283,14 +5322,15 @@
       els.patternChip.textContent = patternNames[template.pattern] || template.pattern;
       els.templateChip.textContent = template.title;
 
-      if (typeof saved?.feedbackClass === "string" && typeof saved?.feedbackHtml === "string") {
-        els.feedback.className = saved.feedbackClass;
-        els.feedback.innerHTML = saved.feedbackHtml;
+      const savedFeedback = normalizeSavedFeedback(saved);
+      if (savedFeedback) {
+        setFeedback(savedFeedback.kind, savedFeedback.text, savedFeedback.sub, false);
       } else {
-        setFeedback("neutral", "Ready.", "Enter an exact fraction like 5/12, a decimal, a percent, or an integer.");
+        setFeedback("neutral", "Ready.", "Enter an exact fraction like 5/12, a decimal, a percent, or an integer.", !restoring);
       }
 
       if (saved?.solutionVisible) showSolution(false);
+      if (restoring) saveCurrentProblem();
       updateMemory();
       if (window.matchMedia("(min-width: 721px) and (pointer: fine)").matches) {
         requestAnimationFrame(() => els.answerInput.focus({ preventScroll: true }));
@@ -5320,7 +5360,7 @@
       const skill = state.current.template.skill ? `<br><br><strong>Skill</strong>${escapeHtml(state.current.template.skill)}` : "";
       const trap = state.current.template.trapType ? `<br><br><strong>Trap to watch</strong>${escapeHtml(state.current.template.trapType)}` : "";
       els.solution.classList.add("visible");
-      els.solution.innerHTML = `<strong>Solution</strong>${state.current.solution}<br><br><strong>Mental hook</strong>${state.current.mental}${skill}${trap}<br><br><strong>Exact answer</strong>${fmt(state.current.answer)}${answerDetail()}`;
+      els.solution.innerHTML = `<strong>Solution</strong>${escapeHtml(state.current.solution)}<br><br><strong>Mental hook</strong>${escapeHtml(state.current.mental)}${skill}${trap}<br><br><strong>Exact answer</strong>${escapeHtml(fmt(state.current.answer) + answerDetail())}`;
       if (persist) saveCurrentProblem();
     };
 
