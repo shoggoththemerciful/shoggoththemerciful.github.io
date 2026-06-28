@@ -191,7 +191,7 @@
     .controls {
       padding: 12px;
       display: grid;
-      grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) auto;
+      grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 0.7fr) auto;
       gap: 12px;
       align-items: end;
     }
@@ -443,6 +443,10 @@
 
     .tempo-meter span.over {
       background: var(--coral);
+    }
+
+    .timer-hidden {
+      display: none !important;
     }
 
     .answer-row {
@@ -806,6 +810,13 @@
               <option value="all">Full bank</option>
             </select>
           </div>
+          <div>
+            <label class="label" for="timerSelect">Timer</label>
+            <select class="select" id="timerSelect">
+              <option value="off">Off</option>
+              <option value="on">On</option>
+            </select>
+          </div>
           <button class="button" id="newProblem" type="button">New Problem</button>
         </div>
 
@@ -823,7 +834,7 @@
 
           <div class="problem-card">
             <p class="prompt" id="prompt">Loading...</p>
-            <div class="tempo-row" aria-label="Problem timing">
+            <div class="tempo-row timer-ui" aria-label="Problem timing">
               <div class="tempo-pill">
                 <span>Target</span>
                 <strong id="targetTime">--</strong>
@@ -837,7 +848,7 @@
                 <strong id="lastTimeInline">--</strong>
               </div>
             </div>
-            <div class="tempo-meter" aria-hidden="true">
+            <div class="tempo-meter timer-ui" aria-hidden="true">
               <span id="tempoMeterFill"></span>
             </div>
             <div class="answer-row">
@@ -880,11 +891,11 @@
             <span>Best</span>
             <strong id="bestStat">0</strong>
           </div>
-          <div class="stat">
+          <div class="stat timer-ui">
             <span>Last</span>
             <strong id="lastTimeStat">--</strong>
           </div>
-          <div class="stat">
+          <div class="stat timer-ui">
             <span>Avg Time</span>
             <strong id="avgTimeStat">--</strong>
           </div>
@@ -4978,6 +4989,7 @@
       topicButtons: document.getElementById("topicButtons"),
       difficultySelect: document.getElementById("difficultySelect"),
       paceSelect: document.getElementById("paceSelect"),
+      timerSelect: document.getElementById("timerSelect"),
       newProblem: document.getElementById("newProblem"),
       prompt: document.getElementById("prompt"),
       answerInput: document.getElementById("answerInput"),
@@ -5059,6 +5071,7 @@
     };
 
     const currentProblemStorageKey = "probabilityGrinderCurrentProblem";
+    const timerPreferenceKey = "probabilityGrinderTimerEnabled";
     const templateById = new Map(templates.map((template) => [template.id, template]));
 
     const loadJson = (key, fallback) => {
@@ -5087,6 +5100,7 @@
       streak: Number.isFinite(raw?.streak) ? raw.streak : 0,
       best: Number.isFinite(raw?.best) ? raw.best : 0,
       totalSeconds: Number.isFinite(raw?.totalSeconds) ? raw.totalSeconds : 0,
+      timedAttempts: Number.isFinite(raw?.timedAttempts) ? raw.timedAttempts : (Number.isFinite(raw?.totalSeconds) && raw.totalSeconds > 0 ? (Number.isFinite(raw?.attempts) ? raw.attempts : 0) : 0),
       lastSeconds: Number.isFinite(raw?.lastSeconds) ? raw.lastSeconds : 0
     });
 
@@ -5094,6 +5108,7 @@
       topic: "all",
       difficulty: "all",
       pace: "sprint",
+      timerEnabled: loadJson(timerPreferenceKey, false) === true,
       current: null,
       answered: false,
       feedback: { kind: "neutral", text: "Ready.", sub: "" },
@@ -5163,14 +5178,20 @@
         attempts: 0,
         correct: 0,
         totalSeconds: 0,
+        timedAttempts: 0,
         lastWrongSeq: 0,
         lastSlowSeq: 0
       };
+      if (!Number.isFinite(stats.totalSeconds)) stats.totalSeconds = 0;
+      if (!Number.isFinite(stats.timedAttempts)) stats.timedAttempts = stats.totalSeconds > 0 ? stats.attempts : 0;
       stats.attempts += 1;
       stats.correct += ok ? 1 : 0;
-      stats.totalSeconds += seconds;
+      if (Number.isFinite(seconds) && seconds > 0) {
+        stats.timedAttempts += 1;
+        stats.totalSeconds += seconds;
+      }
       if (!ok) stats.lastWrongSeq = state.scheduler.seq;
-      if (seconds > template.estimatedSeconds * 1.35) stats.lastSlowSeq = state.scheduler.seq;
+      if (Number.isFinite(seconds) && seconds > template.estimatedSeconds * 1.35) stats.lastSlowSeq = state.scheduler.seq;
       state.scheduler.patternStats[key] = stats;
       saveScheduler();
     };
@@ -5179,9 +5200,10 @@
       const stats = state.scheduler.patternStats[pattern];
       if (!stats || stats.attempts < 3) return 0;
       const accuracy = stats.correct / stats.attempts;
-      const avgSeconds = stats.totalSeconds / stats.attempts;
+      const timedAttempts = Number.isFinite(stats.timedAttempts) ? stats.timedAttempts : stats.attempts;
+      const avgSeconds = timedAttempts > 0 ? stats.totalSeconds / timedAttempts : expectedSeconds;
       const weakness = Math.max(0, 0.84 - accuracy);
-      const slowness = Math.max(0, Math.min(1, (avgSeconds - expectedSeconds) / Math.max(10, expectedSeconds)));
+      const slowness = timedAttempts > 1 ? Math.max(0, Math.min(1, (avgSeconds - expectedSeconds) / Math.max(10, expectedSeconds))) : 0;
       const wrongRecency = stats.lastWrongSeq ? Math.max(0, 45 - (state.scheduler.seq - stats.lastWrongSeq)) / 45 : 0;
       const slowRecency = stats.lastSlowSeq ? Math.max(0, 35 - (state.scheduler.seq - stats.lastSlowSeq)) / 35 : 0;
       return weakness * 2600 + slowness * 900 + wrongRecency * 1600 + slowRecency * 700;
@@ -5281,6 +5303,15 @@
     };
 
     const updateTempo = () => {
+      if (!state.timerEnabled) {
+        els.targetTime.textContent = "--";
+        els.elapsedTime.textContent = "0s";
+        els.lastTimeInline.textContent = formatSeconds(state.stats.lastSeconds);
+        els.tempoMeterFill.style.width = "0%";
+        els.tempoMeterFill.className = "";
+        els.elapsedTime.closest(".tempo-pill")?.classList.remove("over-time");
+        return;
+      }
       if (!state.current) {
         els.targetTime.textContent = "--";
         els.elapsedTime.textContent = "0s";
@@ -5308,8 +5339,19 @@
       els.streakStat.textContent = state.stats.streak;
       els.bestStat.textContent = state.stats.best;
       els.lastTimeStat.textContent = formatSeconds(state.stats.lastSeconds);
-      els.avgTimeStat.textContent = state.stats.attempts ? formatSeconds(state.stats.totalSeconds / state.stats.attempts) : "--";
+      els.avgTimeStat.textContent = state.stats.timedAttempts ? formatSeconds(state.stats.totalSeconds / state.stats.timedAttempts) : "--";
       updateTempo();
+    };
+
+    const saveTimerPreference = () => {
+      localStorage.setItem(timerPreferenceKey, JSON.stringify(Boolean(state.timerEnabled)));
+    };
+
+    const updateTimerVisibility = () => {
+      els.timerSelect.value = state.timerEnabled ? "on" : "off";
+      document.querySelectorAll(".timer-ui").forEach((element) => {
+        element.classList.toggle("timer-hidden", !state.timerEnabled);
+      });
     };
 
     const updateMemory = () => {
@@ -5408,6 +5450,21 @@
       if (persist) saveCurrentProblem();
     };
 
+    const stripTimerDetail = (text) => String(text || "")
+      .replace(/\s*\d+(?:s|:\d{2})\s+vs\s+\d+(?:s|:\d{2})\s+target\.?\s*/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const answerFeedbackLead = () => {
+      const parts = [];
+      if (state.current?.template.topic !== "expected") parts.push(pct(state.current.answer));
+      if (state.timerEnabled) {
+        const elapsed = state.current?.elapsedOffset || currentElapsedSeconds();
+        parts.push(`${formatSeconds(elapsed)} vs ${formatSeconds(targetSeconds())} target`);
+      }
+      return parts.length ? `${parts.join(". ")}. ` : "";
+    };
+
     const currentSnapshot = () => {
       if (!state.current) return null;
       return {
@@ -5455,6 +5512,7 @@
       });
       els.difficultySelect.value = state.difficulty;
       els.paceSelect.value = state.pace;
+      updateTimerVisibility();
     };
 
     const normalizeRestoredGenerated = (raw) => {
@@ -5489,7 +5547,7 @@
 
       const savedFeedback = normalizeSavedFeedback(saved);
       if (savedFeedback) {
-        setFeedback(savedFeedback.kind, savedFeedback.text, savedFeedback.sub, false);
+        setFeedback(savedFeedback.kind, savedFeedback.text, state.timerEnabled ? savedFeedback.sub : stripTimerDetail(savedFeedback.sub), false);
       } else {
         setFeedback("neutral", "Ready.", "Enter an exact fraction like 5/12, a decimal, a percent, or an integer.", !restoring);
       }
@@ -5553,8 +5611,11 @@
         const elapsedSeconds = Math.max(1, currentElapsedSeconds());
         state.current.elapsedOffset = elapsedSeconds;
         state.stats.attempts += 1;
-        state.stats.lastSeconds = elapsedSeconds;
-        state.stats.totalSeconds += elapsedSeconds;
+        if (state.timerEnabled) {
+          state.stats.lastSeconds = elapsedSeconds;
+          state.stats.totalSeconds += elapsedSeconds;
+          state.stats.timedAttempts += 1;
+        }
         if (ok) {
           state.stats.correct += 1;
           state.stats.streak += 1;
@@ -5562,18 +5623,18 @@
         } else {
           state.stats.streak = 0;
         }
-        recordPatternOutcome(state.current.template, ok, elapsedSeconds);
+        recordPatternOutcome(state.current.template, ok, state.timerEnabled ? elapsedSeconds : 0);
         updateStats();
         updateMemory();
       }
       state.answered = true;
-      const timeDetail = `${formatSeconds(state.current.elapsedOffset || currentElapsedSeconds())} vs ${formatSeconds(targetSeconds())} target`;
+      const feedbackLead = answerFeedbackLead();
       if (ok) {
-        setFeedback("good", `Correct: ${fmt(state.current.answer)}`, `${state.current.template.topic === "expected" ? timeDetail : `${pct(state.current.answer)}. ${timeDetail}`}. Press Enter for the next problem.`);
+        setFeedback("good", `Correct: ${fmt(state.current.answer)}`, `${feedbackLead}Press Enter for the next problem.`);
         els.answerInput.classList.add("correct");
         els.answerInput.classList.remove("incorrect");
       } else {
-        setFeedback("bad", `Not quite. Correct answer: ${fmt(state.current.answer)}`, `${state.current.template.topic === "expected" ? timeDetail : `${pct(state.current.answer)}. ${timeDetail}`}. Review the solution, then go next.`);
+        setFeedback("bad", `Not quite. Correct answer: ${fmt(state.current.answer)}`, `${feedbackLead}Review the solution, then go next.`);
         els.answerInput.classList.add("incorrect");
         els.answerInput.classList.remove("correct");
       }
@@ -5596,6 +5657,16 @@
     els.paceSelect.addEventListener("change", () => {
       state.pace = els.paceSelect.value;
       nextProblem();
+    });
+    els.timerSelect.addEventListener("change", () => {
+      state.timerEnabled = els.timerSelect.value === "on";
+      saveTimerPreference();
+      updateTimerVisibility();
+      updateTempo();
+      if (!state.timerEnabled) {
+        setFeedback(state.feedback.kind, state.feedback.text, stripTimerDetail(state.feedback.sub), false);
+      }
+      saveCurrentProblem();
     });
 
     els.newProblem.addEventListener("click", nextProblem);
@@ -5627,6 +5698,8 @@
       if (document.visibilityState === "hidden") saveCurrentProblem();
     });
 
+    syncControls();
+    updateTimerVisibility();
     updateStats();
     if (!restoreCurrentProblem()) nextProblem();
     setInterval(updateTempo, 1000);
