@@ -374,6 +374,43 @@
       font-weight: 920;
     }
 
+    .tempo-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .tempo-pill {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--soft);
+      padding: 7px 10px;
+      display: grid;
+      align-content: center;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .tempo-pill span {
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 930;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .tempo-pill strong {
+      color: var(--ink);
+      font-size: 1rem;
+      line-height: 1.05;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tempo-pill.live strong {
+      color: var(--teal-dark);
+    }
+
     .answer-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(96px, auto) minmax(76px, auto);
@@ -742,6 +779,20 @@
 
           <div class="problem-card">
             <p class="prompt" id="prompt">Loading...</p>
+            <div class="tempo-row" aria-label="Problem timing">
+              <div class="tempo-pill">
+                <span>Target</span>
+                <strong id="targetTime">--</strong>
+              </div>
+              <div class="tempo-pill live">
+                <span>Elapsed</span>
+                <strong id="elapsedTime">0s</strong>
+              </div>
+              <div class="tempo-pill">
+                <span>Last</span>
+                <strong id="lastTimeInline">--</strong>
+              </div>
+            </div>
             <div class="answer-row">
               <input class="answer" id="answerInput" autocomplete="off" inputmode="text" placeholder="Answer: 5/12 or 41.7%">
               <button class="button" id="submitAnswer" type="button">Submit</button>
@@ -781,6 +832,14 @@
           <div class="stat">
             <span>Best</span>
             <strong id="bestStat">0</strong>
+          </div>
+          <div class="stat">
+            <span>Last</span>
+            <strong id="lastTimeStat">--</strong>
+          </div>
+          <div class="stat">
+            <span>Avg Time</span>
+            <strong id="avgTimeStat">--</strong>
           </div>
         </div>
         <div>
@@ -2521,7 +2580,7 @@
           prompt: `A game costs $${cost} to play and you win each play with probability ${fmt(p)}. If you play until your first win, what is the expected total cost?`,
           answer,
           hint: "Expected plays is 1/p.",
-          solution: `Expected plays = 1/${fmt(p)}. Multiply by $${cost}: expected cost = ${fmt(answer)} dollars.`,
+          solution: `Expected plays = 1 / (${fmt(p)}) = ${fmt(div(frac(1, 1), p))}. Multiply by $${cost}: expected cost = ${fmt(answer)} dollars.`,
           mental: "Cost per try times expected tries."
         };
       }),
@@ -2533,7 +2592,7 @@
           prompt: `A game costs $${cost} per play. You win with probability ${fmt(p)} each play and stop at your first win, receiving $${prize}. What is your expected net profit?`,
           answer,
           hint: "The prize is eventually received; subtract expected total entry costs.",
-          solution: `Expected cost until first win is ${cost} * 1/${fmt(p)} = ${fmt(expectedCost)}. Net EV = ${prize} - ${fmt(expectedCost)} = ${fmt(answer)}.`,
+          solution: `Expected cost until first win is ${cost} * [1 / (${fmt(p)})] = ${fmt(expectedCost)}. Net EV = ${prize} - ${fmt(expectedCost)} = ${fmt(answer)}.`,
           mental: "Eventually win minus expected fees."
         };
       }),
@@ -4881,6 +4940,9 @@
       nextProblem: document.getElementById("nextProblem"),
       feedback: document.getElementById("feedback"),
       solution: document.getElementById("solution"),
+      targetTime: document.getElementById("targetTime"),
+      elapsedTime: document.getElementById("elapsedTime"),
+      lastTimeInline: document.getElementById("lastTimeInline"),
       topicChip: document.getElementById("topicChip"),
       difficultyChip: document.getElementById("difficultyChip"),
       paceChip: document.getElementById("paceChip"),
@@ -4891,6 +4953,8 @@
       accuracyStat: document.getElementById("accuracyStat"),
       streakStat: document.getElementById("streakStat"),
       bestStat: document.getElementById("bestStat"),
+      lastTimeStat: document.getElementById("lastTimeStat"),
+      avgTimeStat: document.getElementById("avgTimeStat"),
       seenStat: document.getElementById("seenStat"),
       historyStat: document.getElementById("historyStat"),
       focusStat: document.getElementById("focusStat"),
@@ -4969,6 +5033,15 @@
       history: Array.isArray(raw?.history) ? raw.history.slice(-500) : []
     });
 
+    const normalizeStats = (raw) => ({
+      attempts: Number.isFinite(raw?.attempts) ? raw.attempts : 0,
+      correct: Number.isFinite(raw?.correct) ? raw.correct : 0,
+      streak: Number.isFinite(raw?.streak) ? raw.streak : 0,
+      best: Number.isFinite(raw?.best) ? raw.best : 0,
+      totalSeconds: Number.isFinite(raw?.totalSeconds) ? raw.totalSeconds : 0,
+      lastSeconds: Number.isFinite(raw?.lastSeconds) ? raw.lastSeconds : 0
+    });
+
     const state = {
       topic: "all",
       difficulty: "all",
@@ -4976,7 +5049,7 @@
       current: null,
       answered: false,
       feedback: { kind: "neutral", text: "Ready.", sub: "" },
-      stats: loadJson("probabilityGrinderStats", { attempts: 0, correct: 0, streak: 0, best: 0 }),
+      stats: normalizeStats(loadJson("probabilityGrinderStats", {})),
       scheduler: normalizeScheduler(loadJson("probabilityGrinderScheduler", {}))
     };
 
@@ -5142,12 +5215,44 @@
       return { template, generated: template.generate(), score: 0 };
     };
 
+    const formatSeconds = (seconds) => {
+      if (!Number.isFinite(seconds) || seconds <= 0) return "--";
+      if (seconds < 60) return `${Math.round(seconds)}s`;
+      const minutes = Math.floor(seconds / 60);
+      const rest = Math.round(seconds % 60).toString().padStart(2, "0");
+      return `${minutes}:${rest}`;
+    };
+
+    const targetSeconds = () => state.current?.template?.estimatedSeconds || 25;
+
+    const currentElapsedSeconds = () => {
+      if (!state.current) return 0;
+      const offset = Number.isFinite(state.current.elapsedOffset) ? state.current.elapsedOffset : 0;
+      if (state.answered) return offset;
+      return offset + Math.max(0, (performance.now() - state.current.startedAt) / 1000);
+    };
+
+    const updateTempo = () => {
+      if (!state.current) {
+        els.targetTime.textContent = "--";
+        els.elapsedTime.textContent = "0s";
+        els.lastTimeInline.textContent = formatSeconds(state.stats.lastSeconds);
+        return;
+      }
+      els.targetTime.textContent = formatSeconds(targetSeconds());
+      els.elapsedTime.textContent = formatSeconds(Math.max(1, currentElapsedSeconds()));
+      els.lastTimeInline.textContent = formatSeconds(state.stats.lastSeconds);
+    };
+
     const updateStats = () => {
       localStorage.setItem("probabilityGrinderStats", JSON.stringify(state.stats));
       els.solvedStat.textContent = state.stats.attempts;
       els.accuracyStat.textContent = state.stats.attempts ? `${Math.round(100 * state.stats.correct / state.stats.attempts)}%` : "0%";
       els.streakStat.textContent = state.stats.streak;
       els.bestStat.textContent = state.stats.best;
+      els.lastTimeStat.textContent = formatSeconds(state.stats.lastSeconds);
+      els.avgTimeStat.textContent = state.stats.attempts ? formatSeconds(state.stats.totalSeconds / state.stats.attempts) : "--";
+      updateTempo();
     };
 
     const updateMemory = () => {
@@ -5266,6 +5371,7 @@
         },
         answered: state.answered,
         answerValue: els.answerInput.value,
+        elapsedSeconds: currentElapsedSeconds(),
         feedback: state.feedback,
         solutionVisible: els.solution.classList.contains("visible")
       };
@@ -5332,6 +5438,7 @@
       if (saved?.solutionVisible) showSolution(false);
       if (restoring) saveCurrentProblem();
       updateMemory();
+      updateTempo();
       if (window.matchMedia("(min-width: 721px) and (pointer: fine)").matches) {
         requestAnimationFrame(() => els.answerInput.focus({ preventScroll: true }));
       }
@@ -5347,6 +5454,7 @@
       state.difficulty = validDifficulty(saved?.controls?.difficulty);
       state.pace = validPace(saved?.controls?.pace);
       state.current = { ...generated, template, startedAt: performance.now() };
+      state.current.elapsedOffset = Number.isFinite(saved?.elapsedSeconds) ? Math.max(0, saved.elapsedSeconds) : 0;
       state.answered = Boolean(saved?.answered);
       syncControls();
       renderCurrentProblem(saved);
@@ -5367,7 +5475,7 @@
     const nextProblem = () => {
       const { template, generated } = chooseScheduledProblem();
       recordScheduledProblem(template, generated);
-      state.current = { ...generated, template, startedAt: performance.now() };
+      state.current = { ...generated, template, startedAt: performance.now(), elapsedOffset: 0 };
       state.answered = false;
       renderCurrentProblem();
     };
@@ -5381,8 +5489,11 @@
       }
       const ok = equivalent(parsed, state.current.answer);
       if (!state.answered) {
-        const elapsedSeconds = Math.max(1, (performance.now() - state.current.startedAt) / 1000);
+        const elapsedSeconds = Math.max(1, currentElapsedSeconds());
+        state.current.elapsedOffset = elapsedSeconds;
         state.stats.attempts += 1;
+        state.stats.lastSeconds = elapsedSeconds;
+        state.stats.totalSeconds += elapsedSeconds;
         if (ok) {
           state.stats.correct += 1;
           state.stats.streak += 1;
@@ -5395,10 +5506,11 @@
         updateMemory();
       }
       state.answered = true;
+      const timeDetail = `${formatSeconds(state.current.elapsedOffset || currentElapsedSeconds())} vs ${formatSeconds(targetSeconds())} target`;
       if (ok) {
-        setFeedback("good", `Correct: ${fmt(state.current.answer)}`, `${state.current.template.topic === "expected" ? "Press Enter for the next problem." : `${pct(state.current.answer)}. Press Enter for the next problem.`}`);
+        setFeedback("good", `Correct: ${fmt(state.current.answer)}`, `${state.current.template.topic === "expected" ? timeDetail : `${pct(state.current.answer)}. ${timeDetail}`}. Press Enter for the next problem.`);
       } else {
-        setFeedback("bad", `Not quite. Correct answer: ${fmt(state.current.answer)}`, `${state.current.template.topic === "expected" ? "Review the solution, then go next." : `${pct(state.current.answer)}. Review the solution, then go next.`}`);
+        setFeedback("bad", `Not quite. Correct answer: ${fmt(state.current.answer)}`, `${state.current.template.topic === "expected" ? timeDetail : `${pct(state.current.answer)}. ${timeDetail}`}. Review the solution, then go next.`);
       }
       showSolution();
     };
@@ -5429,7 +5541,7 @@
     });
     els.showSolution.addEventListener("click", showSolution);
     els.resetStats.addEventListener("click", () => {
-      state.stats = { attempts: 0, correct: 0, streak: 0, best: 0 };
+      state.stats = normalizeStats({});
       state.scheduler.patternStats = {};
       saveScheduler();
       updateStats();
@@ -5442,9 +5554,14 @@
       else submit();
     });
     els.answerInput.addEventListener("input", saveCurrentProblem);
+    window.addEventListener("beforeunload", saveCurrentProblem);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") saveCurrentProblem();
+    });
 
     updateStats();
     if (!restoreCurrentProblem()) nextProblem();
+    setInterval(updateTempo, 1000);
   </script>
 </body>
 </html>
