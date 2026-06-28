@@ -1,0 +1,430 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Times-Italic >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+5 0 obj
+<< /Length 4334 >>
+stream
+0.05 0.36 0.34 rg
+0.05 0.36 0.34 rg
+BT /F2 11 Tf 54.00 750.00 Td (North Pole Research Archive) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 9 Tf 359.28 750.00 Td (NPA:2512.1224v1  [physics.pop-ph]  24 Dec 2025) Tj ET
+0 0 0 rg
+BT /F2 21 Tf 114.48 696.00 Td (A Relativistic-Quantum Logistics Model) Tj ET
+0 0 0 rg
+BT /F2 21 Tf 94.32 670.00 Td (for the Christmas Eve Distribution Problem) Tj ET
+0 0 0 rg
+BT /F3 10.5 Tf 144.72 638.00 Td (Department of Applied Festive Dynamics, North Pole Research Desk) Tj ET
+0 0 0 rg
+BT /F1 11 Tf 181.92 620.00 Td (S. Claus, R. Rednose, E. Tesseract, and N. Pole) Tj ET
+0.94 0.97 0.97 rg
+54 474 504 122 re f
+0.08 0.13 0.15 RG 0.8 w
+54 474 504 122 re S
+0.05 0.36 0.34 rg
+BT /F2 11 Tf 66.00 572.00 Td (Abstract) Tj ET
+0 0 0 rg
+BT /F1 9.6 Tf 66.00 552.00 Td (We present a speculative but internally consistent physical model for the annual Christmas Eve) Tj ET
+0 0 0 rg
+BT /F1 9.6 Tf 66.00 540.00 Td (distribution problem. The model combines east-to-west route optimization, relativistic time dilation,) Tj ET
+0 0 0 rg
+BT /F1 9.6 Tf 66.00 528.00 Td (plasma-mediated hypersonic flight, acoustic cancellation, quantum tunneling, higher-dimensional cargo) Tj ET
+0 0 0 rg
+BT /F1 9.6 Tf 66.00 516.00 Td (storage, geomagnetic reindeer lift, and Rudolph-frequency active sensing. While not a claim of) Tj ET
+0 0 0 rg
+BT /F1 9.6 Tf 66.00 504.00 Td (conventional laboratory physics, the framework provides a compact taxonomy for treating apparently) Tj ET
+0 0 0 rg
+BT /F1 9.6 Tf 66.00 492.00 Td (magical observations as coupled field, topology, and logistics phenomena.) Tj ET
+0.35 0.39 0.39 rg
+BT /F3 9 Tf 54.00 454.00 Td (Keywords: Santa Claus; time dilation; tesseract logistics; quantum tunneling; reindeer propulsion) Tj ET
+0 0 0 rg
+BT /F2 15 Tf 54.00 412.00 Td (1. Introduction) Tj ET
+0.1 0.1 0.1 RG 0.7 w
+54 401.00 504 0 l S
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 392.00 Td (The Christmas Eve mission is often framed as a paradox of speed, mass, access, and stealth. A naive) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 378.00 Td (Newtonian estimate yields impossible delivery rates, destructive atmospheric heating, and a cargo) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 364.00 Td (volume exceeding any practical sack. The purpose of this paper is to translate the operational) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 350.00 Td (folklore into a formal systems model with explicit mechanisms and falsifiable-looking intermediate) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 336.00 Td (variables.) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 314.00 Td (The analysis is intentionally festive. Nevertheless, it is structured like an engineering preprint:) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 300.00 Td (each impossible constraint is assigned to a domain where the constraint can be reduced by geometry,) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 286.00 Td (field control, or measurement theory rather than brute force.) Tj ET
+0 0 0 rg
+BT /F2 15 Tf 54.00 256.00 Td (2. Mission Window and Relativistic Time Budget) Tj ET
+0.1 0.1 0.1 RG 0.7 w
+54 245.00 504 0 l S
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 236.00 Td (The first-order solution is geographic. A delivery route progressing east to west follows the moving) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 222.00 Td (night side of the planet. This converts a single local evening into an extended global corridor of) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 208.00 Td (roughly 34 hours before sunrise terminates the operational window.) Tj ET
+0.94 0.97 0.97 rg
+54 144 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 144 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 177.00 Td (Route extension) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 162.00 Td (t_window ~= 24 hr + Delta_lambda / \(15 deg hr^-1\)) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 150.00 Td (Longitude supplies one hour of local solar time per 15 degrees traversed westward.) Tj ET
+0.94 0.97 0.97 rg
+54 92 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 92 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 125.00 Td (Bubble clock rate) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 110.00 Td (Delta_tau = Delta_t / gamma + T_tachyon,   gamma = 1 / sqrt\(1 - v^2/c^2\)) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 98.00 Td (A localized field separates onboard proper time from household clock time.) Tj ET
+0.45 0.45 0.45 rg
+BT /F1 8 Tf 54 36 Td (North Pole Research Archive preprint) Tj ET
+BT /F1 8 Tf 520 36 Td (1) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Length 4321 >>
+stream
+0.96 0.98 1 rg
+54 588 504 150 re f
+0.08 0.13 0.15 RG 0.8 w
+54 588 504 150 re S
+0.88 0.95 0.98 rg
+149 656 310 58 re S
+0.87 0.37 0.31 RG 3 w
+139 680 m 224 718 329 720 464 684 c S
+0.18 0.44 0.73 RG 1.5 w [6 5] 0 d
+110 632 m 214 618 364 623 509 646 c S [] 0 d
+0.05 0.36 0.34 rg
+BT /F2 10 Tf 223.80 716.00 Td (westbound delivery path) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 9 Tf 178.72 606.00 Td (local night bands hand off before sunrise closes the route) Tj ET
+0.35 0.39 0.39 rg
+BT /F3 8.5 Tf 54.00 578.00 Td (Figure 1. Schematic of east-to-west night harvesting and route extension.) Tj ET
+0 0 0 rg
+BT /F2 15 Tf 54.00 552.00 Td (3. Sleigh Aerodynamics and Stealth) Tj ET
+0.1 0.1 0.1 RG 0.7 w
+54 541.00 504 0 l S
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 532.00 Td (Hypersonic passage through the lower atmosphere requires active field engineering. The sleigh is) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 518.00 Td (treated as a craft inside an ionized plasma sheath, not as a passive wooden vehicle. The plasma) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 504.00 Td (layer lowers the effective drag coefficient, redistributes heat flux, and protects the gift payload) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 490.00 Td (from ablation.) Tj ET
+0.94 0.97 0.97 rg
+54 426 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 426 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 459.00 Td (Aerothermal load) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 444.00 Td (q_dot proportional to rho v^3;   F_drag = 0.5 rho v^2 C_d A) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 432.00 Td (Reducing C_d and the effective frontal area is mandatory at festive cruise speed.) Tj ET
+0.94 0.97 0.97 rg
+54 374 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 374 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 407.00 Td (Acoustic cancellation) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 392.00 Td (p_total\(t\) = p_boom\(t\) + p_cancel\(t\) ~= 0) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 380.00 Td (An inverted pressure waveform suppresses sonic booms before they reach rooftops.) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 364.00 Td (The same field architecture also explains observational scarcity. Active camouflage bends optical) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 350.00 Td (paths around the sleigh, while radar-facing surfaces behave as dynamic metamaterials. The expected) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 336.00 Td (signature is therefore not a boom or radar return, but a brief red shimmer consistent with low-) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 322.00 Td (intensity auroral waste heat.) Tj ET
+0 0 0 rg
+BT /F2 15 Tf 54.00 292.00 Td (4. Chimney Entry as Barrier Tunneling) Tj ET
+0.1 0.1 0.1 RG 0.7 w
+54 281.00 504 0 l S
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 272.00 Td (The chimney problem is not solved by compression of a macroscopic body. Instead, Santa, the sack,) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 258.00 Td (and associated payload are assumed to enter a coherent low-scatter state. This reduces the) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 244.00 Td (interaction cross section with brick, mortar, soot, and living-room structure.) Tj ET
+0.94 0.97 0.97 rg
+54 180 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 180 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 213.00 Td (Barrier penetration) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 198.00 Td (P_tunnel ~= exp\(-2 kappa L\),   kappa = sqrt\(2m\(U-E\)\) / hbar) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 186.00 Td (A field-assisted phase state lowers the effective barrier width L or height U.) Tj ET
+0.94 0.97 0.97 rg
+54 128 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 128 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 161.00 Td (Spatial fold) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 146.00 Td (d_fold\(roof, room\) << d_house\(roof, room\),   Delta_P_air ~= 0) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 134.00 Td (Chimney-free structures use a temporary topology shortcut with pressure-balanced closure.) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 118.00 Td (This mechanism predicts clean masonry and no soot transfer. It also explains why modern homes) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 104.00 Td (lacking chimneys do not present a hard exclusion constraint: the route can be replaced by a) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 90.00 Td (miniature, geofenced spatial fold.) Tj ET
+0.45 0.45 0.45 rg
+BT /F1 8 Tf 54 36 Td (North Pole Research Archive preprint) Tj ET
+BT /F1 8 Tf 520 36 Td (2) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Length 4329 >>
+stream
+0 0 0 rg
+BT /F2 15 Tf 54.00 730.00 Td (5. Higher-Dimensional Cargo Storage) Tj ET
+0.1 0.1 0.1 RG 0.7 w
+54 719.00 504 0 l S
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 710.00 Td (The sack is modeled as a three-dimensional aperture into a four-dimensional storage manifold. Its) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 696.00 Td (visible mouth remains shoulder-portable, while the internal coordinate Q multiplies accessible) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 682.00 Td (volume.) Tj ET
+0.94 0.97 0.97 rg
+54 618 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 618 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 651.00 Td (Tesseract capacity) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 636.00 Td (H_4D = L W H Q,   with V_inside >> V_outside) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 624.00 Td (The fourth storage axis absorbs planetary-scale cargo without increasing the exterior bag size.) Tj ET
+0.94 0.97 0.97 rg
+54 566 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 566 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 599.00 Td (Gift retrieval) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 584.00 Td (gift* = argmax P\(gift | home, wish_list, year\)) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 572.00 Td (Santa acts as the measurement event that collapses the bag state to the correct present.) Tj ET
+0.98 0.98 0.96 rg
+54 414 504 142 re f
+0.08 0.13 0.15 RG 0.8 w
+54 414 504 142 re S
+0.93 0.35 0.30 rg
+139 444 334 45 re f
+0.08 0.13 0.15 RG 1.2 w
+139 444 334 45 re S
+0.88 0.95 0.91 rg
+324 490 70 40 re f
+354 514 70 40 re S
+324 490 70 40 re S
+324 530 m 354 554 l S
+394 530 m 424 554 l S
+394 490 m 424 514 l S
+1 1 1 rg
+BT /F2 10 Tf 182.80 504.00 Td (3D sack mouth) Tj ET
+0.05 0.36 0.34 rg
+BT /F2 10 Tf 353.60 538.00 Td (4D pocket volume) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 9 Tf 148.48 426.00 Td (external volume stays small while internal coordinate Q expands capacity) Tj ET
+0.35 0.39 0.39 rg
+BT /F3 8.5 Tf 54.00 404.00 Td (Figure 2. Tesseract sack interpreted as a 3D aperture into a 4D storage manifold.) Tj ET
+0 0 0 rg
+BT /F2 15 Tf 54.00 378.00 Td (6. Reindeer Propulsion and Rudolph-Frequency Sensing) Tj ET
+0.1 0.1 0.1 RG 0.7 w
+54 367.00 504 0 l S
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 358.00 Td (The propulsion team is assigned to a polar subspecies, Rangifer tarandus magicus. The antlers serve) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 344.00 Td (as electrostatic collectors and geomagnetic coupling structures, turning motion through field lines) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 330.00 Td (into lift. The sleigh becomes airborne when the effective gravitational acceleration approaches) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 316.00 Td (zero.) Tj ET
+0.94 0.97 0.97 rg
+54 252 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 252 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 285.00 Td (Magnetic lift) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 270.00 Td (F_lift ~= q_eff \(v x B\),   g_eff = g - F_lift / M_team) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 258.00 Td (Antler-field coupling reduces the mechanical load that must be carried by muscle or thrust.) Tj ET
+0.94 0.97 0.97 rg
+54 200 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 200 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 233.00 Td (Antimatter assist) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 218.00 Td (E_release = 2 m_anti c^2) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 206.00 Td (Trace annihilation supplies peak launch and climb energy from a tiny fuel mass.) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 190.00 Td (Rudolph supplies guidance rather than mere illumination. The red nose is best modeled as a thermal-) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 176.00 Td (imaging bio-laser, tuned so return intensity remains useful through snow, fog, chimney smoke, and) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 162.00 Td (atmospheric dust.) Tj ET
+0.94 0.97 0.97 rg
+54 98 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 98 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 131.00 Td (Rudolph return signal) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 116.00 Td (I_return = I_0 exp\(-alpha snow_depth\)) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 104.00 Td (The operating frequency is chosen to maximize contrast while minimizing household disturbance.) Tj ET
+0 0 0 rg
+BT /F2 15 Tf 54.00 80.00 Td (7. Integrated Systems Model) Tj ET
+0.1 0.1 0.1 RG 0.7 w
+54 69.00 504 0 l S
+0.45 0.45 0.45 rg
+BT /F1 8 Tf 54 36 Td (North Pole Research Archive preprint) Tj ET
+BT /F1 8 Tf 520 36 Td (3) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Length 3323 >>
+stream
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 738.00 Td (The complete mission can be summarized as a constraint-minimization problem in which time, heat,) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 724.00 Td (sound, visibility, access, cargo mass, and navigation drift are jointly suppressed. The system) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 710.00 Td (succeeds because no single subsystem bears the whole burden.) Tj ET
+0 0 0 rg
+BT /F2 10 Tf 62.00 688.00 Td (-) Tj ET
+0 0 0 rg
+BT /F1 10 Tf 76.00 688.00 Td (Time is expanded by westbound routing and local dilation.) Tj ET
+0 0 0 rg
+BT /F2 10 Tf 62.00 673.00 Td (-) Tj ET
+0 0 0 rg
+BT /F1 10 Tf 76.00 673.00 Td (Thermal and acoustic signatures are suppressed by plasma and interference fields.) Tj ET
+0 0 0 rg
+BT /F2 10 Tf 62.00 658.00 Td (-) Tj ET
+0 0 0 rg
+BT /F1 10 Tf 76.00 658.00 Td (Entry is handled by tunneling or topology rather than mechanical squeezing.) Tj ET
+0 0 0 rg
+BT /F2 10 Tf 62.00 643.00 Td (-) Tj ET
+0 0 0 rg
+BT /F1 10 Tf 76.00 643.00 Td (Cargo capacity is shifted into a higher-dimensional storage coordinate.) Tj ET
+0 0 0 rg
+BT /F2 10 Tf 62.00 628.00 Td (-) Tj ET
+0 0 0 rg
+BT /F1 10 Tf 76.00 628.00 Td (Reindeer propulsion provides magnetic lift, while Rudolph resolves path uncertainty.) Tj ET
+0.94 0.97 0.97 rg
+54 571 504 50 re f
+0.08 0.13 0.15 RG 0.8 w
+54 571 504 50 re S
+0.05 0.36 0.34 rg
+BT /F2 8 Tf 64.00 604.00 Td (Mission risk objective) Tj ET
+0 0 0 rg
+BT /F4 10.5 Tf 64.00 589.00 Td (R_total = w_h heat + w_n noise + w_v visibility + w_d drift + w_l lateness) Tj ET
+0.35 0.39 0.39 rg
+BT /F1 8 Tf 64.00 577.00 Td (North Pole control minimizes observable side effects while preserving delivery accuracy.) Tj ET
+0 0 0 rg
+BT /F2 15 Tf 54.00 553.00 Td (8. Conclusion) Tj ET
+0.1 0.1 0.1 RG 0.7 w
+54 542.00 504 0 l S
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 533.00 Td (Santa Claus does not simply move faster than ordinary logistics permits. The Christmas Eve mission) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 519.00 Td (is modeled here as applied cosmic engineering: relativistic scheduling, field-stabilized flight,) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 505.00 Td (quantum entry, four-dimensional storage, biological propulsion, and active sensing operating as one) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 491.00 Td (coupled system. To a household observer it appears magical; in this report it is a solved, if) Tj ET
+0 0 0 rg
+BT /F1 10.5 Tf 54.00 477.00 Td (speculative, physics stack.) Tj ET
+0 0 0 rg
+BT /F2 15 Tf 54.00 447.00 Td (References) Tj ET
+0.1 0.1 0.1 RG 0.7 w
+54 436.00 504 0 l S
+0 0 0 rg
+BT /F1 9.5 Tf 54.00 427.00 Td ([1] Einstein, A. \(1905\). On the electrodynamics of moving bodies. Annalen der Physik.) Tj ET
+0 0 0 rg
+BT /F1 9.5 Tf 54.00 413.00 Td ([2] North Pole Workshop Technical Memorandum 24-12. Plasma Sheath Stabilization in Gift-Bearing Vehicles.) Tj ET
+0 0 0 rg
+BT /F1 9.5 Tf 54.00 399.00 Td ([3] Rednose, R. \(unpublished\). Narrow-band thermal pathfinding in polar precipitation.) Tj ET
+0 0 0 rg
+BT /F1 9.5 Tf 54.00 385.00 Td ([4] Tesseract, E. and Pole, N. Higher-dimensional storage manifolds for holiday-scale logistics.) Tj ET
+0 0 0 rg
+BT /F1 9.5 Tf 54.00 371.00 Td ([5] Claus, S. Annual operations log, restricted archive, December 24-25.) Tj ET
+0.45 0.45 0.45 rg
+BT /F1 8 Tf 54 36 Td (North Pole Research Archive preprint) Tj ET
+BT /F1 8 Tf 520 36 Td (4) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 13 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R /F4 4 0 R >> >> /Contents 5 0 R >>
+endobj
+10 0 obj
+<< /Type /Page /Parent 13 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R /F4 4 0 R >> >> /Contents 6 0 R >>
+endobj
+11 0 obj
+<< /Type /Page /Parent 13 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R /F4 4 0 R >> >> /Contents 7 0 R >>
+endobj
+12 0 obj
+<< /Type /Page /Parent 13 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R /F4 4 0 R >> >> /Contents 8 0 R >>
+endobj
+13 0 obj
+<< /Type /Pages /Count 4 /Kids [ 9 0 R 10 0 R 11 0 R 12 0 R ] >>
+endobj
+14 0 obj
+<< /Type /Catalog /Pages 13 0 R >>
+endobj
+xref
+0 15
+0000000000 65535 f 
+0000000015 00000 n 
+0000000087 00000 n 
+0000000158 00000 n 
+0000000231 00000 n 
+0000000299 00000 n 
+0000004685 00000 n 
+0000009058 00000 n 
+0000013439 00000 n 
+0000016814 00000 n 
+0000016971 00000 n 
+0000017129 00000 n 
+0000017287 00000 n 
+0000017445 00000 n 
+0000017526 00000 n 
+trailer
+<< /Size 15 /Root 14 0 R >>
+startxref
+17577
+%%EOF
