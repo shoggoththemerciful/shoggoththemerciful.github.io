@@ -4940,6 +4940,9 @@
       "walks": "Random Walks"
     };
 
+    const currentProblemStorageKey = "probabilityGrinderCurrentProblem";
+    const templateById = new Map(templates.map((template) => [template.id, template]));
+
     const loadJson = (key, fallback) => {
       try {
         return JSON.parse(localStorage.getItem(key) || "") || fallback;
@@ -5201,26 +5204,77 @@
     const setFeedback = (kind, text, sub = "") => {
       els.feedback.className = `feedback ${kind}`;
       els.feedback.innerHTML = `${text}${sub ? `<span>${sub}</span>` : ""}`;
+      saveCurrentProblem();
     };
 
-    const answerDetail = () => state.current?.template.topic === "expected" ? "" : ` (${pct(state.current.answer)})`;
+    const currentSnapshot = () => {
+      if (!state.current) return null;
+      return {
+        version: 1,
+        savedAt: Date.now(),
+        templateId: state.current.template.id,
+        controls: {
+          topic: state.topic,
+          difficulty: state.difficulty,
+          pace: state.pace
+        },
+        generated: {
+          prompt: state.current.prompt,
+          answer: state.current.answer,
+          hint: state.current.hint,
+          solution: state.current.solution,
+          mental: state.current.mental
+        },
+        answered: state.answered,
+        answerValue: els.answerInput.value,
+        feedbackClass: els.feedback.className,
+        feedbackHtml: els.feedback.innerHTML,
+        solutionVisible: els.solution.classList.contains("visible")
+      };
+    };
 
-    const showSolution = () => {
+    const saveCurrentProblem = () => {
+      const snapshot = currentSnapshot();
+      if (!snapshot) return;
+      try {
+        localStorage.setItem(currentProblemStorageKey, JSON.stringify(snapshot));
+      } catch {
+        // If storage is full or unavailable, the grinder should still work normally.
+      }
+    };
+
+    const validTopic = (topic) => (topic === "all" || topicNames[topic]) ? topic : "all";
+    const validDifficulty = (difficulty) => ["all", "1", "2", "3", "4"].includes(String(difficulty)) ? String(difficulty) : "all";
+    const validPace = (pace) => ["sprint", "standard", "all"].includes(pace) ? pace : "sprint";
+
+    const syncControls = () => {
+      els.topicButtons.querySelectorAll("button").forEach((button) => {
+        button.classList.toggle("active", button.dataset.topic === state.topic);
+      });
+      els.difficultySelect.value = state.difficulty;
+      els.paceSelect.value = state.pace;
+    };
+
+    const normalizeRestoredGenerated = (raw) => {
+      const generated = raw?.generated;
+      const answer = generated?.answer;
+      if (!generated || typeof generated.prompt !== "string" || !generated.prompt.trim()) return null;
+      if (!answer || !Number.isFinite(answer.n) || !Number.isFinite(answer.d) || answer.d === 0) return null;
+      return {
+        prompt: generated.prompt,
+        answer: frac(answer.n, answer.d),
+        hint: typeof generated.hint === "string" ? generated.hint : "",
+        solution: typeof generated.solution === "string" ? generated.solution : "",
+        mental: typeof generated.mental === "string" ? generated.mental : ""
+      };
+    };
+
+    const renderCurrentProblem = (saved = null) => {
       if (!state.current) return;
-      const skill = state.current.template.skill ? `<br><br><strong>Skill</strong>${escapeHtml(state.current.template.skill)}` : "";
-      const trap = state.current.template.trapType ? `<br><br><strong>Trap to watch</strong>${escapeHtml(state.current.template.trapType)}` : "";
-      els.solution.classList.add("visible");
-      els.solution.innerHTML = `<strong>Solution</strong>${state.current.solution}<br><br><strong>Mental hook</strong>${state.current.mental}${skill}${trap}<br><br><strong>Exact answer</strong>${fmt(state.current.answer)}${answerDetail()}`;
-    };
-
-    const nextProblem = () => {
-      const { template, generated } = chooseScheduledProblem();
-      recordScheduledProblem(template, generated);
-      state.current = { ...generated, template, startedAt: performance.now() };
-      state.answered = false;
-      els.prompt.innerHTML = renderPromptText(generated.prompt);
-      els.prompt.setAttribute("aria-label", generated.prompt);
-      els.answerInput.value = "";
+      const template = state.current.template;
+      els.prompt.innerHTML = renderPromptText(state.current.prompt);
+      els.prompt.setAttribute("aria-label", state.current.prompt);
+      els.answerInput.value = typeof saved?.answerValue === "string" ? saved.answerValue : "";
       els.solution.classList.remove("visible");
       els.solution.innerHTML = "";
       els.topicChip.textContent = topicNames[template.topic];
@@ -5228,11 +5282,54 @@
       els.paceChip.textContent = paceNames[template.pace || "sprint"];
       els.patternChip.textContent = patternNames[template.pattern] || template.pattern;
       els.templateChip.textContent = template.title;
-      setFeedback("neutral", "Ready.", "Enter an exact fraction like 5/12, a decimal, a percent, or an integer.");
+
+      if (typeof saved?.feedbackClass === "string" && typeof saved?.feedbackHtml === "string") {
+        els.feedback.className = saved.feedbackClass;
+        els.feedback.innerHTML = saved.feedbackHtml;
+      } else {
+        setFeedback("neutral", "Ready.", "Enter an exact fraction like 5/12, a decimal, a percent, or an integer.");
+      }
+
+      if (saved?.solutionVisible) showSolution(false);
       updateMemory();
       if (window.matchMedia("(min-width: 721px) and (pointer: fine)").matches) {
         requestAnimationFrame(() => els.answerInput.focus({ preventScroll: true }));
       }
+    };
+
+    const restoreCurrentProblem = () => {
+      const saved = loadJson(currentProblemStorageKey, null);
+      const template = templateById.get(saved?.templateId);
+      const generated = normalizeRestoredGenerated(saved);
+      if (!template || !generated) return false;
+
+      state.topic = validTopic(saved?.controls?.topic);
+      state.difficulty = validDifficulty(saved?.controls?.difficulty);
+      state.pace = validPace(saved?.controls?.pace);
+      state.current = { ...generated, template, startedAt: performance.now() };
+      state.answered = Boolean(saved?.answered);
+      syncControls();
+      renderCurrentProblem(saved);
+      return true;
+    };
+
+    const answerDetail = () => state.current?.template.topic === "expected" ? "" : ` (${pct(state.current.answer)})`;
+
+    const showSolution = (persist = true) => {
+      if (!state.current) return;
+      const skill = state.current.template.skill ? `<br><br><strong>Skill</strong>${escapeHtml(state.current.template.skill)}` : "";
+      const trap = state.current.template.trapType ? `<br><br><strong>Trap to watch</strong>${escapeHtml(state.current.template.trapType)}` : "";
+      els.solution.classList.add("visible");
+      els.solution.innerHTML = `<strong>Solution</strong>${state.current.solution}<br><br><strong>Mental hook</strong>${state.current.mental}${skill}${trap}<br><br><strong>Exact answer</strong>${fmt(state.current.answer)}${answerDetail()}`;
+      if (persist) saveCurrentProblem();
+    };
+
+    const nextProblem = () => {
+      const { template, generated } = chooseScheduledProblem();
+      recordScheduledProblem(template, generated);
+      state.current = { ...generated, template, startedAt: performance.now() };
+      state.answered = false;
+      renderCurrentProblem();
     };
 
     const submit = () => {
@@ -5304,11 +5401,10 @@
       if (state.answered) nextProblem();
       else submit();
     });
+    els.answerInput.addEventListener("input", saveCurrentProblem);
 
-    renderBank();
     updateStats();
-    updateMemory();
-    nextProblem();
+    if (!restoreCurrentProblem()) nextProblem();
   </script>
 </body>
 </html>
