@@ -427,6 +427,68 @@
       font-weight: 950;
     }
 
+    .diagram-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .diagram {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+    }
+
+    .diagram.wide {
+      grid-column: 1 / -1;
+    }
+
+    .diagram p {
+      font-size: 0.95rem;
+    }
+
+    .diagram svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 2px solid var(--line-dark);
+      border-radius: var(--radius);
+      background: white;
+    }
+
+    .formula-strip {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .formula-chip {
+      min-height: 92px;
+      border: 2px solid var(--line-dark);
+      border-radius: var(--radius);
+      background: white;
+      padding: 11px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .formula-chip code {
+      color: var(--ink);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .formula-chip span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 760;
+      line-height: 1.35;
+    }
+
     .table-wrap {
       border: 2px solid var(--ink);
       border-radius: var(--radius);
@@ -531,6 +593,10 @@
         grid-template-columns: 1fr;
       }
 
+      .diagram-grid {
+        grid-template-columns: 1fr;
+      }
+
       .cards,
       .flow,
       .equations {
@@ -554,6 +620,8 @@
 
       .hero-stats,
       .cards,
+      .diagram-grid,
+      .formula-strip,
       .flow,
       .equations {
         grid-template-columns: 1fr;
@@ -710,6 +778,67 @@
           <p>Inside the relativistic bubble, one child's eight-hour sleep can map to months of Santa-time. This permits quiet entry, stocking work, cookie sampling, and exit without frantic movement.</p>
         </article>
       </div>
+      <div class="diagram-grid" aria-label="Christmas continuum diagrams">
+        <article class="diagram">
+          <span class="tag">Longitude model</span>
+          <h3>Westbound night harvesting</h3>
+          <p>Santa extends the delivery window by letting each longitude band enter local night before he arrives.</p>
+          <svg viewBox="0 0 640 320" role="img">
+            <title>Longitude bands extend Christmas night</title>
+            <rect width="640" height="320" fill="#f8fbff"></rect>
+            <path d="M70 160a250 105 0 1 0 500 0a250 105 0 1 0-500 0" fill="#eef5ff" stroke="#172026" stroke-width="4"></path>
+            <path d="M70 160a250 105 0 0 0 500 0a250 105 0 0 0-500 0" fill="#dcece5"></path>
+            <path d="M320 55v210M200 76c35 58 35 110 0 168M440 76c-35 58-35 110 0 168" stroke="#aeb9b0" stroke-width="3"></path>
+            <path d="M94 143c100-58 215-68 344-31" fill="none" stroke="#df5f4e" stroke-width="6" stroke-linecap="round"></path>
+            <path d="M432 112l-22-3 15 17" fill="none" stroke="#df5f4e" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+            <rect x="86" y="240" width="142" height="38" rx="7" fill="#172026"></rect>
+            <rect x="250" y="240" width="142" height="38" rx="7" fill="#177c76"></rect>
+            <rect x="414" y="240" width="142" height="38" rx="7" fill="#e0a82e"></rect>
+            <text x="157" y="265" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#fffaf0">local dusk</text>
+            <text x="321" y="265" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#fffaf0">delivery band</text>
+            <text x="485" y="265" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#172026">sunrise limit</text>
+            <text x="320" y="42" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="#095a55">east-to-west route</text>
+          </svg>
+          <div class="formula-strip">
+            <div class="formula-chip">
+              <code>t_window &asymp; 24 hr + &Delta;t_longitude</code>
+              <span>Earth rotation adds a route-dependent extension before sunrise catches up.</span>
+            </div>
+            <div class="formula-chip">
+              <code>&Delta;t_longitude = &Delta;&lambda; / 15 deg per hr</code>
+              <span>Every 15 degrees of longitude is about one hour of local solar time.</span>
+            </div>
+          </div>
+        </article>
+        <article class="diagram">
+          <span class="tag">Relativity model</span>
+          <h3>Inside vs. outside clock rates</h3>
+          <p>The tachyon bubble separates Santa's onboard clock from normal household time.</p>
+          <svg viewBox="0 0 640 320" role="img">
+            <title>Relativistic time dilation bubble around sleigh</title>
+            <rect width="640" height="320" fill="#f8fbff"></rect>
+            <ellipse cx="320" cy="156" rx="230" ry="104" fill="#eef5ff" stroke="#2f6fbb" stroke-width="4" stroke-dasharray="11 9"></ellipse>
+            <ellipse cx="320" cy="156" rx="156" ry="64" fill="#e8f5ef" stroke="#177c76" stroke-width="4"></ellipse>
+            <path d="M236 159h177l31 28H260Z" fill="#df5f4e" stroke="#172026" stroke-width="4"></path>
+            <path d="M258 187h197c-11 20-30 31-57 34H286c-19-3-29-14-28-34Z" fill="#fffdf7" stroke="#172026" stroke-width="4"></path>
+            <circle cx="294" cy="171" r="12" fill="#e0a82e" stroke="#172026" stroke-width="4"></circle>
+            <path d="M110 72h112M110 92h72M437 72h96M437 92h122" stroke="#172026" stroke-width="4" stroke-linecap="round"></path>
+            <text x="166" y="56" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">outside: 8 hr</text>
+            <text x="492" y="56" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">inside: months</text>
+            <text x="320" y="276" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="#095a55">clock-rate gradient around sleigh</text>
+          </svg>
+          <div class="formula-strip">
+            <div class="formula-chip">
+              <code>&gamma; = 1 / sqrt(1 - v^2 / c^2)</code>
+              <span>Relativistic time dilation grows as the craft approaches light-speed conditions.</span>
+            </div>
+            <div class="formula-chip">
+              <code>&Delta;&tau; = &Delta;t / &gamma; + T_tachyon</code>
+              <span>The onboard proper-time budget includes both ordinary dilation and the speculative field term.</span>
+            </div>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section class="section" id="flight">
@@ -742,6 +871,62 @@
           <p>Acceleration is absorbed by the bubble frame so cookies, cargo, reindeer harnesses, and Santa's hat all remain mechanically stable.</p>
         </article>
       </div>
+      <div class="diagram-grid" aria-label="Sleigh aerodynamics diagrams">
+        <article class="diagram">
+          <span class="tag">Thermal envelope</span>
+          <h3>Plasma boundary layer</h3>
+          <p>Incoming air is ionized and diverted around the sleigh before it can become destructive heat.</p>
+          <svg viewBox="0 0 640 320" role="img">
+            <title>Plasma heat shield diverting airflow</title>
+            <rect width="640" height="320" fill="#f8fbff"></rect>
+            <path d="M42 88h224M42 132h204M42 176h224M42 220h204" stroke="#2f6fbb" stroke-width="5" stroke-linecap="round"></path>
+            <path d="M236 83c75 4 110 33 110 77s-35 73-110 77" fill="none" stroke="#e0a82e" stroke-width="12" stroke-linecap="round"></path>
+            <path d="M258 109c56 6 82 25 82 51s-26 45-82 51" fill="none" stroke="#df5f4e" stroke-width="5" stroke-linecap="round"></path>
+            <path d="M332 151h150l52 40H353Z" fill="#df5f4e" stroke="#172026" stroke-width="4"></path>
+            <path d="M360 191h195c-7 20-24 33-51 37H391c-23-2-34-15-31-37Z" fill="#fffdf7" stroke="#172026" stroke-width="4"></path>
+            <path d="M514 227c30 26 60 38 92 36" fill="none" stroke="#172026" stroke-width="6" stroke-linecap="round"></path>
+            <text x="143" y="58" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="#095a55">incoming air</text>
+            <text x="292" y="57" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="#095a55">ionized shield</text>
+            <text x="456" y="270" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="#095a55">cool sleigh core</text>
+          </svg>
+          <div class="formula-strip">
+            <div class="formula-chip">
+              <code>q_dot &prop; &rho; * v^3</code>
+              <span>Convective heating climbs with air density and the cube of speed.</span>
+            </div>
+            <div class="formula-chip">
+              <code>F_drag = 0.5 * &rho; * v^2 * C_d * A</code>
+              <span>The plasma field reduces the effective drag coefficient and frontal area.</span>
+            </div>
+          </div>
+        </article>
+        <article class="diagram">
+          <span class="tag">Acoustic stealth</span>
+          <h3>Destructive interference</h3>
+          <p>The sleigh broadcasts an inverted pressure wave so the shock front cancels before reaching rooftops.</p>
+          <svg viewBox="0 0 640 320" role="img">
+            <title>Sonic boom cancellation by destructive interference</title>
+            <rect width="640" height="320" fill="#f8fbff"></rect>
+            <path d="M50 105c30-45 60 45 90 0s60 45 90 0 60 45 90 0 60 45 90 0 60 45 90 0 60 45 90 0" fill="none" stroke="#df5f4e" stroke-width="5"></path>
+            <path d="M50 215c30 45 60-45 90 0s60-45 90 0 60-45 90 0 60-45 90 0 60-45 90 0 60-45 90 0" fill="none" stroke="#2f6fbb" stroke-width="5"></path>
+            <path d="M50 160h540" stroke="#172026" stroke-width="4" stroke-dasharray="9 9"></path>
+            <rect x="212" y="132" width="216" height="56" rx="8" fill="#e8f5ef" stroke="#172026" stroke-width="4"></rect>
+            <text x="320" y="166" text-anchor="middle" font-family="Inter, sans-serif" font-size="20" font-weight="900" fill="#095a55">p_total near zero</text>
+            <text x="134" y="74" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#a6392e">shock wave</text>
+            <text x="138" y="256" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#2f6fbb">anti-wave</text>
+          </svg>
+          <div class="formula-strip">
+            <div class="formula-chip">
+              <code>p_total(t) = p_boom(t) + p_cancel(t)</code>
+              <span>Pressure at the roofline is the sum of the boom and the inverted cancellation wave.</span>
+            </div>
+            <div class="formula-chip">
+              <code>p_cancel(t) &asymp; -p_boom(t)</code>
+              <span>Matched amplitude and opposite phase make the net audible signal vanish.</span>
+            </div>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section class="section" id="entry">
@@ -767,6 +952,64 @@
           <span class="tag">No chimney</span>
           <h3>Localized spatial fold</h3>
           <p>A chimney-free home receives a miniature wormhole from roof to living room. The fold is short-lived, geofenced, and closed before any household air pressure changes.</p>
+        </article>
+      </div>
+      <div class="diagram-grid" aria-label="Chimney descent diagrams">
+        <article class="diagram">
+          <span class="tag">Barrier crossing</span>
+          <h3>Macroscopic tunneling profile</h3>
+          <p>Santa's coherent wave packet crosses a barrier that would normally block ordinary matter.</p>
+          <svg viewBox="0 0 640 320" role="img">
+            <title>Quantum tunneling through chimney wall</title>
+            <rect width="640" height="320" fill="#f8fbff"></rect>
+            <rect x="274" y="50" width="92" height="220" fill="#fff0ec" stroke="#172026" stroke-width="4"></rect>
+            <path d="M52 210c40-95 82-95 126 0s88 95 132 0 88-95 132 0 88 95 146 0" fill="none" stroke="#2f6fbb" stroke-width="5" stroke-linecap="round"></path>
+            <path d="M53 210c50-86 105-86 164 0 23 33 44 49 63 49 23 0 38-18 54-49 44-87 97-87 159 0 30 41 61 51 95 29" fill="none" stroke="#df5f4e" stroke-width="5" stroke-linecap="round" stroke-dasharray="10 9"></path>
+            <circle cx="166" cy="170" r="26" fill="#177c76" stroke="#172026" stroke-width="4"></circle>
+            <circle cx="474" cy="170" r="26" fill="#177c76" stroke="#172026" stroke-width="4"></circle>
+            <text x="320" y="42" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="#095a55">brick energy barrier</text>
+            <text x="166" y="284" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">roof side</text>
+            <text x="474" y="284" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">living room</text>
+          </svg>
+          <div class="formula-strip">
+            <div class="formula-chip">
+              <code>P_tunnel &asymp; exp(-2 * &kappa; * L)</code>
+              <span>Tunneling likelihood falls with barrier thickness unless the field lowers the barrier.</span>
+            </div>
+            <div class="formula-chip">
+              <code>&kappa; = sqrt(2m(U - E)) / &hbar;</code>
+              <span>The attenuation term depends on mass, barrier energy, and Santa's coherent state.</span>
+            </div>
+          </div>
+        </article>
+        <article class="diagram">
+          <span class="tag">Topology shortcut</span>
+          <h3>Roof-to-room spatial fold</h3>
+          <p>In chimney-free homes, two separated points are temporarily adjacent through a tiny fold.</p>
+          <svg viewBox="0 0 640 320" role="img">
+            <title>Miniature wormhole connecting roof and room</title>
+            <rect width="640" height="320" fill="#f8fbff"></rect>
+            <path d="M70 250h500" stroke="#172026" stroke-width="5"></path>
+            <path d="M112 250V139l83-54 86 54v111" fill="#fffdf7" stroke="#172026" stroke-width="4"></path>
+            <path d="M360 250V139l83-54 86 54v111" fill="#fffdf7" stroke="#172026" stroke-width="4"></path>
+            <path d="M187 96c73 67 188 67 260 0" fill="none" stroke="#2f6fbb" stroke-width="9" stroke-linecap="round"></path>
+            <path d="M203 114c67 39 160 39 226 0" fill="none" stroke="#e0a82e" stroke-width="6" stroke-linecap="round"></path>
+            <circle cx="187" cy="96" r="20" fill="#df5f4e" stroke="#172026" stroke-width="4"></circle>
+            <circle cx="447" cy="96" r="20" fill="#df5f4e" stroke="#172026" stroke-width="4"></circle>
+            <text x="187" y="282" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">roof coordinate</text>
+            <text x="447" y="282" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">room coordinate</text>
+            <text x="318" y="70" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="#095a55">folded spatial path</text>
+          </svg>
+          <div class="formula-strip">
+            <div class="formula-chip">
+              <code>d_fold(A,B) &lt;&lt; d_roof(A,B)</code>
+              <span>The fold makes two distant household points locally adjacent.</span>
+            </div>
+            <div class="formula-chip">
+              <code>&Delta;P_air &asymp; 0 during close</code>
+              <span>A controlled seal prevents drafts, pressure pops, or displaced fireplace ash.</span>
+            </div>
+          </div>
         </article>
       </div>
     </section>
@@ -796,6 +1039,64 @@
           <p>The bag's retrieval field entangles household coordinates, wish-list state, and wrapping metadata. When Santa reaches in, the correct gift is already at his fingertips.</p>
         </article>
       </div>
+      <div class="diagram-grid" aria-label="Spatial compression diagrams">
+        <article class="diagram">
+          <span class="tag">4D storage</span>
+          <h3>Tesseract pocket geometry</h3>
+          <p>The sack mouth is a 3D access surface into a larger four-dimensional cargo volume.</p>
+          <svg viewBox="0 0 640 320" role="img">
+            <title>Tesseract pocket dimension inside Santa's sack</title>
+            <rect width="640" height="320" fill="#f8fbff"></rect>
+            <rect x="190" y="92" width="142" height="142" fill="#eef5ff" stroke="#172026" stroke-width="4"></rect>
+            <rect x="298" y="52" width="142" height="142" fill="#e8f5ef" stroke="#172026" stroke-width="4"></rect>
+            <path d="M190 92l108-40M332 92l108-40M332 234l108-40M190 234l108-40" stroke="#172026" stroke-width="4"></path>
+            <path d="M248 246c-42 9-81 12-117 8 14 37 44 56 89 57h190c45-1 75-20 89-57-42 5-84 1-126-8-38 13-80 13-125 0Z" fill="#df5f4e" stroke="#172026" stroke-width="4"></path>
+            <path d="M171 253c82-27 177-27 286 0" fill="none" stroke="#fffaf0" stroke-width="5" stroke-linecap="round"></path>
+            <text x="262" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">3D mouth</text>
+            <text x="392" y="42" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">4D volume</text>
+            <text x="320" y="289" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="#fffaf0">external sack stays small</text>
+          </svg>
+          <div class="formula-strip">
+            <div class="formula-chip">
+              <code>V_3D = &int; A_slice(w) dw</code>
+              <span>Ordinary apparent volume is only a slice through a larger dimensional inventory.</span>
+            </div>
+            <div class="formula-chip">
+              <code>H_4D = L * W * H * Q</code>
+              <span>Adding the fourth storage axis multiplies capacity without enlarging the bag mouth.</span>
+            </div>
+          </div>
+        </article>
+        <article class="diagram">
+          <span class="tag">Gift selection</span>
+          <h3>Entangled retrieval index</h3>
+          <p>Household identity, wish-list state, and the sack inventory collapse onto one wrapped item.</p>
+          <svg viewBox="0 0 640 320" role="img">
+            <title>Quantum sorting system matching gifts to households</title>
+            <rect width="640" height="320" fill="#f8fbff"></rect>
+            <rect x="54" y="58" width="144" height="70" rx="8" fill="#eef5ff" stroke="#172026" stroke-width="4"></rect>
+            <rect x="54" y="160" width="144" height="70" rx="8" fill="#fff5d8" stroke="#172026" stroke-width="4"></rect>
+            <rect x="442" y="109" width="144" height="70" rx="8" fill="#e8f5ef" stroke="#172026" stroke-width="4"></rect>
+            <path d="M198 93h100M198 195h100M342 144h100" stroke="#172026" stroke-width="4" stroke-linecap="round"></path>
+            <circle cx="320" cy="144" r="48" fill="#df5f4e" stroke="#172026" stroke-width="4"></circle>
+            <path d="M299 126h42v42h-42zM320 126v42M299 147h42" fill="none" stroke="#fffaf0" stroke-width="4"></path>
+            <text x="126" y="100" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">household</text>
+            <text x="126" y="202" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">wish vector</text>
+            <text x="514" y="151" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">gift output</text>
+            <text x="320" y="258" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="#095a55">quantum retrieval kernel</text>
+          </svg>
+          <div class="formula-strip">
+            <div class="formula-chip">
+              <code>gift* = argmax P(gift | home, list, year)</code>
+              <span>The bag selects the highest-likelihood correct item for that household.</span>
+            </div>
+            <div class="formula-chip">
+              <code>&psi;_bag -> |gift*&gt; when observed</code>
+              <span>Santa's hand acts as the measurement event that resolves the inventory state.</span>
+            </div>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section class="section" id="reindeer">
@@ -821,6 +1122,68 @@
           <span class="tag">Thrust</span>
           <h3>Antimatter-assisted metabolism</h3>
           <p>Trace antimatter reactions provide the peak energy required for launch and climb. The sleigh's field system captures waste heat and vents it as low-intensity auroral glow.</p>
+        </article>
+      </div>
+      <div class="diagram-grid" aria-label="Reindeer propulsion diagrams">
+        <article class="diagram">
+          <span class="tag">Magnetosphere</span>
+          <h3>Antler-field coupling</h3>
+          <p>Antlers act like biological collectors that couple the team to Earth's magnetic field lines.</p>
+          <svg viewBox="0 0 640 320" role="img">
+            <title>Reindeer antlers coupling to magnetic field lines</title>
+            <rect width="640" height="320" fill="#f8fbff"></rect>
+            <path d="M52 264c77-103 177-151 300-144 99 6 178-25 236-92M52 220c87-87 185-123 294-107 103 15 181-9 242-71M52 176c90-68 188-91 293-68 105 23 186 6 243-52" fill="none" stroke="#2f6fbb" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 9"></path>
+            <path d="M232 195c20-30 60-28 76 4 13 27-9 53-45 53-35 0-53-28-31-57Z" fill="#177c76" stroke="#172026" stroke-width="4"></path>
+            <path d="M270 190l-22-54m28 54 26-58m-37 30-38-30m50 28 41-30" stroke="#172026" stroke-width="4" stroke-linecap="round"></path>
+            <path d="M318 214h154l41 32H346Z" fill="#df5f4e" stroke="#172026" stroke-width="4"></path>
+            <path d="M340 246h188c-10 20-27 31-51 34H366c-18-2-27-13-26-34Z" fill="#fffdf7" stroke="#172026" stroke-width="4"></path>
+            <path d="M279 160c20 10 37 25 51 46" stroke="#e0a82e" stroke-width="6" stroke-linecap="round"></path>
+            <text x="198" y="54" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="#095a55">geomagnetic flux</text>
+            <text x="372" y="122" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">lift vector</text>
+            <text x="427" y="292" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">sleigh load reduced</text>
+          </svg>
+          <div class="formula-strip">
+            <div class="formula-chip">
+              <code>F_lift &asymp; q_eff * v x B</code>
+              <span>Charged antler structures convert motion through magnetic field lines into lift.</span>
+            </div>
+            <div class="formula-chip">
+              <code>g_eff = g - F_lift / M_team</code>
+              <span>The sleigh flies once effective gravity is driven close to zero.</span>
+            </div>
+          </div>
+        </article>
+        <article class="diagram">
+          <span class="tag">Guidance and energy</span>
+          <h3>Rudolph beam plus antimatter boost</h3>
+          <p>The lead reindeer resolves the path visually while the propulsion stack supplies launch energy.</p>
+          <svg viewBox="0 0 640 320" role="img">
+            <title>Rudolph guidance beam and antimatter energy conversion</title>
+            <rect width="640" height="320" fill="#f8fbff"></rect>
+            <path d="M88 174c22-31 63-27 79 6 12 26-9 52-45 52-35 0-54-29-34-58Z" fill="#177c76" stroke="#172026" stroke-width="4"></path>
+            <circle cx="78" cy="184" r="12" fill="#df5f4e" stroke="#172026" stroke-width="4"></circle>
+            <path d="M66 184H28M76 173L40 142M76 195L40 226" stroke="#df5f4e" stroke-width="6" stroke-linecap="round"></path>
+            <path d="M134 165l-17-41m24 42 20-44m-28 24-28-22m39 23 31-24" stroke="#172026" stroke-width="4" stroke-linecap="round"></path>
+            <rect x="260" y="108" width="120" height="118" rx="8" fill="#172026" stroke="#172026" stroke-width="4"></rect>
+            <circle cx="304" cy="166" r="28" fill="#e0a82e" stroke="#fffaf0" stroke-width="4"></circle>
+            <circle cx="336" cy="166" r="28" fill="#2f6fbb" stroke="#fffaf0" stroke-width="4"></circle>
+            <path d="M380 166h104" stroke="#e0a82e" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M484 166l-23-14 8 14-8 14Z" fill="#e0a82e"></path>
+            <rect x="504" y="126" width="82" height="80" rx="8" fill="#fff5d8" stroke="#172026" stroke-width="4"></rect>
+            <text x="320" y="258" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">matter-antimatter chamber</text>
+            <text x="546" y="174" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#172026">thrust</text>
+            <text x="111" y="272" text-anchor="middle" font-family="Inter, sans-serif" font-size="17" font-weight="900" fill="#095a55">thermal pathfinding</text>
+          </svg>
+          <div class="formula-strip">
+            <div class="formula-chip">
+              <code>E_release = 2 * m_anti * c^2</code>
+              <span>Annihilation converts a tiny antimatter mass into a very large energy pulse.</span>
+            </div>
+            <div class="formula-chip">
+              <code>I_return = I_0 * exp(-&alpha; * snow)</code>
+              <span>Rudolph's beam is tuned so enough thermal signal returns through snowfall.</span>
+            </div>
+          </div>
         </article>
       </div>
     </section>
@@ -899,12 +1262,48 @@
           <p>Effective delivery time equals local night, westbound route extension, and the onboard dilation interval.</p>
         </article>
         <article class="equation">
+          <code>&gamma; = 1 / sqrt(1 - v^2 / c^2)</code>
+          <p>The relativistic factor describes how strongly the sleigh frame separates from Earth clocks.</p>
+        </article>
+        <article class="equation">
+          <code>N_homes / t_eff = delivery rate</code>
+          <p>The required stop rate falls when the Christmas Continuum increases available onboard time.</p>
+        </article>
+        <article class="equation">
           <code>heat flux scales with rho * v^3</code>
           <p>Atmospheric heating rises brutally with speed, explaining why the sleigh needs a plasma boundary layer.</p>
         </article>
         <article class="equation">
+          <code>p_total = p_boom + p_cancel &asymp; 0</code>
+          <p>Silent flight is modeled as destructive interference between shock pressure and the anti-wave.</p>
+        </article>
+        <article class="equation">
+          <code>P_tunnel &asymp; exp(-2 * &kappa; * L)</code>
+          <p>Chimney entry becomes feasible only if Santa's field shrinks the effective barrier width.</p>
+        </article>
+        <article class="equation">
           <code>V_inside &gt;&gt; V_outside</code>
           <p>The sack is possible only when its storage volume is higher-dimensional rather than a normal three-dimensional bag.</p>
+        </article>
+        <article class="equation">
+          <code>H_4D = L * W * H * Q</code>
+          <p>The pocket dimension gains capacity from the fourth storage coordinate, not from a bigger sack.</p>
+        </article>
+        <article class="equation">
+          <code>gift* = argmax P(gift | home, list)</code>
+          <p>The sorting field selects the most likely correct present for the current household.</p>
+        </article>
+        <article class="equation">
+          <code>F_lift &asymp; q_eff * v x B</code>
+          <p>Antler coupling turns motion through Earth's magnetic field into an upward force.</p>
+        </article>
+        <article class="equation">
+          <code>E = 2 * m_anti * c^2</code>
+          <p>Matter-antimatter annihilation supplies extreme launch energy from microscopic fuel mass.</p>
+        </article>
+        <article class="equation">
+          <code>risk = heat + noise + visibility + drift</code>
+          <p>North Pole control minimizes every observable signature during the route.</p>
         </article>
       </div>
     </section>
