@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f7f2">
+  <meta name="description" content="An arXiv-style scientific paper on the speculative relativistic, quantum, and logistical physics of Santa Claus.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <title>A Relativistic-Quantum Logistics Model for the Christmas Eve Distribution Problem</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["\\(", "\\)"]],
+        displayMath: [["\\[", "\\]"]],
+        tags: "ams"
+      },
+      chtml: {
+        matchFontHeight: false
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f7f7f2;
+      --page: #fffdf8;
+      --ink: #111418;
+      --muted: #555f61;
+      --line: #c8c4b8;
+      --link: #0645ad;
+      --accent: #6b1f1f;
+      --note: #f4f1e8;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --serif: "Computer Modern Serif", "Latin Modern Roman", "Times New Roman", Times, serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--paper);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--serif);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(247, 247, 242, 0.96) 360px),
+        var(--paper);
+    }
+
+    a {
+      color: var(--link);
+    }
+
+    .shell {
+      width: min(980px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 20px 0 42px;
+    }
+
+    .topbar {
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 0.86rem;
+    }
+
+    .topbar a {
+      color: var(--ink);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: white;
+      padding: 7px 10px;
+      border-radius: 3px;
+      font-weight: 700;
+    }
+
+    .paper {
+      background: var(--page);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 55px rgba(17, 20, 24, 0.08);
+      padding: clamp(28px, 5vw, 58px);
+    }
+
+    .archive-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 28px;
+      color: var(--muted);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 0.82rem;
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 0 auto 12px;
+      text-align: center;
+      font-size: clamp(1.8rem, 4vw, 2.85rem);
+      line-height: 1.05;
+      font-weight: 700;
+    }
+
+    .authors,
+    .affiliation,
+    .date {
+      margin: 0;
+      text-align: center;
+      line-height: 1.45;
+    }
+
+    .authors {
+      margin-top: 14px;
+      font-size: 1.06rem;
+    }
+
+    .affiliation,
+    .date {
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .abstract {
+      max-width: 760px;
+      margin: 30px auto 22px;
+      padding: 16px 18px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: rgba(244, 241, 232, 0.42);
+    }
+
+    .abstract h2 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 1.02rem;
+    }
+
+    .abstract p,
+    .metadata p {
+      margin: 0;
+      font-size: 0.98rem;
+      line-height: 1.55;
+    }
+
+    .metadata {
+      max-width: 760px;
+      margin: 0 auto 28px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .metadata strong {
+      color: var(--ink);
+    }
+
+    h2 {
+      margin: 28px 0 10px;
+      font-size: 1.32rem;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin: 22px 0 8px;
+      font-size: 1.06rem;
+      line-height: 1.25;
+    }
+
+    p {
+      margin: 0 0 12px;
+      font-size: 1.04rem;
+      line-height: 1.64;
+      text-align: justify;
+    }
+
+    .equation-note {
+      margin: 6px auto 18px;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      text-align: center;
+    }
+
+    .figure {
+      margin: 22px 0;
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: white;
+    }
+
+    .figure svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .caption {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .caption strong {
+      color: var(--ink);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    th,
+    td {
+      border-top: 1px solid var(--line);
+      padding: 8px 9px;
+      text-align: left;
+      vertical-align: top;
+      line-height: 1.35;
+    }
+
+    th {
+      border-bottom: 2px solid var(--ink);
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .references {
+      padding-left: 22px;
+      font-size: 0.96rem;
+      line-height: 1.5;
+    }
+
+    .references li {
+      margin-bottom: 8px;
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.92em;
+    }
+
+    @media (max-width: 720px) {
+      .topbar,
+      .archive-line {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .paper {
+        padding: 22px 16px;
+      }
+
+      p {
+        text-align: left;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .shell {
+        width: auto;
+        padding: 0;
+      }
+
+      .topbar {
+        display: none;
+      }
+
+      .paper {
+        border: 0;
+        box-shadow: none;
+        padding: 0;
+      }
+
+      a {
+        color: var(--ink);
+        text-decoration: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <nav class="topbar" aria-label="Paper navigation">
+      <a href="../">Report</a>
+      <a href="../santa-claus-physics-paper.pdf">PDF version</a>
+    </nav>
+
+    <article class="paper">
+      <div class="archive-line">
+        <span>arXiv:2512.1224v2 [physics.pop-ph]</span>
+        <span>North Pole Research Archive</span>
+      </div>
+
+      <h1>A Relativistic-Quantum Logistics Model for the Christmas Eve Distribution Problem</h1>
+      <p class="authors">S. Claus, R. Rednose, E. Tesseract, and N. Pole</p>
+      <p class="affiliation">Department of Applied Festive Dynamics, North Pole Research Desk</p>
+      <p class="date">Version 2.0, December 24, 2025</p>
+
+      <section class="abstract" aria-labelledby="abstract-title">
+        <h2 id="abstract-title">Abstract</h2>
+        <p>
+          We present a speculative but internally consistent physical model for the annual Christmas Eve distribution problem. The model combines east-to-west route optimization, relativistic time dilation, plasma-mediated hypersonic flight, acoustic cancellation, macroscopic tunneling, higher-dimensional cargo storage, geomagnetic reindeer lift, and Rudolph-frequency active sensing. While not a claim of conventional laboratory physics, the framework provides a formal taxonomy for treating apparently magical observations as coupled field, topology, and logistics phenomena.
+        </p>
+      </section>
+
+      <section class="metadata" aria-label="Paper metadata">
+        <p><strong>Keywords:</strong> Santa Claus; relativistic logistics; quantum tunneling; tesseract storage; reindeer propulsion; festive field theory.</p>
+        <p><strong>Comments:</strong> 12 pages in holiday normalization; 2 figures; all approximations are cheerful.</p>
+      </section>
+
+      <section>
+        <h2>1. Introduction</h2>
+        <p>
+          The Christmas Eve mission is often framed as a paradox of speed, mass, access, and stealth. A naive Newtonian estimate yields impossible delivery rates, destructive atmospheric heating, and cargo volume exceeding any practical sack. We instead model the mission as a coupled physical system in which each apparent impossibility is assigned to the domain best suited to reduce it: relativity for time, field control for flight, tunneling for entry, higher-dimensional topology for cargo, and biological sensing for navigation.
+        </p>
+        <p>
+          The central hypothesis is not that one mechanism solves the entire distribution problem, but that a stack of small impossible-looking mechanisms produces an operationally stable whole. Let \(R\) denote total mission risk. We decompose it as
+        </p>
+        \[
+          R = w_h H + w_n N + w_v V + w_d D + w_\ell L,
+        \]
+        <p class="equation-note">
+          where \(H\), \(N\), \(V\), \(D\), and \(L\) are heat, noise, visibility, navigational drift, and lateness penalties.
+        </p>
+      </section>
+
+      <section>
+        <h2>2. Relativistic Mission Window</h2>
+        <p>
+          The first-order solution is geographic. A delivery route progressing east to west follows the moving night side of Earth. Since each \(15^\circ\) of longitude corresponds to approximately one hour of local solar time, Santa converts a single local evening into a global corridor.
+        </p>
+        \[
+          t_{\mathrm{window}} \simeq 24\ \mathrm{hr} + \frac{\Delta \lambda}{15^\circ\ \mathrm{hr}^{-1}}.
+        \]
+        <p>
+          The effective onboard budget is further extended by the Christmas Continuum, a local field surrounding the sleigh. In conventional notation,
+        </p>
+        \[
+          \gamma = \frac{1}{\sqrt{1-v^2/c^2}},
+          \qquad
+          \Delta \tau = \frac{\Delta t}{\gamma} + T_{\mathrm{tachyon}},
+        \]
+        <p>
+          where \(\Delta t\) is Earth-frame time, \(\Delta \tau\) is Santa-frame proper time, and \(T_{\mathrm{tachyon}}\) is the speculative contribution of the localized tachyon field.
+        </p>
+
+        <figure class="figure">
+          <svg viewBox="0 0 900 270" role="img">
+            <title>East-to-west routing and time dilation schematic</title>
+            <rect width="900" height="270" fill="#fbfbf7"></rect>
+            <ellipse cx="450" cy="132" rx="335" ry="92" fill="#eef5ff" stroke="#111418" stroke-width="3"></ellipse>
+            <path d="M132 132h636M450 40v184M300 58c48 54 48 104 0 148M600 58c-48 54-48 104 0 148" stroke="#c8c4b8" stroke-width="3"></path>
+            <path d="M165 108c118-64 246-70 384-20 78 28 137 32 181 10" fill="none" stroke="#6b1f1f" stroke-width="6" stroke-linecap="round"></path>
+            <path d="M726 98l-28-5 20 20" fill="none" stroke="#6b1f1f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+            <ellipse cx="480" cy="132" rx="185" ry="58" fill="rgba(6,69,173,0.08)" stroke="#0645ad" stroke-width="4" stroke-dasharray="12 9"></ellipse>
+            <text x="450" y="28" text-anchor="middle" font-family="Times New Roman, Times, serif" font-size="22" font-weight="700" fill="#111418">East-to-west night harvesting</text>
+            <text x="480" y="139" text-anchor="middle" font-family="Times New Roman, Times, serif" font-size="20" font-weight="700" fill="#0645ad">local dilation bubble</text>
+            <text x="450" y="244" text-anchor="middle" font-family="Times New Roman, Times, serif" font-size="18" fill="#555f61">Longitude routing extends the available night; relativistic isolation expands Santa-frame time.</text>
+          </svg>
+          <p class="caption"><strong>Figure 1.</strong> Schematic decomposition of the mission window into a longitude term and a local proper-time term.</p>
+        </figure>
+      </section>
+
+      <section>
+        <h2>3. Hypersonic Sleigh Flight</h2>
+        <p>
+          A passive wooden sled cannot survive high-speed atmospheric flight. The sleigh is therefore treated as a field-stabilized vehicle inside an ionized plasma sheath. The thermal and drag constraints are approximated by
+        </p>
+        \[
+          \dot{q} \propto \rho v^3,
+          \qquad
+          F_D = \frac{1}{2}\rho v^2 C_D A.
+        \]
+        <p>
+          Mission viability requires a strong reduction in effective \(C_D A\), with energy diverted around the craft rather than deposited into the payload. Silent operation is modeled as active destructive interference:
+        </p>
+        \[
+          p_{\mathrm{total}}(t) =
+          p_{\mathrm{boom}}(t) + p_{\mathrm{cancel}}(t) \simeq 0,
+          \qquad
+          p_{\mathrm{cancel}}(t) \simeq -p_{\mathrm{boom}}(t).
+        \]
+      </section>
+
+      <section>
+        <h2>4. Entry Through Chimneys and Walls</h2>
+        <p>
+          The chimney constraint is not solved by compression of a macroscopic body. Santa, the sack, and associated payload are assumed to enter a coherent low-scatter state, reducing the effective interaction cross section with brick, mortar, soot, and household structures.
+        </p>
+        \[
+          P_{\mathrm{tunnel}} \simeq \exp(-2\kappa L),
+          \qquad
+          \kappa = \frac{\sqrt{2m(U-E)}}{\hbar}.
+        \]
+        <p>
+          For chimney-free homes, the model substitutes a pressure-balanced spatial fold:
+        </p>
+        \[
+          d_{\mathrm{fold}}(A,B) \ll d_{\mathrm{house}}(A,B),
+          \qquad
+          \Delta P_{\mathrm{air}} \simeq 0.
+        \]
+      </section>
+
+      <section>
+        <h2>5. Tesseract Cargo Storage</h2>
+        <p>
+          The sack is modeled as a three-dimensional aperture into a four-dimensional storage manifold. Its external mouth remains portable, while the additional coordinate \(Q\) multiplies accessible volume:
+        </p>
+        \[
+          H_{4D} = LWHQ,
+          \qquad
+          V_{\mathrm{inside}} \gg V_{\mathrm{outside}}.
+        \]
+        <p>
+          Retrieval is then an inference problem. The bag selects the gift state with maximum posterior probability conditioned on the household and wish-list state:
+        </p>
+        \[
+          g^\star =
+          \operatorname*{arg\,max}_{g \in \mathcal{G}}
+          P(g \mid \mathrm{home},\mathrm{wish\ list},\mathrm{year}).
+        \]
+
+        <figure class="figure">
+          <svg viewBox="0 0 900 280" role="img">
+            <title>Tesseract sack model</title>
+            <rect width="900" height="280" fill="#fbfbf7"></rect>
+            <path d="M150 188c-38 14-76 18-114 12 18 48 58 72 121 74h420c64-2 104-26 122-74-54 8-109 3-164-12-103 32-231 32-385 0Z" fill="#df5f4e" stroke="#111418" stroke-width="5"></path>
+            <path d="M84 198c154-46 348-46 582 0" fill="none" stroke="#fffdf8" stroke-width="8" stroke-linecap="round"></path>
+            <rect x="330" y="58" width="120" height="120" fill="#eef5ff" stroke="#111418" stroke-width="4"></rect>
+            <rect x="425" y="24" width="120" height="120" fill="#eef8f0" stroke="#111418" stroke-width="4"></rect>
+            <path d="M330 58l95-34M450 58l95-34M450 178l95-34M330 178l95-34" stroke="#111418" stroke-width="4"></path>
+            <text x="255" y="92" font-family="Times New Roman, Times, serif" font-size="22" font-weight="700" fill="#111418">3D aperture</text>
+            <text x="575" y="85" font-family="Times New Roman, Times, serif" font-size="22" font-weight="700" fill="#111418">4D cargo manifold</text>
+            <text x="450" y="252" text-anchor="middle" font-family="Times New Roman, Times, serif" font-size="18" fill="#555f61">A small visible boundary opens onto a higher-dimensional inventory volume.</text>
+          </svg>
+          <p class="caption"><strong>Figure 2.</strong> Tesseract interpretation of Santa's sack as an aperture into a higher-dimensional storage manifold.</p>
+        </figure>
+      </section>
+
+      <section>
+        <h2>6. Reindeer Propulsion and Rudolph-Frequency Sensing</h2>
+        <p>
+          The North Pole subspecies <em>Rangifer tarandus magicus</em> is modeled as a biological flight platform. Antlers serve as electrostatic collectors and geomagnetic coupling structures. The lift term is approximated by
+        </p>
+        \[
+          F_{\mathrm{lift}} \simeq q_{\mathrm{eff}}(\mathbf{v}\times\mathbf{B}),
+          \qquad
+          g_{\mathrm{eff}} = g - \frac{F_{\mathrm{lift}}}{M_{\mathrm{team}}}.
+        \]
+        <p>
+          Trace antimatter metabolism supplies high peak power:
+        </p>
+        \[
+          E_{\mathrm{release}} = 2m_{\mathrm{anti}}c^2.
+        \]
+        <p>
+          Rudolph's nose is modeled as a narrow-band thermal bio-laser whose returned intensity remains useful through precipitation:
+        </p>
+        \[
+          I_{\mathrm{return}} = I_0 e^{-\alpha s},
+        \]
+        <p>
+          where \(s\) is an effective snow-depth optical path and \(\alpha\) is the storm attenuation coefficient.
+        </p>
+      </section>
+
+      <section>
+        <h2>7. System Summary</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Constraint</th>
+                <th>Mechanism</th>
+                <th>Model term</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Too little time</td>
+                <td>Westbound routing and local dilation</td>
+                <td>\(t_{\mathrm{window}},\Delta\tau\)</td>
+              </tr>
+              <tr>
+                <td>Atmospheric heating</td>
+                <td>Ionized plasma boundary</td>
+                <td>\(\dot{q}\propto \rho v^3\)</td>
+              </tr>
+              <tr>
+                <td>Sonic boom</td>
+                <td>Destructive interference</td>
+                <td>\(p_{\mathrm{total}}\simeq 0\)</td>
+              </tr>
+              <tr>
+                <td>Chimney access</td>
+                <td>Macroscopic tunneling or spatial fold</td>
+                <td>\(P_{\mathrm{tunnel}}, d_{\mathrm{fold}}\)</td>
+              </tr>
+              <tr>
+                <td>Cargo volume</td>
+                <td>Tesseract storage</td>
+                <td>\(H_{4D}=LWHQ\)</td>
+              </tr>
+              <tr>
+                <td>Navigation</td>
+                <td>Rudolph-frequency sensing</td>
+                <td>\(I_{\mathrm{return}}\)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>8. Conclusion</h2>
+        <p>
+          Santa Claus does not merely move faster than ordinary logistics permits. The Christmas Eve mission is modeled here as applied cosmic engineering: relativistic scheduling, field-stabilized flight, quantum entry, four-dimensional storage, biological propulsion, and active sensing operating as one coupled system. To a household observer it appears magical; under this model it is a festive, speculative physics stack.
+        </p>
+      </section>
+
+      <section>
+        <h2>References</h2>
+        <ol class="references">
+          <li>Einstein, A. On the electrodynamics of moving bodies. <em>Annalen der Physik</em>, 1905.</li>
+          <li>North Pole Workshop Technical Memorandum 24-12. Plasma Sheath Stabilization in Gift-Bearing Vehicles.</li>
+          <li>Rednose, R. Narrow-band thermal pathfinding in polar precipitation. Unpublished field notes.</li>
+          <li>Tesseract, E. and Pole, N. Higher-dimensional storage manifolds for holiday-scale logistics.</li>
+          <li>Claus, S. Annual operations log, restricted archive, December 24-25.</li>
+        </ol>
+      </section>
+    </article>
+  </main>
+</body>
+</html>
