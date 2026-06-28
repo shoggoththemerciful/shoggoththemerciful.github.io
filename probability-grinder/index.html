@@ -191,7 +191,7 @@
     .controls {
       padding: 12px;
       display: grid;
-      grid-template-columns: minmax(0, 1.35fr) minmax(190px, 0.75fr) auto;
+      grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) auto;
       gap: 12px;
       align-items: end;
     }
@@ -235,9 +235,13 @@
       color: white;
     }
 
+    .topic-control {
+      grid-column: 1 / -1;
+    }
+
     .topic-control .segmented {
       grid-auto-flow: row;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
     }
 
     .select {
@@ -707,6 +711,14 @@
               <option value="4">Level 4: traps</option>
             </select>
           </div>
+          <div>
+            <label class="label" for="paceSelect">Pace</label>
+            <select class="select" id="paceSelect">
+              <option value="sprint">Sprint only</option>
+              <option value="standard">Sprint + standard</option>
+              <option value="all">Full bank</option>
+            </select>
+          </div>
           <button class="button" id="newProblem" type="button">New Problem</button>
         </div>
 
@@ -715,6 +727,7 @@
             <div class="chips">
               <span class="chip" id="topicChip">Topic</span>
               <span class="chip blue" id="difficultyChip">Level</span>
+              <span class="chip" id="paceChip">Pace</span>
               <span class="chip coral" id="patternChip">Pattern</span>
               <span class="chip gold" id="templateChip">Template</span>
             </div>
@@ -786,7 +799,7 @@
           <div class="bank-list" id="bankList"></div>
         </div>
         <p class="note">
-          Problems are generated from templates and spaced from your local history to keep topics, levels, reasoning patterns, and repeats spread out.
+          Problems are generated from templates and spaced from your local history. Sprint keeps the loop fast; Standard and Full Bank opt into slower patterns.
         </p>
       </aside>
     </div>
@@ -901,6 +914,7 @@
         pattern,
         skill: meta.skill || title,
         estimatedSeconds: meta.estimatedSeconds || (pattern === "bayes" || pattern === "linearity" ? 35 : 25),
+        pace: meta.pace || "sprint",
         trapType: meta.trapType || "",
         prerequisite: meta.prerequisite || ""
       };
@@ -928,6 +942,7 @@
           pattern: variant.pattern || defaults.pattern,
           skill: variant.skill || defaults.skill || title,
           estimatedSeconds: variant.estimatedSeconds || defaults.estimatedSeconds,
+          pace: variant.pace || defaults.pace,
           trapType: variant.trapType || defaults.trapType || "",
           prerequisite: variant.prerequisite || defaults.prerequisite || ""
         }
@@ -4140,9 +4155,717 @@
       })
     );
 
+    templates.push(
+      ...problemFamily({
+        familyId: "birthday-collisions",
+        defaults: {
+          topic: "counting",
+          difficulty: 2,
+          pattern: "collision",
+          skill: "birthday-style collision counting",
+          estimatedSeconds: 30,
+          pace: "sprint"
+        },
+        variants: [
+          {
+            id: "at-least-one-shared",
+            title: "Birthday Collision",
+            pattern: "complement",
+            skill: "no-collision complement",
+            generate: () => {
+              const [n, m] = pick([[3, 6], [3, 8], [4, 8], [4, 10], [5, 10]]);
+              const noCollision = frac(perm(m, n), m ** n);
+              const answer = oneMinus(noCollision);
+              return {
+                prompt: `${n} people independently have one of ${m} equally likely birthday types. What is the probability at least two people share a birthday type?`,
+                answer,
+                hint: "Use the complement: all birthday types are different.",
+                solution: `P(all different) = (${Array.from({ length: n }, (_, i) => m - i).join(" * ")})/${m}^${n} = ${fmt(noCollision)}. So P(at least one match) = ${fmt(answer)}.`,
+                mental: "Collision = not all distinct."
+              };
+            }
+          },
+          {
+            id: "exactly-one-pair-three",
+            title: "Exactly One Birthday Pair",
+            generate: () => {
+              const m = pick([6, 8, 10, 12]);
+              const answer = frac(3 * m * (m - 1), m ** 3);
+              return {
+                prompt: `Three people independently have one of ${m} equally likely birthday types. What is the probability exactly two people match and the third is different?`,
+                answer,
+                hint: "Choose the matching pair, their birthday type, and the different birthday type.",
+                solution: `Choose the pair in C(3,2)=3 ways, their type in ${m} ways, and the other type in ${m - 1} ways. Total outcomes: ${m}^3. Probability: ${fmt(answer)}.`,
+                mental: "Pair pattern: choose pair, shared label, outsider label."
+              };
+            }
+          },
+          {
+            id: "first-repeat-draw",
+            title: "First Repeat Draw",
+            difficulty: 3,
+            pace: "standard",
+            generate: () => {
+              const [m, k] = pick([[6, 3], [8, 3], [8, 4], [10, 4]]);
+              const answer = frac(perm(m, k - 1) * (k - 1), m ** k);
+              return {
+                prompt: `Draw labels from ${m} equally likely types with replacement. What is the probability the first repeated label appears on draw ${k}?`,
+                answer,
+                hint: "The first k-1 labels must be distinct; draw k must match one of them.",
+                solution: `First ${k - 1} draws distinct: ${perm(m, k - 1)} ordered ways. Draw ${k} matches one of those ${k - 1} labels. Total outcomes: ${m}^${k}. Probability: ${fmt(answer)}.`,
+                mental: "No collision yet, then collide."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "negative-binomial",
+        defaults: {
+          topic: "dice-coins",
+          difficulty: 2,
+          pattern: "negative-binomial",
+          skill: "kth success on a named trial",
+          estimatedSeconds: 28,
+          pace: "sprint"
+        },
+        variants: [
+          {
+            id: "kth-head-on-n",
+            title: "kth Head On nth Flip",
+            generate: () => {
+              const [k, n] = pick([[2, 3], [2, 4], [3, 5], [3, 6], [4, 6]]);
+              const answer = frac(C(n - 1, k - 1), 2 ** n);
+              return {
+                prompt: `Flip a fair coin. What is the probability the ${ord(k)} head occurs exactly on flip ${n}?`,
+                answer,
+                hint: `Flip ${n} must be heads, and the first ${n - 1} flips need exactly ${k - 1} heads.`,
+                solution: `Choose the ${k - 1} earlier heads among the first ${n - 1} flips: C(${n - 1},${k - 1}) = ${C(n - 1, k - 1)}. Total strings: 2^${n}. Probability: ${fmt(answer)}.`,
+                mental: "Lock the final success, choose earlier successes."
+              };
+            }
+          },
+          {
+            id: "kth-six-on-n",
+            title: "kth Six On nth Roll",
+            generate: () => {
+              const [k, n] = pick([[2, 3], [2, 4], [2, 5], [3, 5]]);
+              const answer = frac(C(n - 1, k - 1) * (5 ** (n - k)), 6 ** n);
+              return {
+                prompt: `Roll a fair die. What is the probability the ${ord(k)} six occurs exactly on roll ${n}?`,
+                answer,
+                hint: `Roll ${n} is a six; among the first ${n - 1} rolls, exactly ${k - 1} are sixes.`,
+                solution: `Choose earlier six positions in C(${n - 1},${k - 1}) ways. The ${n - k} earlier failures each have 5 choices, so favorable sequences are ${C(n - 1, k - 1)}*5^${n - k}. Total: 6^${n}. Probability: ${fmt(answer)}.`,
+                mental: "Final success plus binomial prefix."
+              };
+            }
+          },
+          {
+            id: "failures-before-successes",
+            title: "Failures Before Successes",
+            generate: () => {
+              const [r, f] = pick([[2, 1], [2, 2], [3, 1], [3, 2]]);
+              const n = r + f;
+              const answer = frac(C(n - 1, r - 1), 2 ** n);
+              return {
+                prompt: `Flip a fair coin until you have ${r} heads. What is the probability there are exactly ${f} tails before stopping?`,
+                answer,
+                hint: "The final flip is the last needed head.",
+                solution: `There are ${n} flips total, and the last one must be H. Among the first ${n - 1}, choose the other ${r - 1} heads: C(${n - 1},${r - 1})/2^${n} = ${fmt(answer)}.`,
+                mental: "Same kth-success shape, worded as failures before stopping."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "negative-hypergeometric",
+        defaults: {
+          topic: "cards-bags",
+          difficulty: 2,
+          pattern: "hypergeometric",
+          skill: "first success without replacement",
+          estimatedSeconds: 32,
+          pace: "sprint"
+        },
+        variants: [
+          {
+            id: "first-red-on-k",
+            title: "First Red Without Replacement",
+            generate: () => {
+              const [R, B, k] = pick([[3, 4, 2], [3, 5, 3], [4, 4, 3], [5, 5, 4]]);
+              const answer = frac(perm(B, k - 1) * R, perm(R + B, k));
+              return {
+                prompt: `A bag has ${R} red and ${B} blue balls. Draw without replacement. What is the probability the first red appears on draw ${k}?`,
+                answer,
+                hint: "The first k-1 draws are blue, then draw k is red.",
+                solution: `Ordered favorable draws: ${k - 1} blue draws then red = P(${B},${k - 1})*${R}. Ordered total draws: P(${R + B},${k}). Probability: ${fmt(answer)}.`,
+                mental: "Without replacement geometric: blue prefix, then red."
+              };
+            }
+          },
+          {
+            id: "second-red-on-k",
+            title: "Second Red Without Replacement",
+            difficulty: 3,
+            pace: "standard",
+            generate: () => {
+              const [R, B, k] = pick([[3, 4, 3], [3, 5, 4], [4, 4, 4], [5, 5, 5]]);
+              const answer = frac((k - 1) * R * (R - 1) * perm(B, k - 2), perm(R + B, k));
+              return {
+                prompt: `A bag has ${R} red and ${B} blue balls. Draw without replacement. What is the probability the second red appears on draw ${k}?`,
+                answer,
+                hint: "Draw k is red; the first k-1 draws contain exactly one red.",
+                solution: `Choose the earlier red position in ${k - 1} ways, choose the two ordered red balls in ${R}*${R - 1} ways, and fill ${k - 2} blue positions in P(${B},${k - 2}) ways. Divide by P(${R + B},${k}). Probability: ${fmt(answer)}.`,
+                mental: "Final success; exactly one earlier success."
+              };
+            }
+          },
+          {
+            id: "all-red-before-blue",
+            title: "Red Streak Before Blue",
+            difficulty: 1,
+            generate: () => {
+              const [R, B, r] = pick([[3, 4, 2], [4, 5, 2], [5, 5, 3], [6, 4, 3]]);
+              const answer = frac(perm(R, r), perm(R + B, r));
+              return {
+                prompt: `A bag has ${R} red and ${B} blue balls. Draw without replacement. What is the probability the first ${r} draws are all red?`,
+                answer,
+                hint: "Multiply the shrinking red fractions.",
+                solution: `P(first ${r} red) = P(${R},${r})/P(${R + B},${r}) = ${fmt(answer)}.`,
+                mental: "A clean without-replacement streak."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "dice-order-stats",
+        defaults: {
+          topic: "dice-coins",
+          difficulty: 2,
+          pattern: "order-stat",
+          skill: "dice order statistics",
+          estimatedSeconds: 28,
+          pace: "sprint"
+        },
+        variants: [
+          {
+            id: "two-dice-range",
+            title: "Two-Dice Range",
+            generate: () => {
+              const r = randInt(0, 5);
+              const ways = r === 0 ? 6 : 2 * (6 - r);
+              const answer = frac(ways, 36);
+              return {
+                prompt: `Roll two fair dice. What is the probability the difference between the larger and smaller roll is exactly ${r}?`,
+                answer,
+                hint: "For positive range r, choose the smaller value and then either order.",
+                solution: r === 0
+                  ? `Range 0 means doubles: 6 outcomes out of 36, so the probability is ${fmt(answer)}.`
+                  : `The smaller die can be 1 through ${6 - r}, and each pair has 2 orders. Favorable outcomes: 2*${6 - r} = ${ways}. Probability: ${fmt(answer)}.`,
+                mental: "Range r on two dice has 2(6-r) ordered outcomes, except r=0."
+              };
+            }
+          },
+          {
+            id: "unique-maximum",
+            title: "Unique Maximum",
+            generate: () => {
+              const n = pick([2, 3]);
+              const m = randInt(2, 6);
+              const answer = frac(n * ((m - 1) ** (n - 1)), 6 ** n);
+              return {
+                prompt: `Roll ${n} fair dice. What is the probability the maximum is ${m} and exactly one die shows that maximum?`,
+                answer,
+                hint: "Choose which die has m; every other die must be below m.",
+                solution: `Choose the max die in ${n} ways. The other ${n - 1} dice each have ${m - 1} lower choices. Favorable outcomes: ${n}*${m - 1}^${n - 1}. Total: 6^${n}. Probability: ${fmt(answer)}.`,
+                mental: "Unique max = choose peak position, keep all others lower."
+              };
+            }
+          },
+          {
+            id: "median-three",
+            title: "Median Of Three Dice",
+            difficulty: 3,
+            pace: "standard",
+            generate: () => {
+              const m = randInt(1, 6);
+              const medianLe = (x) => x <= 0 ? 0 : (x ** 3) + 3 * (x ** 2) * (6 - x);
+              const ways = medianLe(m) - medianLe(m - 1);
+              const answer = frac(ways, 216);
+              return {
+                prompt: `Roll three fair dice. What is the probability the median roll is exactly ${m}?`,
+                answer,
+                hint: "Count median <= m, then subtract median <= m-1.",
+                solution: `Triples with median <= ${m}: ${medianLe(m)}. Triples with median <= ${m - 1}: ${medianLe(m - 1)}. Difference: ${ways} out of 216. Probability: ${fmt(answer)}.`,
+                mental: "Median exact is a CDF difference."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "poker-hands",
+        defaults: {
+          topic: "cards-bags",
+          difficulty: 3,
+          pattern: "poker",
+          skill: "card-hand category counting",
+          estimatedSeconds: 45,
+          pace: "standard"
+        },
+        variants: [
+          {
+            id: "three-card-pair",
+            title: "Three-Card Pair",
+            difficulty: 2,
+            pace: "sprint",
+            generate: () => {
+              const good = 13 * C(4, 2) * 12 * 4;
+              const total = C(52, 3);
+              const answer = frac(good, total);
+              return {
+                prompt: "Draw 3 cards from a standard deck. What is the probability of getting exactly one pair?",
+                answer,
+                hint: "Choose the paired rank, the two suits, and the unrelated third card.",
+                solution: `Favorable hands: 13*C(4,2)*12*4 = ${good}. Total 3-card hands: C(52,3) = ${total}. Probability: ${fmt(answer)}.`,
+                mental: "Pair rank, pair suits, kicker rank, kicker suit."
+              };
+            }
+          },
+          {
+            id: "three-card-trips",
+            title: "Three Of A Kind",
+            difficulty: 2,
+            pace: "sprint",
+            generate: () => {
+              const good = 13 * C(4, 3);
+              const total = C(52, 3);
+              const answer = frac(good, total);
+              return {
+                prompt: "Draw 3 cards from a standard deck. What is the probability all three cards have the same rank?",
+                answer,
+                hint: "Choose the rank and then choose 3 suits from the 4 suits.",
+                solution: `Favorable hands: 13*C(4,3) = ${good}. Total hands: C(52,3) = ${total}. Probability: ${fmt(answer)}.`,
+                mental: "Three-card trips are rare: one rank, three suits."
+              };
+            }
+          },
+          {
+            id: "five-card-flush",
+            title: "Five-Card Flush",
+            pace: "challenge",
+            difficulty: 4,
+            generate: () => {
+              const good = 4 * C(13, 5);
+              const total = C(52, 5);
+              const answer = frac(good, total);
+              return {
+                prompt: "Draw 5 cards from a standard deck. What is the probability all 5 cards have the same suit?",
+                answer,
+                hint: "Choose the suit, then choose 5 cards from that suit.",
+                solution: `Favorable hands: 4*C(13,5) = ${good}. Total 5-card hands: C(52,5) = ${total}. Probability: ${fmt(answer)}.`,
+                mental: "Suit first, then cards inside the suit."
+              };
+            }
+          },
+          {
+            id: "full-house",
+            title: "Full House",
+            pace: "challenge",
+            difficulty: 4,
+            generate: () => {
+              const good = 13 * C(4, 3) * 12 * C(4, 2);
+              const total = C(52, 5);
+              const answer = frac(good, total);
+              return {
+                prompt: "Draw 5 cards from a standard deck. What is the probability of a full house?",
+                answer,
+                hint: "Choose the triple rank and suits, then the pair rank and suits.",
+                solution: `Favorable hands: 13*C(4,3)*12*C(4,2) = ${good}. Total hands: C(52,5) = ${total}. Probability: ${fmt(answer)}.`,
+                mental: "Triple structure times pair structure."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "monty-reveal",
+        defaults: {
+          topic: "conditional",
+          difficulty: 2,
+          pattern: "reveal",
+          skill: "condition on a reveal rule",
+          estimatedSeconds: 30,
+          pace: "sprint",
+          trapType: "ignoring how the information was generated"
+        },
+        variants: [
+          {
+            id: "classic-switch",
+            title: "Classic Monty Hall",
+            generate: () => ({
+              prompt: "In classic Monty Hall, you pick 1 of 3 doors. The host, who knows the car location, opens a goat door. If you switch, what is the probability you win the car?",
+              answer: frac(2, 3),
+              hint: "Switching wins exactly when your first pick was wrong.",
+              solution: "Your first pick is wrong with probability 2/3. The informed host's reveal transfers all of that probability to the remaining unopened door, so switching wins with probability 2/3.",
+              mental: "Switching wins on the initial miss."
+            })
+          },
+          {
+            id: "four-doors-open-two",
+            title: "Four-Door Monty",
+            generate: () => ({
+              prompt: "You pick 1 of 4 doors. An informed host opens 2 goat doors, leaving your door and one other door closed. If you switch, what is the probability you win?",
+              answer: frac(3, 4),
+              hint: "Switching wins when your original pick was wrong.",
+              solution: "Your first pick has probability 1/4 of being correct and 3/4 of being wrong. Since the host removes goats, the other remaining door wins exactly in the 3/4 wrong-first-pick cases.",
+              mental: "More doors make the initial miss even more likely."
+            })
+          },
+          {
+            id: "random-host-goat",
+            title: "Random Host Reveal",
+            pace: "challenge",
+            difficulty: 4,
+            generate: () => ({
+              prompt: "You pick 1 of 3 doors. A host randomly opens one of the other two doors, and it happens to show a goat. Given this, what is the probability your original door has the car?",
+              answer: frac(1, 2),
+              hint: "The reveal is less informative because the host might have accidentally opened the car.",
+              solution: "If your original pick was correct, the random host certainly opens a goat. If your original pick was wrong, the host opens a goat only half the time. Conditional weights: original correct = 1/3, original wrong and goat shown = (2/3)(1/2)=1/3. So the posterior is 1/2.",
+              mental: "The host rule changes the denominator."
+            })
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "variance-drills",
+        defaults: {
+          topic: "expected",
+          difficulty: 3,
+          pattern: "variance",
+          skill: "variance from standard formulas",
+          estimatedSeconds: 35,
+          pace: "standard"
+        },
+        variants: [
+          {
+            id: "bernoulli",
+            title: "Bernoulli Variance",
+            difficulty: 2,
+            generate: () => {
+              const p = pick([frac(1, 2), frac(1, 3), frac(2, 3), frac(1, 4), frac(3, 4)]);
+              const answer = mul(p, oneMinus(p));
+              return {
+                prompt: `A 0/1 indicator equals 1 with probability ${fmt(p)}. What is its variance?`,
+                answer,
+                hint: "For a Bernoulli variable, Var = p(1-p).",
+                solution: `Variance = p(1-p) = ${fmt(p)}*${fmt(oneMinus(p))} = ${fmt(answer)}.`,
+                mental: "Bernoulli variance is probability times complement."
+              };
+            }
+          },
+          {
+            id: "binomial",
+            title: "Binomial Variance",
+            generate: () => {
+              const [n, p] = pick([[4, frac(1, 2)], [6, frac(1, 2)], [6, frac(1, 3)], [8, frac(1, 4)]]);
+              const answer = mul(frac(n, 1), mul(p, oneMinus(p)));
+              return {
+                prompt: `Let X be the number of successes in ${n} independent trials, each with success probability ${fmt(p)}. What is Var(X)?`,
+                answer,
+                hint: "For binomial X, Var(X) = np(1-p).",
+                solution: `Var(X) = ${n}*${fmt(p)}*${fmt(oneMinus(p))} = ${fmt(answer)}.`,
+                mental: "Binomial variance scales Bernoulli variance by n."
+              };
+            }
+          },
+          {
+            id: "sum-of-dice",
+            title: "Dice Sum Variance",
+            difficulty: 4,
+            pace: "challenge",
+            generate: () => {
+              const n = pick([1, 2, 3]);
+              const answer = frac(35 * n, 12);
+              return {
+                prompt: `Roll ${n} fair dice and add the results. What is the variance of the sum?`,
+                answer,
+                hint: "One fair die has variance 35/12; independent variances add.",
+                solution: `Var(one die) = 35/12. For ${n} independent dice, Var(sum) = ${n}*35/12 = ${fmt(answer)}.`,
+                mental: "Independent variances add."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "tail-sum-ev",
+        defaults: {
+          topic: "expected",
+          difficulty: 3,
+          pattern: "tail-sum",
+          skill: "expected value from tail probabilities",
+          estimatedSeconds: 42,
+          pace: "standard"
+        },
+        variants: [
+          {
+            id: "max-dice",
+            title: "Expected Maximum",
+            generate: () => {
+              const n = pick([2, 3]);
+              let answer = frac(0, 1);
+              for (let k = 1; k <= 6; k++) answer = add(answer, oneMinus(powFrac(frac(k - 1, 6), n)));
+              return {
+                prompt: `Roll ${n} fair dice. What is the expected maximum roll?`,
+                answer,
+                hint: "For a positive integer X, E[X] = sum P(X >= k).",
+                solution: `E(max) = sum from k=1 to 6 of P(max >= k) = sum [1 - ((k-1)/6)^${n}] = ${fmt(answer)}.`,
+                mental: "Max is easier through tail probabilities."
+              };
+            }
+          },
+          {
+            id: "min-dice",
+            title: "Expected Minimum",
+            generate: () => {
+              const n = pick([2, 3]);
+              let answer = frac(0, 1);
+              for (let k = 1; k <= 6; k++) answer = add(answer, powFrac(frac(7 - k, 6), n));
+              return {
+                prompt: `Roll ${n} fair dice. What is the expected minimum roll?`,
+                answer,
+                hint: "Use E[X] = sum P(X >= k). For the minimum, all dice must be at least k.",
+                solution: `E(min) = sum from k=1 to 6 of P(min >= k) = sum [((7-k)/6)^${n}] = ${fmt(answer)}.`,
+                mental: "Minimum tail means every die clears the threshold."
+              };
+            }
+          },
+          {
+            id: "best-of-two-rolls",
+            title: "Best Of Two Rolls",
+            generate: () => {
+              let answer = frac(0, 1);
+              for (let k = 1; k <= 6; k++) answer = add(answer, oneMinus(powFrac(frac(k - 1, 6), 2)));
+              return {
+                prompt: "You roll two fair dice and keep the larger result. What is the expected value of the result you keep?",
+                answer,
+                hint: "This is the expected maximum of two dice.",
+                solution: `The kept result is max of two dice. Using tail sums, E(max) = sum [1 - ((k-1)/6)^2] from k=1 to 6 = ${fmt(answer)}.`,
+                mental: "Keep-the-best is an order statistic."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "market-odds",
+        defaults: {
+          topic: "expected",
+          difficulty: 2,
+          pattern: "odds",
+          skill: "odds and implied probability",
+          estimatedSeconds: 25,
+          pace: "sprint"
+        },
+        variants: [
+          {
+            id: "no-vig-normalize",
+            title: "No-Vig Normalization",
+            pace: "standard",
+            generate: () => {
+              const [a, b] = pick([[55, 50], [60, 48], [45, 60], [70, 40]]);
+              const answer = frac(a, a + b);
+              return {
+                prompt: `Two mutually exclusive outcomes are priced at ${a} cents and ${b} cents, summing to more than $1. If you remove vig by normalizing prices, what is the implied probability of the first outcome?`,
+                answer,
+                hint: "Divide the first price by the sum of both prices.",
+                solution: `No-vig probability = ${a}/(${a}+${b}) = ${fmt(answer)}.`,
+                mental: "Normalize by the overround total."
+              };
+            }
+          },
+          {
+            id: "independent-parlay",
+            title: "Independent Parlay",
+            generate: () => {
+              const [p, q] = pick([[frac(1, 2), frac(1, 3)], [frac(2, 3), frac(3, 4)], [frac(3, 5), frac(5, 6)], [frac(1, 4), frac(2, 3)]]);
+              const answer = mul(p, q);
+              return {
+                prompt: `Event A has probability ${fmt(p)} and independent Event B has probability ${fmt(q)}. What is the probability both happen?`,
+                answer,
+                hint: "For independent events, multiply probabilities.",
+                solution: `P(A and B) = ${fmt(p)}*${fmt(q)} = ${fmt(answer)}.`,
+                mental: "Independent parlay means product."
+              };
+            }
+          },
+          {
+            id: "kelly-fraction",
+            title: "Kelly Fraction",
+            difficulty: 3,
+            pace: "standard",
+            generate: () => {
+              const [b, p] = pick([[1, frac(2, 3)], [2, frac(1, 2)], [3, frac(1, 3)], [4, frac(1, 3)]]);
+              const q = oneMinus(p);
+              const answer = div(sub(mul(frac(b, 1), p), q), frac(b, 1));
+              return {
+                prompt: `A bet risks $1 to win $${b}. You estimate the win probability is ${fmt(p)}. What Kelly fraction of bankroll should you bet?`,
+                answer,
+                hint: "Kelly fraction for net odds b is (bp - q)/b.",
+                solution: `Here b=${b}, p=${fmt(p)}, q=${fmt(q)}. Kelly = (bp-q)/b = (${b}*${fmt(p)}-${fmt(q)})/${b} = ${fmt(answer)}.`,
+                mental: "Edge divided by odds."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "markov-mini",
+        defaults: {
+          topic: "conditional",
+          difficulty: 3,
+          pattern: "markov",
+          skill: "two-state transition counting",
+          estimatedSeconds: 38,
+          pace: "standard"
+        },
+        variants: [
+          {
+            id: "same-after-two",
+            title: "Two-Step Markov",
+            generate: () => {
+              const stay = pick([frac(2, 3), frac(3, 4)]);
+              const switchP = oneMinus(stay);
+              const answer = add(powFrac(stay, 2), powFrac(switchP, 2));
+              return {
+                prompt: `A system is in state A. Each step, it stays in the same state with probability ${fmt(stay)} and switches with probability ${fmt(switchP)}. What is the probability it is back in state A after 2 steps?`,
+                answer,
+                hint: "After two steps, either stay-stay or switch-switch.",
+                solution: `Back in A after 2 steps means SS or WW: ${fmt(stay)}^2 + ${fmt(switchP)}^2 = ${fmt(answer)}.`,
+                mental: "Even number of switches returns to the start."
+              };
+            }
+          },
+          {
+            id: "different-after-two",
+            title: "Two-Step Switch",
+            generate: () => {
+              const stay = pick([frac(2, 3), frac(3, 4)]);
+              const switchP = oneMinus(stay);
+              const answer = mul(frac(2, 1), mul(stay, switchP));
+              return {
+                prompt: `A system is in state A. Each step, it stays in the same state with probability ${fmt(stay)} and switches with probability ${fmt(switchP)}. What is the probability it is in the other state after 2 steps?`,
+                answer,
+                hint: "After two steps, exactly one of the two steps must be a switch.",
+                solution: `Different state after 2 steps means SW or WS: 2*${fmt(stay)}*${fmt(switchP)} = ${fmt(answer)}.`,
+                mental: "Odd number of switches changes state."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "ballot-catalan",
+        defaults: {
+          topic: "counting",
+          difficulty: 4,
+          pattern: "ballot",
+          skill: "Catalan / ballot symmetry",
+          estimatedSeconds: 50,
+          pace: "challenge"
+        },
+        variants: [
+          {
+            id: "never-trails",
+            title: "Never-Trails Ballot",
+            generate: () => {
+              const n = pick([2, 3, 4]);
+              const answer = frac(1, n + 1);
+              return {
+                prompt: `In a random ordering of ${n} A votes and ${n} B votes, what is the probability A is never behind B while the votes are read from left to right?`,
+                answer,
+                hint: "Among tied-count sequences, the Catalan fraction is 1/(n+1).",
+                solution: `The number of nonnegative paths is the Catalan count C(${2 * n},${n})/(${n}+1). Dividing by all C(${2 * n},${n}) tied sequences gives ${fmt(answer)}.`,
+                mental: "Equal-count never-trails probability is 1/(n+1)."
+              };
+            }
+          },
+          {
+            id: "valid-parentheses",
+            title: "Valid Parentheses",
+            generate: () => {
+              const n = pick([2, 3, 4]);
+              const answer = frac(1, n + 1);
+              return {
+                prompt: `Randomly arrange ${n} left parentheses and ${n} right parentheses. What is the probability the string is valid at every prefix?`,
+                answer,
+                hint: "This is the Catalan fraction among all balanced-symbol arrangements.",
+                solution: `Valid strings are Catalan: C(${2 * n},${n})/(${n}+1). All arrangements with ${n} left and ${n} right symbols: C(${2 * n},${n}). Probability: ${fmt(answer)}.`,
+                mental: "Valid parentheses are the same as never going below zero."
+              };
+            }
+          }
+        ]
+      }),
+      ...problemFamily({
+        familyId: "continuous-geometry",
+        defaults: {
+          topic: "conditional",
+          difficulty: 3,
+          pattern: "continuous",
+          skill: "unit-square area probability",
+          estimatedSeconds: 35,
+          pace: "standard"
+        },
+        variants: [
+          {
+            id: "one-less-than-other",
+            title: "Uniform Order",
+            difficulty: 1,
+            pace: "sprint",
+            generate: () => ({
+              prompt: "Pick two independent random numbers uniformly from 0 to 1. What is the probability the first number is less than the second?",
+              answer: frac(1, 2),
+              hint: "By symmetry, either number is equally likely to be smaller.",
+              solution: "The two numbers are almost surely unequal, and symmetry splits the unit square into two equal triangles. Probability: 1/2.",
+              mental: "Symmetry over the square."
+            })
+          },
+          {
+            id: "sum-less-than-one",
+            title: "Uniform Triangle",
+            generate: () => ({
+              prompt: "Pick two independent random numbers uniformly from 0 to 1. What is the probability their sum is less than 1?",
+              answer: frac(1, 2),
+              hint: "Draw the line x+y=1 in the unit square.",
+              solution: "The region x+y<1 is one of the two equal right triangles in the unit square, so its area and probability are 1/2.",
+              mental: "Probability equals area in the unit square."
+            })
+          },
+          {
+            id: "close-points",
+            title: "Uniform Distance",
+            pace: "challenge",
+            difficulty: 4,
+            generate: () => ({
+              prompt: "Pick two independent random numbers uniformly from 0 to 1. What is the probability their distance is less than 1/2?",
+              answer: frac(3, 4),
+              hint: "Use the complement: distance at least 1/2 makes two corner triangles.",
+              solution: "The region |x-y| >= 1/2 consists of two right triangles with side length 1/2, total area 1/4. So |x-y| < 1/2 has probability 1 - 1/4 = 3/4.",
+              mental: "Band around the diagonal."
+            })
+          }
+        ]
+      })
+    );
+
     const els = {
       topicButtons: document.getElementById("topicButtons"),
       difficultySelect: document.getElementById("difficultySelect"),
+      paceSelect: document.getElementById("paceSelect"),
       newProblem: document.getElementById("newProblem"),
       prompt: document.getElementById("prompt"),
       answerInput: document.getElementById("answerInput"),
@@ -4154,6 +4877,7 @@
       solution: document.getElementById("solution"),
       topicChip: document.getElementById("topicChip"),
       difficultyChip: document.getElementById("difficultyChip"),
+      paceChip: document.getElementById("paceChip"),
       patternChip: document.getElementById("patternChip"),
       templateChip: document.getElementById("templateChip"),
       bankChip: document.getElementById("bankChip"),
@@ -4176,19 +4900,43 @@
       "expected": "EV Games"
     };
 
+    const paceNames = {
+      sprint: "Sprint",
+      standard: "Standard",
+      challenge: "Challenge"
+    };
+
+    const paceRank = {
+      sprint: 1,
+      standard: 2,
+      challenge: 3
+    };
+
     const patternNames = {
       "bayes": "Bayes",
+      "ballot": "Ballot",
       "binomial": "Binomial",
       "complement": "Complement",
       "conditioning": "Conditioning",
+      "collision": "Collisions",
+      "continuous": "Continuous",
       "counting": "Counting",
       "dice-table": "Dice Table",
       "ev": "EV",
       "geometric": "Waiting Time",
+      "hypergeometric": "No Replacement",
       "linearity": "Linearity",
+      "markov": "Markov",
+      "negative-binomial": "kth Success",
       "occupancy": "Occupancy",
+      "odds": "Odds",
+      "order-stat": "Order Stats",
       "order": "Relative Order",
+      "poker": "Poker Hands",
+      "reveal": "Reveal Info",
       "symmetry": "Symmetry",
+      "tail-sum": "Tail Sum",
+      "variance": "Variance",
       "walks": "Random Walks"
     };
 
@@ -4207,6 +4955,7 @@
       seenTopics: raw?.seenTopics && typeof raw.seenTopics === "object" ? raw.seenTopics : {},
       seenDifficulties: raw?.seenDifficulties && typeof raw.seenDifficulties === "object" ? raw.seenDifficulties : {},
       seenPatterns: raw?.seenPatterns && typeof raw.seenPatterns === "object" ? raw.seenPatterns : {},
+      seenPaces: raw?.seenPaces && typeof raw.seenPaces === "object" ? raw.seenPaces : {},
       patternStats: raw?.patternStats && typeof raw.patternStats === "object" ? raw.patternStats : {},
       history: Array.isArray(raw?.history) ? raw.history.slice(-500) : []
     });
@@ -4214,6 +4963,7 @@
     const state = {
       topic: "all",
       difficulty: "all",
+      pace: "sprint",
       current: null,
       answered: false,
       stats: loadJson("probabilityGrinderStats", { attempts: 0, correct: 0, streak: 0, best: 0 }),
@@ -4223,7 +4973,8 @@
     const filteredTemplates = () => templates.filter((t) => {
       const topicOk = state.topic === "all" || t.topic === state.topic;
       const diffOk = state.difficulty === "all" || t.difficulty === Number(state.difficulty);
-      return topicOk && diffOk;
+      const paceOk = state.pace === "all" || (paceRank[t.pace || "sprint"] <= paceRank[state.pace]);
+      return topicOk && diffOk && paceOk;
     });
 
     const promptKey = (template, generated) => `${template.id}::${generated.prompt}`;
@@ -4261,11 +5012,13 @@
       state.scheduler.seenTopics[template.topic] = state.scheduler.seq;
       state.scheduler.seenDifficulties[template.difficulty] = state.scheduler.seq;
       state.scheduler.seenPatterns[template.pattern] = state.scheduler.seq;
+      state.scheduler.seenPaces[template.pace || "sprint"] = state.scheduler.seq;
       state.scheduler.history.push({
         id: template.id,
         topic: template.topic,
         difficulty: template.difficulty,
         pattern: template.pattern,
+        pace: template.pace || "sprint",
         promptKey: key,
         seq: state.scheduler.seq
       });
@@ -4322,6 +5075,7 @@
       const recentTopics = countRecent(recent, (item) => item.topic);
       const recentDifficulties = countRecent(recent, (item) => item.difficulty);
       const recentPatterns = countRecent(recent, (item) => item.pattern || "unknown");
+      const recentPaces = countRecent(recent, (item) => item.pace || "sprint");
       const allMode = state.topic === "all" && state.difficulty === "all";
 
       const scoredTemplates = usablePool.map((template) => {
@@ -4334,6 +5088,13 @@
           sinceSeen(state.scheduler.seenPatterns, template.pattern) * (allMode ? 55 : 24) -
           (recentPatterns[template.pattern] || 0) * (allMode ? 1100 : 520) +
           patternNeed(template.pattern, template.estimatedSeconds);
+
+        if (state.pace !== "sprint") {
+          const pace = template.pace || "sprint";
+          baseScore +=
+            sinceSeen(state.scheduler.seenPaces, pace) * 22 -
+            (recentPaces[pace] || 0) * 420;
+        }
 
         if (state.topic === "all") {
           baseScore +=
@@ -4387,17 +5148,29 @@
       els.seenStat.textContent = `${seenInPool}/${activePool.length}`;
       els.historyStat.textContent = `${state.scheduler.history.length}/500`;
       els.focusStat.textContent = focus ? (patternNames[focus] || focus) : "Mixed";
+      renderBank();
     };
 
     const renderBank = () => {
-      const counts = templates.reduce((acc, t) => {
+      const active = filteredTemplates();
+      const activePool = active.length ? active : templates;
+      const counts = activePool.reduce((acc, t) => {
         acc[t.topic] = (acc[t.topic] || 0) + 1;
         return acc;
       }, {});
-      els.bankChip.textContent = `${templates.length} templates`;
-      els.bankList.innerHTML = Object.entries(topicNames).map(([key, label]) => `
+      const paceCounts = templates.reduce((acc, t) => {
+        const pace = t.pace || "sprint";
+        acc[pace] = (acc[pace] || 0) + 1;
+        return acc;
+      }, {});
+      els.bankChip.textContent = `${activePool.length} active / ${templates.length} templates`;
+      const topicRows = Object.entries(topicNames).map(([key, label]) => `
         <div class="bank-row"><strong>${label}</strong><span>${counts[key] || 0} templates</span></div>
       `).join("");
+      const paceRows = ["sprint", "standard", "challenge"].map((pace) => `
+        <div class="bank-row"><strong>${paceNames[pace]}</strong><span>${paceCounts[pace] || 0} templates</span></div>
+      `).join("");
+      els.bankList.innerHTML = `${topicRows}${paceRows}`;
     };
 
     const escapeHtml = (text) => text.replace(/[&<>"']/g, (ch) => ({
@@ -4409,16 +5182,16 @@
     }[ch]));
 
     const renderPromptText = (text) => {
-      const tokenPattern = /(\$\d+|\d+\/\d+|\d+(?:\.\d+)?%?|\b(?:at least|at most|without replacement|with replacement|expected|probability|exactly|given|until|before|after|independently|uniformly|random|heads?|tails?|red|blue|green|hearts?|aces?|six(?:es)?|dice|die|cards?|balls?|boxes?|success|failure|wins?|loss(?:es)?)\b|[+*/=])/gi;
+      const tokenPattern = /(\$\d+|\d+\/\d+|\d+(?:\.\d+)?%?|\b(?:at least|at most|without replacement|with replacement|expected|probability|exactly|given|until|before|after|independently|uniformly|random|variance|maximum|minimum|median|birthday|doors?|host|switch|heads?|tails?|red|blue|green|hearts?|aces?|six(?:es)?|dice|die|cards?|balls?|boxes?|success|failure|wins?|loss(?:es)?|pair|flush|house|state)\b|[+*/=])/gi;
       return text.split(tokenPattern).map((part) => {
         if (!part) return "";
         const clean = escapeHtml(part);
         const lower = part.toLowerCase();
         if (/^\$?\d/.test(part) || /^[+*/=]$/.test(part)) return `<span class="q-math">${clean}</span>`;
-        if (/^(at least|at most|without replacement|with replacement|expected|probability|exactly|given|until|before|after|independently|uniformly|random)$/i.test(part)) {
+        if (/^(at least|at most|without replacement|with replacement|expected|probability|exactly|given|until|before|after|independently|uniformly|random|variance|maximum|minimum|median)$/i.test(part)) {
           return `<span class="q-logic">${clean}</span>`;
         }
-        if (/^(heads?|tails?|red|blue|green|hearts?|aces?|six(?:es)?|dice|die|cards?|balls?|boxes?|success|failure|wins?|loss(?:es)?)$/i.test(lower)) {
+        if (/^(birthday|doors?|host|switch|heads?|tails?|red|blue|green|hearts?|aces?|six(?:es)?|dice|die|cards?|balls?|boxes?|success|failure|wins?|loss(?:es)?|pair|flush|house|state)$/i.test(lower)) {
           return `<span class="q-object">${clean}</span>`;
         }
         return clean;
@@ -4452,6 +5225,7 @@
       els.solution.innerHTML = "";
       els.topicChip.textContent = topicNames[template.topic];
       els.difficultyChip.textContent = `Level ${template.difficulty}`;
+      els.paceChip.textContent = paceNames[template.pace || "sprint"];
       els.patternChip.textContent = patternNames[template.pattern] || template.pattern;
       els.templateChip.textContent = template.title;
       setFeedback("neutral", "Ready.", "Enter an exact fraction like 5/12, a decimal, a percent, or an integer.");
@@ -4502,6 +5276,11 @@
 
     els.difficultySelect.addEventListener("change", () => {
       state.difficulty = els.difficultySelect.value;
+      nextProblem();
+    });
+
+    els.paceSelect.addEventListener("change", () => {
+      state.pace = els.paceSelect.value;
       nextProblem();
     });
 
