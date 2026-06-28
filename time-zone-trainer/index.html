@@ -741,8 +741,11 @@
 
     resetRound();
     renderStore();
-    renderClocks();
-    state.clockTimer = setInterval(renderClocks, 1000);
+    startClockTimer();
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") stopClockTimer();
+      else startClockTimer();
+    });
 
     function wireSegments(id, key) {
       document.getElementById(id).addEventListener("click", (event) => {
@@ -1091,6 +1094,17 @@
       els.clocks.innerHTML = [zones.bergen, zones.utc, zones.ny, zones.pt, zones.london, zones.chicago].map((item) => {
         return '<div class="clock"><div><strong>' + item.label + '</strong><span>' + offsetLabel(now, item.zone) + '</span></div><b>' + formatInZone(now, item.zone) + '</b></div>';
       }).join("");
+    }
+
+    function startClockTimer() {
+      if (state.clockTimer || document.visibilityState === "hidden") return;
+      renderClocks();
+      state.clockTimer = setInterval(renderClocks, 1000);
+    }
+
+    function stopClockTimer() {
+      clearInterval(state.clockTimer);
+      state.clockTimer = null;
     }
 
     function handleGlobalKeydown(event) {

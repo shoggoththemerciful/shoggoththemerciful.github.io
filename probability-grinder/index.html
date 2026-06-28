@@ -5121,6 +5121,7 @@
       difficulty: "all",
       pace: "sprint",
       timerEnabled: loadJson(timerPreferenceKey, false) === true,
+      tempoTimer: null,
       current: null,
       answered: false,
       feedback: { kind: "neutral", text: "Ready.", sub: "" },
@@ -5344,6 +5345,16 @@
       els.elapsedTime.closest(".tempo-pill")?.classList.toggle("over-time", ratio >= 1 && !state.answered);
     };
 
+    const syncTempoTimer = () => {
+      const shouldRun = state.timerEnabled && state.current && !state.answered && document.visibilityState !== "hidden";
+      if (shouldRun && !state.tempoTimer) {
+        state.tempoTimer = setInterval(updateTempo, 1000);
+      } else if (!shouldRun && state.tempoTimer) {
+        clearInterval(state.tempoTimer);
+        state.tempoTimer = null;
+      }
+    };
+
     const updateStats = () => {
       localStorage.setItem("probabilityGrinderStats", JSON.stringify(state.stats));
       els.solvedStat.textContent = state.stats.attempts;
@@ -5353,6 +5364,7 @@
       els.lastTimeStat.textContent = formatSeconds(state.stats.lastSeconds);
       els.avgTimeStat.textContent = state.stats.timedAttempts ? formatSeconds(state.stats.totalSeconds / state.stats.timedAttempts) : "--";
       updateTempo();
+      syncTempoTimer();
     };
 
     const saveTimerPreference = () => {
@@ -5605,6 +5617,7 @@
       if (restoring) saveCurrentProblem();
       updateMemory();
       updateTempo();
+      syncTempoTimer();
       updateActionState();
       if (window.matchMedia("(min-width: 721px) and (pointer: fine)").matches) {
         requestAnimationFrame(() => els.answerInput.focus({ preventScroll: true }));
@@ -5702,6 +5715,7 @@
       saveTimerPreference();
       updateTimerVisibility();
       updateTempo();
+      syncTempoTimer();
       if (!state.timerEnabled) {
         setFeedback(state.feedback.kind, state.feedback.text, stripTimerDetail(state.feedback.sub), false);
       }
@@ -5737,13 +5751,15 @@
     window.addEventListener("beforeunload", saveCurrentProblem);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") saveCurrentProblem();
+      else updateTempo();
+      syncTempoTimer();
     });
 
     syncControls();
     updateTimerVisibility();
     updateStats();
     if (!restoreCurrentProblem()) nextProblem();
-    setInterval(updateTempo, 1000);
+    syncTempoTimer();
   </script>
 </body>
 </html>
