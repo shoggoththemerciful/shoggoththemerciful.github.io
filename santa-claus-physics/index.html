@@ -116,6 +116,16 @@
       min-width: 0;
     }
 
+    .brand > span:last-child {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .brand .record {
+      margin: 0;
+    }
+
     .mark {
       width: 46px;
       height: 46px;
@@ -280,12 +290,18 @@
     }
 
     .visual {
+      aspect-ratio: 760 / 520;
       border: 2px solid var(--ink);
       border-radius: var(--radius);
       background: #f8fbff;
-      min-height: 410px;
       box-shadow: var(--shadow);
       overflow: hidden;
+    }
+
+    .visual svg {
+      display: block;
+      height: auto;
+      width: 100%;
     }
 
     .section {
@@ -515,10 +531,6 @@
         grid-template-columns: 1fr;
       }
 
-      .visual {
-        min-height: 330px;
-      }
-
       .cards,
       .flow,
       .equations {
@@ -545,10 +557,6 @@
       .flow,
       .equations {
         grid-template-columns: 1fr;
-      }
-
-      .visual {
-        min-height: 260px;
       }
 
       .button {
