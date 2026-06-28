@@ -5465,6 +5465,29 @@
       return parts.length ? `${parts.join(". ")}. ` : "";
     };
 
+    const recordFinalOutcome = (firstTryCorrect) => {
+      if (!state.current || state.answered) return;
+      const elapsedSeconds = Math.max(1, currentElapsedSeconds());
+      state.current.elapsedOffset = elapsedSeconds;
+      state.stats.attempts += 1;
+      if (state.timerEnabled) {
+        state.stats.lastSeconds = elapsedSeconds;
+        state.stats.totalSeconds += elapsedSeconds;
+        state.stats.timedAttempts += 1;
+      }
+      if (firstTryCorrect) {
+        state.stats.correct += 1;
+        state.stats.streak += 1;
+        state.stats.best = Math.max(state.stats.best, state.stats.streak);
+      } else {
+        state.stats.streak = 0;
+      }
+      recordPatternOutcome(state.current.template, firstTryCorrect, state.timerEnabled ? elapsedSeconds : 0);
+      state.answered = true;
+      updateStats();
+      updateMemory();
+    };
+
     const currentSnapshot = () => {
       if (!state.current) return null;
       return {
@@ -5486,6 +5509,7 @@
         answered: state.answered,
         answerValue: els.answerInput.value,
         answerStatus: els.answerInput.classList.contains("correct") ? "correct" : els.answerInput.classList.contains("incorrect") ? "incorrect" : "",
+        wrongTries: Number.isFinite(state.current.wrongTries) ? state.current.wrongTries : 0,
         elapsedSeconds: currentElapsedSeconds(),
         feedback: state.feedback,
         solutionVisible: els.solution.classList.contains("visible")
@@ -5554,7 +5578,7 @@
       const answerStatus = saved?.answerStatus || (state.answered && savedFeedback?.kind === "good" ? "correct" : state.answered && savedFeedback?.kind === "bad" ? "incorrect" : "");
       if (answerStatus === "correct" || answerStatus === "incorrect") els.answerInput.classList.add(answerStatus);
 
-      if (saved?.solutionVisible) showSolution(false);
+      if (saved?.solutionVisible) showSolution(false, false);
       if (restoring) saveCurrentProblem();
       updateMemory();
       updateTempo();
@@ -5573,6 +5597,7 @@
       state.difficulty = validDifficulty(saved?.controls?.difficulty);
       state.pace = validPace(saved?.controls?.pace);
       state.current = { ...generated, template, startedAt: performance.now() };
+      state.current.wrongTries = Number.isFinite(saved?.wrongTries) ? Math.max(0, saved.wrongTries) : 0;
       state.current.elapsedOffset = Number.isFinite(saved?.elapsedSeconds) ? Math.max(0, saved.elapsedSeconds) : 0;
       state.answered = Boolean(saved?.answered);
       syncControls();
@@ -5582,8 +5607,14 @@
 
     const answerDetail = () => state.current?.template.topic === "expected" ? "" : ` (${pct(state.current.answer)})`;
 
-    const showSolution = (persist = true) => {
+    const showSolution = (persist = true, finalize = true) => {
       if (!state.current) return;
+      if (finalize && !state.answered) {
+        recordFinalOutcome(false);
+        setFeedback("bad", "Solution shown.", `${answerFeedbackLead()}Press Enter for the next problem.`, false);
+        els.answerInput.classList.add("incorrect");
+        els.answerInput.classList.remove("correct");
+      }
       const skill = state.current.template.skill ? `<br><br><strong>Skill</strong>${escapeHtml(state.current.template.skill)}` : "";
       const trap = state.current.template.trapType ? `<br><br><strong>Trap to watch</strong>${escapeHtml(state.current.template.trapType)}` : "";
       els.solution.classList.add("visible");
@@ -5594,7 +5625,7 @@
     const nextProblem = () => {
       const { template, generated } = chooseScheduledProblem();
       recordScheduledProblem(template, generated);
-      state.current = { ...generated, template, startedAt: performance.now(), elapsedOffset: 0 };
+      state.current = { ...generated, template, startedAt: performance.now(), elapsedOffset: 0, wrongTries: 0 };
       state.answered = false;
       renderCurrentProblem();
     };
@@ -5607,38 +5638,21 @@
         return;
       }
       const ok = equivalent(parsed, state.current.answer);
-      if (!state.answered) {
-        const elapsedSeconds = Math.max(1, currentElapsedSeconds());
-        state.current.elapsedOffset = elapsedSeconds;
-        state.stats.attempts += 1;
-        if (state.timerEnabled) {
-          state.stats.lastSeconds = elapsedSeconds;
-          state.stats.totalSeconds += elapsedSeconds;
-          state.stats.timedAttempts += 1;
-        }
-        if (ok) {
-          state.stats.correct += 1;
-          state.stats.streak += 1;
-          state.stats.best = Math.max(state.stats.best, state.stats.streak);
-        } else {
-          state.stats.streak = 0;
-        }
-        recordPatternOutcome(state.current.template, ok, state.timerEnabled ? elapsedSeconds : 0);
-        updateStats();
-        updateMemory();
-      }
-      state.answered = true;
-      const feedbackLead = answerFeedbackLead();
       if (ok) {
-        setFeedback("good", `Correct: ${fmt(state.current.answer)}`, `${feedbackLead}Press Enter for the next problem.`);
+        const wrongTries = Number.isFinite(state.current.wrongTries) ? state.current.wrongTries : 0;
+        recordFinalOutcome(wrongTries === 0);
+        const retryNote = wrongTries > 0 ? `Solved after ${wrongTries + 1} tries. ` : "";
+        setFeedback("good", `Correct: ${fmt(state.current.answer)}`, `${answerFeedbackLead()}${retryNote}Press Enter for the next problem.`);
         els.answerInput.classList.add("correct");
         els.answerInput.classList.remove("incorrect");
+        showSolution();
       } else {
-        setFeedback("bad", `Not quite. Correct answer: ${fmt(state.current.answer)}`, `${feedbackLead}Review the solution, then go next.`);
+        state.current.wrongTries = (Number.isFinite(state.current.wrongTries) ? state.current.wrongTries : 0) + 1;
+        setFeedback("bad", "Not quite.", "Try again, or use Show Solution when you want to give up.");
         els.answerInput.classList.add("incorrect");
         els.answerInput.classList.remove("correct");
       }
-      showSolution();
+      saveCurrentProblem();
     };
 
     els.topicButtons.addEventListener("click", (event) => {
@@ -5675,7 +5689,7 @@
     els.showHint.addEventListener("click", () => {
       if (state.current) setFeedback("neutral", "Hint", state.current.hint);
     });
-    els.showSolution.addEventListener("click", showSolution);
+    els.showSolution.addEventListener("click", () => showSolution());
     els.resetStats.addEventListener("click", () => {
       state.stats = normalizeStats({});
       state.scheduler.patternStats = {};
